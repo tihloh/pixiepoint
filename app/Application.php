@@ -14,8 +14,8 @@ use PixiePoint\App\Http\Router as HttpRouter;
 use PixiePoint\App\Models\Router as RouterModel;
 use PixiePoint\App\Models\User;
 use PixiePoint\App\Services\AuthContext;
+use PixiePoint\App\Services\GoogleOAuth;
 use PixiePoint\App\Services\View;
-use PixiePoint\GoogleOAuth;
 use PixiePoint\PrefabAdmin;
 
 final class Application
