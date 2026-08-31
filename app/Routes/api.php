@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-use PixiePoint\App\Http\Router;
+use Tihloh\Prefab\Routes\RouteManager;
 
-return static function (Router $router, array $c): void {
-    $router->add('GET', '/hotspot/health', [$c['api'], 'health']);
-    $router->add('POST', '/api/accounting', [$c['api'], 'accounting']);
+return static function (RouteManager $routes, array $c): void {
+    $routes->get('/hotspot/health', [$c['api'], 'health'])->name('api.health');
+    $routes->post('/api/accounting', [$c['api'], 'accounting'])->name('api.accounting');
 };
