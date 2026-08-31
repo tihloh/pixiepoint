@@ -1,0 +1,55 @@
+name: pixiepoint
+
+services:
+  php:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+
+    container_name: pixiepoint_php
+    working_dir: /var/www/html
+
+    volumes:
+      - ./:/var/www/html
+
+    environment:
+      APP_NAME: ${APP_NAME}
+      APP_URL: ${APP_URL}
+      APP_TIMEZONE: ${APP_TIMEZONE}
+      COOKIE_SECURE: ${COOKIE_SECURE}
+      SESSION_NAME: ${SESSION_NAME}
+
+      DB_DSN: ${DB_DSN}
+      DB_USER: ${DB_USER}
+      DB_PASS: ${DB_PASS}
+
+      ACCOUNTING_KEY: ${ACCOUNTING_KEY}
+
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+    command:
+      - sh
+      - -c
+      - php bin/migrate.php --auto && exec php-fpm
+
+    healthcheck:
+      test:
+        - CMD
+        - php
+        - -r
+        - "$$s=@fsockopen('127.0.0.1',9000); exit($$s ? 0 : 1);"
+      interval: 3s
+      timeout: 2s
+      retries: 20
+
+    networks:
+      webnet:
+        aliases:
+          - pixiepoint_php
+
+    restart: unless-stopped
+
+networks:
+  webnet:
+    external: true

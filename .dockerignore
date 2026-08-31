@@ -1,0 +1,10 @@
+.git
+.gitignore
+.env
+config.php
+data
+mt_hotspot
+README.md
+compose.yaml
+deploy
+

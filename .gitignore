@@ -1,0 +1,5 @@
+/data/*.sqlite
+/data/*.sqlite-*
+/data/sessions/
+/.env
+/config.php
