@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace PixiePoint\App\Services;
 
 use PDO;
-use PixiePoint\AdminUserFactory;
+use PixiePoint\AppUserFactory;
 use Tihloh\Prefab\Auth\Services\AuthManager;
 use Tihloh\Prefab\Logs\Services\LogManager;
 use Tihloh\Prefab\Permissions\Services\PermissionManager;
@@ -67,7 +67,7 @@ final class PrefabKernel
         $users = new UserManager([
             'database' => $db,
             'map' => $map,
-            'factory' => new AdminUserFactory(),
+            'factory' => new AppUserFactory(),
         ]);
         $users->prefabConfigure();
 
