@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace PixiePoint\App\Controllers;
 
 use PDO;
-use PixiePoint\App\Http\Request;
 use PixiePoint\App\Services\AuthContext;
 use PixiePoint\App\Services\View;
 
@@ -13,7 +12,7 @@ final class DashboardController
 {
     public function __construct(private PDO $db, private AuthContext $auth, private View $view) {}
 
-    public function index(Request $request): never
+    public function index(): never
     {
         $user = $this->auth->requireAccount();
         $uid = (int)$user['id'];
@@ -28,10 +27,14 @@ final class DashboardController
             'My devices' => (int)$deviceStmt->fetchColumn(),
             'My sessions' => (int)$sessionStmt->fetchColumn(),
         ];
-        $owner = $this->auth->isPlatformOwner();
-        if ($owner) {
+
+        if ($this->auth->can('routers.view')) {
             $metrics['Routers'] = (int)$this->db->query('SELECT COUNT(*) FROM routers WHERE enabled=1')->fetchColumn();
+        }
+        if ($this->auth->can('sessions.view')) {
             $metrics['Active sessions'] = (int)$this->db->query("SELECT COUNT(*) FROM sessions WHERE status='active'")->fetchColumn();
+        }
+        if ($this->auth->can('users.view')) {
             $metrics['Users'] = (int)$this->db->query('SELECT COUNT(*) FROM users')->fetchColumn();
         }
 
@@ -47,9 +50,13 @@ final class DashboardController
             $rows .= '<tr><td>' . e($session['username'] ?: '—') . '</td><td class="code">' . e($session['mac'] ?: '—') . '</td><td>' . e($session['router_name'] ?: '—') . '</td><td><span class="badge ' . ($session['status'] === 'active' ? '' : 'off') . '">' . e($session['status']) . '</span></td><td>' . e($session['updated_at']) . '</td></tr>';
         }
 
-        $role = $owner ? 'Platform owner' : 'PixiePoint user';
-        $ownerNote = $owner ? '<section class="panel"><h2>Platform management</h2><p class="muted">Manage the centralized MikroTik Hotspot service using the navigation above.</p></section>' : '';
-        $content = '<div class="heading"><div><h1>My dashboard</h1><p class="muted">Welcome, ' . e($user['name']) . ' · ' . e($role) . '</p></div></div><section class="grid">' . $cards . '</section>' . $ownerNote . '<section class="panel"><h2>My recent Wi-Fi sessions</h2><table><thead><tr><th>Access</th><th>Device</th><th>Router</th><th>Status</th><th>Updated</th></tr></thead><tbody>' . ($rows ?: '<tr><td colspan="5" class="empty">No account-linked sessions yet. Guest sessions continue to work normally.</td></tr>') . '</tbody></table></section>';
-        $this->view->page('Dashboard', $content, true, $owner);
+        $role = $this->auth->isPlatformOwner() ? 'Platform owner' : 'PixiePoint user';
+        $management = array_filter($this->auth->navigation());
+        $managementNote = $management
+            ? '<section class="panel"><h2>Management access</h2><p class="muted">Additional PixiePoint features are shown according to your Prefab permissions.</p></section>'
+            : '';
+
+        $content = '<div class="heading"><div><h1>My dashboard</h1><p class="muted">Welcome, ' . e($user['name']) . ' · ' . e($role) . '</p></div></div><section class="grid">' . $cards . '</section>' . $managementNote . '<section class="panel"><h2>My recent Wi-Fi sessions</h2><table><thead><tr><th>Access</th><th>Device</th><th>Router</th><th>Status</th><th>Updated</th></tr></thead><tbody>' . ($rows ?: '<tr><td colspan="5" class="empty">No account-linked sessions yet. Guest sessions continue to work normally.</td></tr>') . '</tbody></table></section>';
+        $this->view->page('Dashboard', $content, true, $this->auth->navigation());
     }
 }
