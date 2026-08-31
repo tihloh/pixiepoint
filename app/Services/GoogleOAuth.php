@@ -6,10 +6,15 @@ namespace PixiePoint\App\Services;
 
 use PDO;
 use RuntimeException;
+use Tihloh\Prefab\Users\Services\UserManager;
 
 final class GoogleOAuth
 {
-    public function __construct(private PDO $db, private array $config) {}
+    public function __construct(
+        private PDO $db,
+        private array $config,
+        private UserManager $users,
+    ) {}
 
     public function enabled(): bool
     {
@@ -45,6 +50,7 @@ final class GoogleOAuth
         $expectedState = (string)($_SESSION['google_oauth_state'] ?? '');
         $verifier = (string)($_SESSION['google_oauth_verifier'] ?? '');
         unset($_SESSION['google_oauth_state'], $_SESSION['google_oauth_verifier']);
+
         if ($code === '' || $state === '' || $expectedState === '' || !hash_equals($expectedState, $state) || $verifier === '') {
             throw new RuntimeException('Google sign-in session expired. Please try again.');
         }
@@ -66,30 +72,56 @@ final class GoogleOAuth
         $verified = filter_var($profile['email_verified'] ?? false, FILTER_VALIDATE_BOOL);
         $name = trim((string)($profile['name'] ?? ''));
         $picture = substr(trim((string)($profile['picture'] ?? '')), 0, 1000);
+
         if ($sub === '' || $email === '' || !$verified || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
             throw new RuntimeException('Google did not provide a verified email address.');
         }
 
-        $stmt = $this->db->prepare('SELECT id,active FROM users WHERE google_sub=? OR email=? ORDER BY google_sub=? DESC LIMIT 1');
-        $stmt->execute([$sub, $email, $sub]);
-        $user = $stmt->fetch();
+        $id = $this->idByGoogleSubject($sub);
+        $user = $id !== null ? $this->users->find($id) : $this->users->findByEmail($email);
+        $context = [
+            'ip_address' => $_SERVER['REMOTE_ADDR'] ?? null,
+            'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? null,
+            'source' => 'google-oauth',
+        ];
+
         if ($user) {
-            if (!(bool)$user['active']) throw new RuntimeException('This PixiePoint account is disabled.');
-            $id = (int)$user['id'];
-            $update = $this->db->prepare('UPDATE users SET google_sub=?,name=IF(name="" OR name IS NULL,?,name),avatar_url=? WHERE id=?');
-            $update->execute([$sub, $name !== '' ? $name : $email, $picture !== '' ? $picture : null, $id]);
-            return $id;
+            if (!$user->active) throw new RuntimeException('This PixiePoint account is disabled.');
+            $update = [
+                'google_sub' => $sub,
+                'avatar_url' => $picture !== '' ? $picture : null,
+            ];
+            if (($user->name ?? '') === '') $update['name'] = $name !== '' ? $name : $email;
+            $this->users->update($user->id, $update, $context);
+            return (int)$user->id;
         }
 
-        $insert = $this->db->prepare("INSERT INTO users(name,email,password_hash,google_sub,avatar_url,platform_role) VALUES(?,?,NULL,?,?,'user')");
-        $insert->execute([$name !== '' ? $name : $email, $email, $sub, $picture !== '' ? $picture : null]);
-        return (int)$this->db->lastInsertId();
+        $created = $this->users->create([
+            'name' => $name !== '' ? $name : $email,
+            'email' => $email,
+            'active' => true,
+            'password_hash' => null,
+            'google_sub' => $sub,
+            'avatar_url' => $picture !== '' ? $picture : null,
+            'platform_role' => 'user',
+            'points' => 0,
+        ], $context);
+
+        return (int)$created->data->id;
     }
 
     public function establishSession(int $userId): void
     {
         $_SESSION['auth:user_id'] = $userId;
         session_regenerate_id(true);
+    }
+
+    private function idByGoogleSubject(string $sub): ?int
+    {
+        $stmt = $this->db->prepare('SELECT id FROM users WHERE google_sub=? LIMIT 1');
+        $stmt->execute([$sub]);
+        $id = $stmt->fetchColumn();
+        return $id === false ? null : (int)$id;
     }
 
     private function redirectUri(): string
