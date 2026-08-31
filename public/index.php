@@ -26,6 +26,7 @@ session_start();
 $prefabAdmin = PixiePoint\PrefabAdmin::boot($app->db);
 $adminUsers = $prefabAdmin['users'];
 $adminAuth = $prefabAdmin['auth'];
+$googleOAuth = new PixiePoint\GoogleOAuth($app->db, $app->config);
 
 $path = rtrim(parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH), '/') ?: '/';
 $method = strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET');
@@ -63,7 +64,7 @@ function platform_required(): void
 
 function page(string $title, string $content, bool $admin = false): never
 {
-    global $app, $adminAuth;
+    global $app;
     $name = e($app->config['app_name'] ?? 'PixiePoint Wi-Fi');
     $nav = '';
     if ($admin) {
@@ -78,6 +79,13 @@ function page(string $title, string $content, bool $admin = false): never
 function portal_card(string $body): string
 {
     return '<section class="card"><div class="brand"><div class="logo">P</div><div><strong>PixiePoint Wi-Fi</strong><div class="muted">MikroTik hotspot access</div></div></div>' . $body . '</section>';
+}
+
+function google_auth_button(): string
+{
+    global $googleOAuth;
+    if (!$googleOAuth->enabled()) return '';
+    return '<a class="button google full" href="/auth/google"><span class="google-mark">G</span>Continue with Google</a><div class="auth-divider">or</div>';
 }
 
 function user_count(): int
@@ -127,7 +135,7 @@ if ($path === '/hotspot/health') {
 if ($path === '/' && $method === 'GET') {
     $account = $adminAuth->check()
         ? '<a class="button full" href="/dashboard">Open my PixiePoint dashboard</a>'
-        : '<a class="button full" href="/login">Log in</a><p class="muted" style="text-align:center">New here? <a href="/register">Create a free account</a>. Registration is optional for basic Wi-Fi access.</p>';
+        : '<a class="button full" href="/login">Log in</a><p class="muted auth-footer">New here? <a href="/register">Create a free account</a>. Registration is optional for basic Wi-Fi access.</p>';
     page('Portal', portal_card('<h1>Wi-Fi portal</h1><p class="muted">Connect to a participating MikroTik hotspot to begin a session. Guests can still use basic access without registering.</p>' . $account));
 }
 
@@ -269,6 +277,31 @@ if ($path === '/api/accounting' && $method === 'POST') {
     exit;
 }
 
+if ($path === '/auth/google') {
+    if (user_count() === 0) redirect('/setup');
+    if ($adminAuth->check()) redirect('/dashboard');
+    try {
+        header('Location: ' . $googleOAuth->authorizationUrl(), true, 302);
+        exit;
+    } catch (Throwable $exception) {
+        page('Google sign-in', portal_card('<h1>Google sign-in unavailable</h1><div class="alert">' . e($exception->getMessage()) . '</div><a class="button full" href="/login">Back to login</a>'));
+    }
+}
+
+if ($path === '/auth/google/callback') {
+    if (user_count() === 0) redirect('/setup');
+    if (isset($_GET['error'])) {
+        page('Google sign-in', portal_card('<h1>Sign-in cancelled</h1><p class="muted">Google sign-in was cancelled or could not be completed.</p><a class="button full" href="/login">Back to login</a>'));
+    }
+    try {
+        $userId = $googleOAuth->complete((string)($_GET['code'] ?? ''), (string)($_GET['state'] ?? ''));
+        $googleOAuth->establishSession($userId);
+        redirect('/dashboard');
+    } catch (Throwable $exception) {
+        page('Google sign-in', portal_card('<h1>Could not sign in</h1><div class="alert">' . e($exception->getMessage()) . '</div><a class="button full" href="/login">Try again</a>'));
+    }
+}
+
 if ($path === '/setup') {
     if (user_count() > 0) redirect('/login');
     $error = '';
@@ -310,11 +343,11 @@ if ($path === '/register') {
                 }
                 redirect('/login');
             } catch (PDOException $exception) {
-                $error = '<div class="alert">An account with that email already exists.</div>';
+                $error = '<div class="alert">An account with that email already exists. Try logging in instead.</div>';
             }
         }
     }
-    page('Create account', portal_card('<h1>Create your PixiePoint account</h1><p class="muted">Registration is optional for basic PisoWiFi access. An account unlocks points, saved devices, history and better support.</p>' . $error . '<form method="post"><input type="hidden" name="_csrf" value="' . e(csrf_token()) . '"><div class="field"><label>Name</label><input name="name" autocomplete="name" required></div><div class="field"><label>Email</label><input name="email" type="email" autocomplete="email" required></div><div class="field"><label>Password</label><input name="password" type="password" minlength="8" autocomplete="new-password" required></div><button class="button full">Create free account</button></form><p class="muted" style="text-align:center">Already registered? <a href="/login">Log in</a></p>'));
+    page('Create account', portal_card('<h1>Create your account</h1><p class="muted">Registration is optional for basic PisoWiFi access. An account unlocks points, saved devices, history and better support.</p>' . $error . google_auth_button() . '<form method="post"><input type="hidden" name="_csrf" value="' . e(csrf_token()) . '"><div class="field"><label>Name</label><input name="name" autocomplete="name" required></div><div class="field"><label>Email</label><input name="email" type="email" autocomplete="email" required></div><div class="field"><label>Password</label><input name="password" type="password" minlength="8" autocomplete="new-password" required></div><button class="button full">Create free account</button></form><p class="muted auth-footer">Already registered? <a href="/login">Log in</a></p>'));
 }
 
 if ($path === '/login') {
@@ -334,7 +367,7 @@ if ($path === '/login') {
         }
         $error = '<div class="alert">The email or password is incorrect.</div>';
     }
-    page('Log in', portal_card('<h1>PixiePoint login</h1><p class="muted">One account for Wi-Fi rewards, devices, history, support and authorized management features.</p>' . $error . '<form method="post"><input type="hidden" name="_csrf" value="' . e(csrf_token()) . '"><div class="field"><label>Email</label><input name="email" type="email" autocomplete="username" required autofocus></div><div class="field"><label>Password</label><input name="password" type="password" autocomplete="current-password" required></div><button class="button full">Log in</button></form><p class="muted" style="text-align:center">No account? <a href="/register">Register free</a></p>'));
+    page('Log in', portal_card('<h1>Welcome back</h1><p class="muted">One PixiePoint account for Wi-Fi rewards, devices, history, support and authorized management features.</p>' . $error . google_auth_button() . '<form method="post"><input type="hidden" name="_csrf" value="' . e(csrf_token()) . '"><div class="field"><label>Email</label><input name="email" type="email" autocomplete="username" required autofocus></div><div class="field"><label>Password</label><input name="password" type="password" autocomplete="current-password" required></div><button class="button full">Log in</button></form><p class="muted auth-footer">No account? <a href="/register">Register free</a></p>'));
 }
 
 if ($path === '/logout') {
@@ -368,8 +401,8 @@ if ($path === '/dashboard') {
     $rows = '';
     foreach ($recentStmt->fetchAll() as $session) $rows .= '<tr><td>' . e($session['username'] ?: '—') . '</td><td class="code">' . e($session['mac'] ?: '—') . '</td><td>' . e($session['router_name'] ?: '—') . '</td><td><span class="badge ' . ($session['status']==='active'?'':'off') . '">' . e($session['status']) . '</span></td><td>' . e($session['updated_at']) . '</td></tr>';
     $role = is_platform_owner() ? 'Platform owner' : 'PixiePoint user';
-    $ownerNote = is_platform_owner() ? '<section class="panel"><h2>Platform management</h2><p class="muted">Your owner account can manage the centralized MikroTik Hotspot service using the navigation above. Group- and permission-based operator access will build on the new permission-ready schema.</p></section>' : '';
-    page('Dashboard', '<div class="heading"><div><h1>My dashboard</h1><p class="muted">Welcome, ' . e($user['name']) . ' · ' . e($role) . '</p></div></div><section class="grid">' . $cards . '</section>' . $ownerNote . '<section class="panel"><h2>My recent Wi-Fi sessions</h2><table><thead><tr><th>Access</th><th>Device</th><th>Router</th><th>Status</th><th>Updated</th></tr></thead><tbody>' . ($rows ?: '<tr><td colspan="5" class="empty">No account-linked sessions yet. Guest sessions continue to work normally.</td></tr>') . '</tbody></table></section>', true);
+    $ownerNote = is_platform_owner() ? '<section class="panel"><h2>Platform management</h2><p class="muted">Your owner account can manage the centralized MikroTik Hotspot service using the navigation above. Group- and permission-based operator access will build on the permission-ready schema.</p></section>' : '';
+    page('Dashboard', '<div class="heading"><div><h1>My dashboard</h1><p class="muted">Welcome, ' . e($user['name']) . ' · ' . e($role) . '</p></div></div><section class="grid">' . $cards . '</section>' . $ownerNote . '<section class="panel"><h2>My recent Wi-Fi sessions</h2><div class="table-wrap"><table><thead><tr><th>Access</th><th>Device</th><th>Router</th><th>Status</th><th>Updated</th></tr></thead><tbody>' . ($rows ?: '<tr><td colspan="5" class="empty">No account-linked sessions yet. Guest sessions continue to work normally.</td></tr>') . '</tbody></table></div></section>', true);
 }
 
 if (str_starts_with($path, '/admin/')) platform_required();
@@ -390,7 +423,7 @@ if ($path === '/admin/routers') {
     }
     $rows = '';
     foreach ($app->db->query('SELECT * FROM routers ORDER BY created_at DESC') as $router) $rows .= '<tr><td>' . e($router['name']) . '<div class="muted">' . e($router['location']) . '</div></td><td class="code">' . e($router['identity']) . '</td><td>' . e($router['public_host'] ?: '—') . '</td><td><span class="badge ' . ($router['enabled']?'':'off') . '">' . ($router['enabled']?'Enabled':'Disabled') . '</span></td><td>' . e($router['last_seen_at'] ?: 'Never') . '</td></tr>';
-    page('Routers', '<div class="heading"><div><h1>Routers</h1><p class="muted">Register each MikroTik using its exact RouterOS identity.</p></div></div>' . $message . '<section class="panel"><h2>Add router</h2><form method="post"><input type="hidden" name="_csrf" value="' . e(csrf_token()) . '"><div class="form-grid"><div class="field"><label>Display name</label><input name="name" required></div><div class="field"><label>RouterOS identity</label><input name="identity" required></div><div class="field"><label>Public hostname / VPN IP</label><input name="public_host"></div><div class="field"><label>Location</label><input name="location"></div></div><button class="button">Register router</button></form></section><section class="panel"><table><thead><tr><th>Router</th><th>Identity</th><th>Address</th><th>Status</th><th>Last seen</th></tr></thead><tbody>' . ($rows ?: '<tr><td colspan="5" class="empty">No routers registered.</td></tr>') . '</tbody></table></section>', true);
+    page('Routers', '<div class="heading"><div><h1>Routers</h1><p class="muted">Register each MikroTik using its exact RouterOS identity.</p></div></div>' . $message . '<section class="panel"><h2>Add router</h2><form method="post"><input type="hidden" name="_csrf" value="' . e(csrf_token()) . '"><div class="form-grid"><div class="field"><label>Display name</label><input name="name" required></div><div class="field"><label>RouterOS identity</label><input name="identity" required></div><div class="field"><label>Public hostname / VPN IP</label><input name="public_host"></div><div class="field"><label>Location</label><input name="location"></div></div><button class="button">Register router</button></form></section><section class="panel"><div class="table-wrap"><table><thead><tr><th>Router</th><th>Identity</th><th>Address</th><th>Status</th><th>Last seen</th></tr></thead><tbody>' . ($rows ?: '<tr><td colspan="5" class="empty">No routers registered.</td></tr>') . '</tbody></table></div></section>', true);
 }
 
 if ($path === '/admin/vouchers') {
@@ -407,17 +440,17 @@ if ($path === '/admin/vouchers') {
     }
     $rows='';
     foreach($app->db->query('SELECT * FROM vouchers ORDER BY created_at DESC LIMIT 100') as $v)$rows.='<tr><td class="code">'.e($v['code']).'</td><td>'.e($v['label']?:'—').'</td><td>'.e($v['duration_minutes']).' min</td><td>'.e($v['uses'].' / '.$v['max_uses']).'</td><td>'.e($v['expires_at']?:'Never').'</td><td><span class="badge '.($v['enabled']?'':'off').'">'.($v['enabled']?'Enabled':'Disabled').'</span></td></tr>';
-    page('Vouchers','<div class="heading"><div><h1>Access vouchers</h1><p class="muted">Issue time- and usage-limited Wi-Fi credentials.</p></div></div>'.$message.'<section class="panel"><h2>Create voucher</h2><form method="post"><input type="hidden" name="_csrf" value="'.e(csrf_token()).'"><div class="form-grid"><div class="field"><label>Code (blank for automatic)</label><input name="code"></div><div class="field"><label>Label</label><input name="label"></div><div class="field"><label>Duration in minutes</label><input name="duration_minutes" type="number" min="1" value="60"></div><div class="field"><label>Data limit in MB (optional)</label><input name="data_limit_mb" type="number" min="1"></div><div class="field"><label>Maximum devices</label><input name="max_devices" type="number" min="1" value="1"></div><div class="field"><label>Maximum uses</label><input name="max_uses" type="number" min="1" value="1"></div><div class="field"><label>Expires at (optional)</label><input name="expires_at" type="datetime-local"></div></div><button class="button">Create voucher</button></form></section><section class="panel"><table><thead><tr><th>Code</th><th>Label</th><th>Duration</th><th>Uses</th><th>Expires</th><th>Status</th></tr></thead><tbody>'.($rows?:'<tr><td colspan="6" class="empty">No vouchers created.</td></tr>').'</tbody></table></section>',true);
+    page('Vouchers','<div class="heading"><div><h1>Access vouchers</h1><p class="muted">Issue time- and usage-limited Wi-Fi credentials.</p></div></div>'.$message.'<section class="panel"><h2>Create voucher</h2><form method="post"><input type="hidden" name="_csrf" value="'.e(csrf_token()).'"><div class="form-grid"><div class="field"><label>Code (blank for automatic)</label><input name="code"></div><div class="field"><label>Label</label><input name="label"></div><div class="field"><label>Duration in minutes</label><input name="duration_minutes" type="number" min="1" value="60"></div><div class="field"><label>Data limit in MB (optional)</label><input name="data_limit_mb" type="number" min="1"></div><div class="field"><label>Maximum devices</label><input name="max_devices" type="number" min="1" value="1"></div><div class="field"><label>Maximum uses</label><input name="max_uses" type="number" min="1" value="1"></div><div class="field"><label>Expires at (optional)</label><input name="expires_at" type="datetime-local"></div></div><button class="button">Create voucher</button></form></section><section class="panel"><div class="table-wrap"><table><thead><tr><th>Code</th><th>Label</th><th>Duration</th><th>Uses</th><th>Expires</th><th>Status</th></tr></thead><tbody>'.($rows?:'<tr><td colspan="6" class="empty">No vouchers created.</td></tr>').'</tbody></table></div></section>',true);
 }
 
 if ($path === '/admin/devices') {
     $rows='';foreach($app->db->query('SELECT d.*,u.email,COUNT(s.id) sessions FROM devices d LEFT JOIN users u ON u.id=d.user_id LEFT JOIN sessions s ON s.device_id=d.id GROUP BY d.id ORDER BY d.last_seen_at DESC') as $d)$rows.='<tr><td class="code">'.e($d['mac']).'</td><td>'.e($d['email']?:'Guest').'</td><td>'.e($d['last_ip']?:'—').'</td><td>'.e($d['sessions']).'</td><td>'.e($d['last_seen_at']).'</td></tr>';
-    page('Devices','<div class="heading"><div><h1>Devices</h1><p class="muted">MikroTik hotspot devices. Guest devices remain valid and may later be linked to accounts.</p></div></div><section class="panel"><table><thead><tr><th>MAC address</th><th>Account</th><th>Last IP</th><th>Sessions</th><th>Last seen</th></tr></thead><tbody>'.($rows?:'<tr><td colspan="5" class="empty">No devices observed.</td></tr>').'</tbody></table></section>',true);
+    page('Devices','<div class="heading"><div><h1>Devices</h1><p class="muted">MikroTik hotspot devices. Guest devices remain valid and may later be linked to accounts.</p></div></div><section class="panel"><div class="table-wrap"><table><thead><tr><th>MAC address</th><th>Account</th><th>Last IP</th><th>Sessions</th><th>Last seen</th></tr></thead><tbody>'.($rows?:'<tr><td colspan="5" class="empty">No devices observed.</td></tr>').'</tbody></table></div></section>',true);
 }
 
 if ($path === '/admin/sessions') {
     $rows='';foreach($app->db->query('SELECT s.*,d.mac,r.name router_name,u.email account_email FROM sessions s LEFT JOIN devices d ON d.id=s.device_id LEFT JOIN routers r ON r.id=s.router_id LEFT JOIN users u ON u.id=s.user_id ORDER BY s.updated_at DESC LIMIT 250') as $s)$rows.='<tr><td>'.e($s['account_email']?:'Guest').'</td><td>'.e($s['username']?:'—').'</td><td class="code">'.e($s['mac']?:'—').'</td><td>'.e($s['router_name']?:'—').'</td><td><span class="badge '.($s['status']==='active'?'':'off').'">'.e($s['status']).'</span></td><td>'.e(duration_nice((int)$s['uptime_seconds'])).'</td><td>'.e(bytes_nice((int)$s['bytes_in']+(int)$s['bytes_out'])).'</td></tr>';
-    page('Sessions','<div class="heading"><div><h1>Sessions</h1><p class="muted">MikroTik authentication and accounting history, including guests and registered users.</p></div></div><section class="panel"><table><thead><tr><th>Account</th><th>Hotspot user</th><th>Device</th><th>Router</th><th>Status</th><th>Uptime</th><th>Transfer</th></tr></thead><tbody>'.($rows?:'<tr><td colspan="7" class="empty">No sessions recorded.</td></tr>').'</tbody></table></section>',true);
+    page('Sessions','<div class="heading"><div><h1>Sessions</h1><p class="muted">MikroTik authentication and accounting history, including guests and registered users.</p></div></div><section class="panel"><div class="table-wrap"><table><thead><tr><th>Account</th><th>Hotspot user</th><th>Device</th><th>Router</th><th>Status</th><th>Uptime</th><th>Transfer</th></tr></thead><tbody>'.($rows?:'<tr><td colspan="7" class="empty">No sessions recorded.</td></tr>').'</tbody></table></div></section>',true);
 }
 
 http_response_code(404);
