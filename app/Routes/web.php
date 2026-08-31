@@ -5,19 +5,24 @@ declare(strict_types=1);
 use Tihloh\Prefab\Routes\RouteManager;
 
 return static function (RouteManager $routes, array $c): void {
-    $routes->matchMethods(['GET', 'POST'], '/', [$c['hotspot'], 'portal'])->name('hotspot.portal');
+    // Public PixiePoint home/login page. MikroTik still POSTs its hotspot
+    // context to the same root path, so browser GET and hotspot POST coexist.
+    $routes->get('/', [$c['auth'], 'home'])->name('home');
+    $routes->post('/', [$c['hotspot'], 'portal'])->name('hotspot.portal');
+
     $routes->post('/hotspot/authenticate', [$c['hotspot'], 'authenticate'])->name('hotspot.authenticate');
     $routes->post('/hotspot/session', [$c['hotspot'], 'session'])->name('hotspot.session');
     $routes->post('/hotspot/disconnected', [$c['hotspot'], 'disconnected'])->name('hotspot.disconnected');
 
     $routes->matchMethods(['GET', 'POST'], '/setup', [$c['auth'], 'setup'])->name('setup');
     $routes->matchMethods(['GET', 'POST'], '/register', [$c['auth'], 'register'])->name('register');
-    $routes->matchMethods(['GET', 'POST'], '/login', [$c['auth'], 'login'])->name('login');
+    $routes->post('/login', [$c['auth'], 'login'])->name('login.submit');
+    $routes->get('/login', static fn () => redirect('/'))->name('login');
     $routes->get('/logout', [$c['auth'], 'logout'])->name('logout')->auth()->middleware('prefab.access');
     $routes->get('/auth/google', [$c['auth'], 'googleStart'])->name('auth.google');
     $routes->get('/auth/google/callback', [$c['auth'], 'googleCallback'])->name('auth.google.callback');
 
-    $routes->redirect('/admin/login', '/login');
+    $routes->redirect('/admin/login', '/');
     $routes->redirect('/admin/logout', '/logout');
     $routes->redirect('/admin', '/dashboard');
 
