@@ -7,10 +7,10 @@ services:
       dockerfile: docker/php/Dockerfile
 
     container_name: pixiepoint_php
-    working_dir: /var/www/html
+    working_dir: /var/www/pixiepoint
 
     volumes:
-      - ./:/var/www/html
+      - ./:/var/www/pixiepoint
 
     environment:
       APP_NAME: ${APP_NAME}
