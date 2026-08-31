@@ -5,7 +5,11 @@
   "require": {
     "php": ">=8.3",
     "tihloh/prefab-users": "^0.5",
-    "tihloh/prefab-auth": "^0.5"
+    "tihloh/prefab-auth": "^0.5",
+    "tihloh/prefab-routes": "^0.5",
+    "tihloh/prefab-input": "^0.5",
+    "tihloh/prefab-permissions": "^0.5",
+    "tihloh/prefab-logs": "^0.5"
   },
   "autoload": {
     "psr-4": {
