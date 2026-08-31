@@ -28,6 +28,18 @@ final class App
     private function migrate(): void
     {
         $this->db->exec(<<<'SQL'
+CREATE TABLE IF NOT EXISTS users (
+    id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(160) NOT NULL,
+    email VARCHAR(254) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    active TINYINT(1) NOT NULL DEFAULT 1,
+    platform_role VARCHAR(32) NOT NULL DEFAULT 'user',
+    points BIGINT NOT NULL DEFAULT 0,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS admins (
     id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
     name VARCHAR(160) NOT NULL,
@@ -35,6 +47,37 @@ CREATE TABLE IF NOT EXISTS admins (
     password_hash VARCHAR(255) NOT NULL,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS groups (
+    id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(100) NOT NULL UNIQUE,
+    description VARCHAR(255),
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS permissions (
+    id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(120) NOT NULL UNIQUE,
+    description VARCHAR(255),
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS user_groups (
+    user_id BIGINT UNSIGNED NOT NULL,
+    group_id BIGINT UNSIGNED NOT NULL,
+    PRIMARY KEY(user_id, group_id),
+    FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY(group_id) REFERENCES groups(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS group_permissions (
+    group_id BIGINT UNSIGNED NOT NULL,
+    permission_id BIGINT UNSIGNED NOT NULL,
+    PRIMARY KEY(group_id, permission_id),
+    FOREIGN KEY(group_id) REFERENCES groups(id) ON DELETE CASCADE,
+    FOREIGN KEY(permission_id) REFERENCES permissions(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS routers (
     id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
     name VARCHAR(160) NOT NULL,
@@ -46,6 +89,7 @@ CREATE TABLE IF NOT EXISTS routers (
     last_seen_at DATETIME,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS vouchers (
     id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
     code VARCHAR(128) NOT NULL UNIQUE,
@@ -60,16 +104,22 @@ CREATE TABLE IF NOT EXISTS vouchers (
     enabled TINYINT(1) NOT NULL DEFAULT 1,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS devices (
     id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    user_id BIGINT UNSIGNED NULL,
     mac CHAR(17) NOT NULL UNIQUE,
     last_ip VARCHAR(45),
     user_agent VARCHAR(500),
     first_seen_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    last_seen_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    last_seen_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_devices_user (user_id),
+    FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS sessions (
     id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    user_id BIGINT UNSIGNED NULL,
     radius_session_id VARCHAR(128) UNIQUE,
     voucher_id BIGINT UNSIGNED,
     router_id BIGINT UNSIGNED,
@@ -84,13 +134,22 @@ CREATE TABLE IF NOT EXISTS sessions (
     bytes_in BIGINT UNSIGNED NOT NULL DEFAULT 0,
     bytes_out BIGINT UNSIGNED NOT NULL DEFAULT 0,
     terminate_cause VARCHAR(128),
+    INDEX idx_sessions_user (user_id),
     INDEX idx_sessions_status (status),
     INDEX idx_sessions_updated (updated_at),
+    FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE SET NULL,
     FOREIGN KEY(voucher_id) REFERENCES vouchers(id),
     FOREIGN KEY(router_id) REFERENCES routers(id),
     FOREIGN KEY(device_id) REFERENCES devices(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 SQL);
+
+        // Upgrade existing PixiePoint v1 databases without removing guest data.
+        $this->db->exec("ALTER TABLE devices ADD COLUMN IF NOT EXISTS user_id BIGINT UNSIGNED NULL AFTER id");
+        $this->db->exec("ALTER TABLE sessions ADD COLUMN IF NOT EXISTS user_id BIGINT UNSIGNED NULL AFTER id");
+
+        // Carry forward an existing first-install administrator as the platform owner.
+        $this->db->exec("INSERT IGNORE INTO users(name,email,password_hash,platform_role,created_at) SELECT name,email,password_hash,'platform_owner',created_at FROM admins");
     }
 }
 
@@ -157,6 +216,6 @@ function admin_required(): void
 {
     global $adminAuth;
     if (!isset($adminAuth) || !$adminAuth->check()) {
-        redirect('/admin/login');
+        redirect('/login');
     }
 }
