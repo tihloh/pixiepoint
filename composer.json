@@ -9,6 +9,7 @@
   },
   "autoload": {
     "psr-4": {
+      "PixiePoint\\App\\": "app/",
       "PixiePoint\\": "src/"
     }
   }
