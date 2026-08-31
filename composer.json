@@ -4,8 +4,8 @@
   "type": "project",
   "require": {
     "php": ">=8.3",
-    "tihloh/prefab-users": "^0.2.1",
-    "tihloh/prefab-auth": "^0.2.0"
+    "tihloh/prefab-users": "^0.5",
+    "tihloh/prefab-auth": "^0.5"
   },
   "autoload": {
     "psr-4": {
