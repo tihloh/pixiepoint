@@ -16,12 +16,16 @@ final class PrefabAdmin
     public static function boot(PDO $db): array
     {
         $map = new UserMap(
-            table: 'admins',
+            table: 'users',
             id: 'id',
             name: 'name',
             email: 'email',
-            active: null,
-            attributes: ['password_hash' => 'password_hash'],
+            active: 'active',
+            attributes: [
+                'password_hash' => 'password_hash',
+                'platform_role' => 'platform_role',
+                'points' => 'points',
+            ],
             allowCreate: false,
             allowUpdate: false,
             allowDelete: false,
