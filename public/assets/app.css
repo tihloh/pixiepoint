@@ -182,3 +182,4 @@ tbody tr:last-child td{border-bottom:0}
 .compat-transaction,.compat-rate-list{margin-top:18px;padding:16px;border:1px solid var(--border);border-radius:16px;background:rgba(255,255,255,.025)}
 .compat-transaction>strong{display:block;margin:4px 0 12px;font:700 25px ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:.06em}
 .compat-voucher{margin-top:22px;padding-top:18px;border-top:1px solid var(--border)}.compat-rate{padding:10px 0;border-bottom:1px solid var(--border)}.compat-rate:last-child{border-bottom:0}
+.compat-tools{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:10px}.compat-tools .button{margin:0;padding-inline:8px}.compat-inline{margin-top:14px;padding:14px;border:1px solid var(--border);border-radius:14px}.compat-rate button{margin-top:8px}@media(max-width:560px){.compat-tools{grid-template-columns:1fr}}

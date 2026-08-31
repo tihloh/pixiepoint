@@ -25,7 +25,9 @@ Use `passwordMode: "blank"` for standard JuanFi voucher users whose password is 
 - If PixiePoint is reachable but the ESP is not, the hosted UI remains responsive and reports the local vendo failure separately.
 - Coin checks use background AJAX and update the visible transaction without page reloads.
 
-The bridge permits only the known JuanFi routes declared in `bridge.js`. Compatibility covers health, rates, top-up, coin polling, voucher activation/cancellation/conversion, charging discovery, and e-load routes. The first portal revision exposes coin/voucher login and rates; charging and e-load can use the same adapter in a later UI revision.
+The bridge permits only the known JuanFi routes declared in `bridge.js`. All customer-facing behavior stays in the hosted `/hotspot/compat` application. The bridge contains no rates, transaction rules, product catalog, account UI, sales logic, or operator interface.
+
+The hosted compatibility layer currently implements coin/voucher login, legacy rate parsing, voucher extension and conversion, charging-station discovery and charging top-up. It can detect the JuanFi e-load service, but purchasing remains hidden by default and must not be enabled until the compressed product catalog and real transaction flow pass a physical-device test.
 
 ## Security notes
 
