@@ -25,6 +25,9 @@ services:
 
       ACCOUNTING_KEY: ${ACCOUNTING_KEY}
 
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
