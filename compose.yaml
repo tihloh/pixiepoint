@@ -31,7 +31,7 @@ services:
     command:
       - sh
       - -c
-      - php bin/migrate.php --auto && exec php-fpm
+      - composer install --no-interaction --prefer-dist --optimize-autoloader && php bin/migrate.php --auto && exec php-fpm
 
     healthcheck:
       test:

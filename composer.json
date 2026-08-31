@@ -1,0 +1,20 @@
+{
+  "name": "tihloh/pixiepoint",
+  "description": "PixiePoint MikroTik hotspot management portal",
+  "type": "project",
+  "license": "MIT",
+  "require": {
+    "php": ">=8.1",
+    "tihloh/prefab-users": "^0.2",
+    "tihloh/prefab-auth": "^0.2"
+  },
+  "autoload": {
+    "psr-4": {
+      "PixiePoint\\": "src/"
+    }
+  },
+  "config": {
+    "sort-packages": true,
+    "optimize-autoloader": true
+  }
+}
