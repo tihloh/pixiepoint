@@ -2,10 +2,17 @@
 
 declare(strict_types=1);
 
-require dirname(__DIR__) . '/src/App.php';
+$root = dirname(__DIR__);
+$autoload = $root . '/vendor/autoload.php';
+if (!is_file($autoload)) {
+    http_response_code(503);
+    exit('PixiePoint dependencies are not installed. Run composer install.');
+}
+require $autoload;
+require $root . '/src/App.php';
 
-$app = new App(dirname(__DIR__));
-$sessionPath = dirname(__DIR__) . '/data/sessions';
+$app = new App($root);
+$sessionPath = $root . '/data/sessions';
 if (!is_dir($sessionPath)) {
     mkdir($sessionPath, 0775, true);
 }
@@ -17,6 +24,10 @@ session_set_cookie_params([
     'samesite' => 'Lax',
 ]);
 session_start();
+
+$prefabAdmin = PixiePoint\PrefabAdmin::boot($app->db);
+$adminUsers = $prefabAdmin['users'];
+$adminAuth = $prefabAdmin['auth'];
 
 $path = rtrim(parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH), '/') ?: '/';
 $method = strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET');
@@ -143,7 +154,6 @@ if ($path === '/hotspot/authenticate' && $method === 'POST') {
     $app->db->prepare('UPDATE routers SET last_seen_at=? WHERE id=?')->execute([now(), $router['id']]);
     $app->db->commit();
 
-    // The router validates this credential through RADIUS. The portal never exposes the DB password hash.
     $action = e((string)$context['login_url']);
     $destination = e((string)($context['original_url'] ?: '/hotspot/session'));
     $body = '<h1>Authorizing…</h1><p class="muted">Your access code was accepted. Connecting this device now.</p><form id="router-login" action="' . $action . '" method="post"><input type="hidden" name="username" value="' . e($voucher['code']) . '"><input type="hidden" name="password" value="' . e($voucher['password']) . '"><input type="hidden" name="dst" value="' . $destination . '"><input type="hidden" name="popup" value="true"></form><script>document.getElementById("router-login").submit()</script><noscript><button class="button full" type="submit" form="router-login">Continue</button></noscript>';
@@ -241,25 +251,35 @@ if ($path === '/setup') {
 
 if ($path === '/admin/login') {
     if (admin_count() === 0) redirect('/setup');
+    if ($adminAuth->check()) redirect('/admin');
     $error = '';
     if ($method === 'POST') {
         require_csrf();
-        $stmt = $app->db->prepare('SELECT * FROM admins WHERE email=?');
-        $stmt->execute([strtolower(trim((string)($_POST['email'] ?? '')))]);
-        $admin = $stmt->fetch();
-        if ($admin && password_verify((string)($_POST['password'] ?? ''), $admin['password_hash'])) {
+        $result = $adminAuth->attempt(
+            strtolower(trim((string)($_POST['email'] ?? ''))),
+            (string)($_POST['password'] ?? ''),
+            [
+                'ip_address' => $_SERVER['REMOTE_ADDR'] ?? null,
+                'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? null,
+            ],
+        );
+        if ($result->success) {
             session_regenerate_id(true);
-            $_SESSION['admin_id'] = $admin['id'];
-            $_SESSION['admin_name'] = $admin['name'];
             redirect('/admin');
         }
         $error = '<div class="alert">The email or password is incorrect.</div>';
     }
-    page('Admin login', portal_card('<h1>Management login</h1>' . $error . '<form method="post"><input type="hidden" name="_csrf" value="' . e(csrf_token()) . '"><div class="field"><label>Email</label><input name="email" type="email" required autofocus></div><div class="field"><label>Password</label><input name="password" type="password" required></div><button class="button full">Log in</button></form>'));
+    page('Admin login', portal_card('<h1>Management login</h1><p class="muted">Administrator authentication is powered by Tihloh Prefab Auth.</p>' . $error . '<form method="post"><input type="hidden" name="_csrf" value="' . e(csrf_token()) . '"><div class="field"><label>Email</label><input name="email" type="email" autocomplete="username" required autofocus></div><div class="field"><label>Password</label><input name="password" type="password" autocomplete="current-password" required></div><button class="button full">Log in</button></form>'));
 }
 
 if ($path === '/admin/logout') {
-    session_destroy();
+    if ($adminAuth->check()) {
+        $adminAuth->logout([
+            'ip_address' => $_SERVER['REMOTE_ADDR'] ?? null,
+            'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? null,
+        ]);
+    }
+    session_regenerate_id(true);
     redirect('/admin/login');
 }
 
@@ -279,7 +299,8 @@ if ($path === '/admin') {
     $recent = $app->db->query('SELECT s.*,d.mac,r.name router_name FROM sessions s LEFT JOIN devices d ON d.id=s.device_id LEFT JOIN routers r ON r.id=s.router_id ORDER BY s.updated_at DESC LIMIT 8')->fetchAll();
     $rows = '';
     foreach ($recent as $session) $rows .= '<tr><td>' . e($session['username'] ?: '—') . '</td><td class="code">' . e($session['mac'] ?: '—') . '</td><td>' . e($session['router_name'] ?: '—') . '</td><td><span class="badge ' . ($session['status']==='active'?'':'off') . '">' . e($session['status']) . '</span></td><td>' . e($session['updated_at']) . '</td></tr>';
-    page('Dashboard', '<div class="heading"><div><h1>Network overview</h1><p class="muted">Welcome back, ' . e($_SESSION['admin_name'] ?? 'Administrator') . '.</p></div></div><section class="grid">' . $cards . '</section><section class="panel"><h2>Recent sessions</h2><table><thead><tr><th>User</th><th>Device</th><th>Router</th><th>Status</th><th>Updated</th></tr></thead><tbody>' . ($rows ?: '<tr><td colspan="5" class="empty">No sessions recorded yet.</td></tr>') . '</tbody></table></section>', true);
+    $currentAdmin = $adminAuth->user();
+    page('Dashboard', '<div class="heading"><div><h1>Network overview</h1><p class="muted">Welcome back, ' . e($currentAdmin?->name ?? 'Administrator') . '.</p></div></div><section class="grid">' . $cards . '</section><section class="panel"><h2>Recent sessions</h2><table><thead><tr><th>User</th><th>Device</th><th>Router</th><th>Status</th><th>Updated</th></tr></thead><tbody>' . ($rows ?: '<tr><td colspan="5" class="empty">No sessions recorded yet.</td></tr>') . '</tbody></table></section>', true);
 }
 
 if ($path === '/admin/routers') {
