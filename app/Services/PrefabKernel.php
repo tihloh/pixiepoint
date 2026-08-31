@@ -12,7 +12,6 @@ use Tihloh\Prefab\Permissions\Services\PermissionManager;
 use Tihloh\Prefab\PrefabConfig;
 use Tihloh\Prefab\Routes\RouteManager;
 use Tihloh\Prefab\Users\Mapping\UserMap;
-use Tihloh\Prefab\Users\Repositories\PdoUserProvider;
 use Tihloh\Prefab\Users\Services\UserManager;
 
 final class PrefabKernel
@@ -41,7 +40,7 @@ final class PrefabKernel
             ],
         ]);
 
-        // Logs first so compatible Prefab modules can auto-discover the logger.
+        // Logs first so Users/Auth/Permissions can auto-discover audit logging.
         $logs = new LogManager(['database' => $db]);
         $logs->prefabConfigure();
 
@@ -63,7 +62,13 @@ final class PrefabKernel
             allowDelete: false,
         );
 
-        $users = new UserManager(new PdoUserProvider($db, $map, new AdminUserFactory()));
+        // Let Prefab Users own its database-backed provider configuration so its
+        // native prefab_groups/prefab_user_groups provider is available too.
+        $users = new UserManager([
+            'database' => $db,
+            'map' => $map,
+            'factory' => new AdminUserFactory(),
+        ]);
         $users->prefabConfigure();
 
         $auth = new AuthManager();
