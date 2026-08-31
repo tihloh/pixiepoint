@@ -28,7 +28,7 @@ final class Application
         $prefab = PrefabKernel::boot($app->db, $root);
         $auth = new AuthContext($prefab['users'], $prefab['auth'], $prefab['permissions']);
         $view = new View($app->config);
-        $google = new GoogleOAuth($app->db, $app->config);
+        $google = new GoogleOAuth($app->db, $app->config, $prefab['users']);
         $logs = $prefab['logs'];
         $routes = $prefab['routes'];
 
