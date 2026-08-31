@@ -48,12 +48,16 @@ final class AdminController
             }
         }
 
+        $canManageRouters = $this->auth->can('routers.manage');
         $rows = '';
         foreach ($this->db->query('SELECT * FROM routers ORDER BY created_at DESC') as $router) {
-            $rows .= '<tr><td>' . e($router['name']) . '<div class="muted">' . e($router['location']) . '</div></td><td class="code">' . e($router['identity']) . '</td><td>' . e($router['public_host'] ?: '—') . '</td><td><span class="badge ' . ($router['enabled'] ? '' : 'off') . '">' . ($router['enabled'] ? 'Enabled' : 'Disabled') . '</span></td><td>' . e($router['last_seen_at'] ?: 'Never') . '</td></tr>';
+            $keyCell = $canManageRouters ? '<td><code class="code">' . e($router['api_key']) . '</code></td>' : '';
+            $rows .= '<tr><td>' . e($router['name']) . '<div class="muted">' . e($router['location']) . '</div></td><td class="code">' . e($router['identity']) . '</td><td>' . e($router['public_host'] ?: '—') . '</td>' . $keyCell . '<td><span class="badge ' . ($router['enabled'] ? '' : 'off') . '">' . ($router['enabled'] ? 'Enabled' : 'Disabled') . '</span></td><td>' . e($router['last_seen_at'] ?: 'Never') . '</td></tr>';
         }
 
-        $content = '<div class="heading"><div><h1>Routers</h1><p class="muted">Register each MikroTik using its exact RouterOS identity.</p></div></div>' . $message . '<section class="panel"><h2>Add router</h2><form method="post"><input type="hidden" name="_csrf" value="' . e(csrf_token()) . '"><div class="form-grid"><div class="field"><label>Display name</label><input name="name" required></div><div class="field"><label>RouterOS identity</label><input name="identity" required></div><div class="field"><label>Public hostname / VPN IP</label><input name="public_host"></div><div class="field"><label>Location</label><input name="location"></div></div><button class="button">Register router</button></form></section><section class="panel"><table><thead><tr><th>Router</th><th>Identity</th><th>Address</th><th>Status</th><th>Last seen</th></tr></thead><tbody>' . ($rows ?: '<tr><td colspan="5" class="empty">No routers registered.</td></tr>') . '</tbody></table></section>';
+        $keyHead = $canManageRouters ? '<th>Login script API key</th>' : '';
+        $columns = $canManageRouters ? 6 : 5;
+        $content = '<div class="heading"><div><h1>Routers</h1><p class="muted">Register each MikroTik using its exact RouterOS identity.</p></div></div>' . $message . '<section class="panel"><h2>Add router</h2><form method="post"><input type="hidden" name="_csrf" value="' . e(csrf_token()) . '"><div class="form-grid"><div class="field"><label>Display name</label><input name="name" required></div><div class="field"><label>RouterOS identity</label><input name="identity" required></div><div class="field"><label>Public hostname / VPN IP</label><input name="public_host"></div><div class="field"><label>Location</label><input name="location"></div></div><button class="button">Register router</button></form></section><section class="panel"><table><thead><tr><th>Router</th><th>Identity</th><th>Address</th>' . $keyHead . '<th>Status</th><th>Last seen</th></tr></thead><tbody>' . ($rows ?: '<tr><td colspan="' . $columns . '" class="empty">No routers registered.</td></tr>') . '</tbody></table></section>';
         $this->view->page('Routers', $content, true, $this->auth->navigation());
     }
 
@@ -117,6 +121,19 @@ final class AdminController
         }
         $content = '<div class="heading"><div><h1>Sessions</h1><p class="muted">MikroTik authentication and accounting history, including guests and registered users.</p></div></div><section class="panel"><table><thead><tr><th>Account</th><th>Hotspot user</th><th>Device</th><th>Router</th><th>Status</th><th>Uptime</th><th>Transfer</th></tr></thead><tbody>' . ($rows ?: '<tr><td colspan="7" class="empty">No sessions recorded.</td></tr>') . '</tbody></table></section>';
         $this->view->page('Sessions', $content, true, $this->auth->navigation());
+    }
+
+    public function sales(): never
+    {
+        $summary = $this->db->query("SELECT COALESCE(SUM(amount_pesos),0) total,COUNT(*) transactions,COALESCE(SUM(points_awarded),0) points FROM router_login_events WHERE created_at >= CURDATE()")->fetch() ?: [];
+        $rows = '';
+        foreach ($this->db->query('SELECT e.*,r.name router_name,d.mac device_mac FROM router_login_events e JOIN routers r ON r.id=e.router_id LEFT JOIN devices d ON d.id=e.device_id ORDER BY e.created_at DESC LIMIT 250') as $event) {
+            $kind = $event['is_extension'] ? 'Extension' : 'New access';
+            $rows .= '<tr><td>' . e($event['created_at']) . '</td><td>' . e($event['router_name']) . '</td><td>' . e($event['vendo_name'] ?: '—') . '</td><td class="code">' . e($event['username']) . '</td><td class="code">' . e($event['device_mac'] ?: $event['mac'] ?: '—') . '</td><td>' . e($kind) . '</td><td>₱' . e(number_format((int)$event['amount_pesos'])) . '</td><td>' . e($event['points_awarded']) . '</td></tr>';
+        }
+        $metrics = '<section class="grid"><div class="metric"><small>Today sales</small><strong>₱' . e(number_format((int)($summary['total'] ?? 0))) . '</strong></div><div class="metric"><small>Transactions</small><strong>' . e($summary['transactions'] ?? 0) . '</strong></div><div class="metric"><small>Points awarded</small><strong>' . e($summary['points'] ?? 0) . '</strong></div></section>';
+        $content = '<div class="heading"><div><h1>Vendo sales</h1><p class="muted">Idempotent sales recorded by authenticated RouterOS login events.</p></div></div>' . $metrics . '<section class="panel"><table><thead><tr><th>Time</th><th>Router</th><th>Vendo</th><th>Voucher</th><th>Device</th><th>Type</th><th>Amount</th><th>Points</th></tr></thead><tbody>' . ($rows ?: '<tr><td colspan="8" class="empty">No login sales recorded.</td></tr>') . '</tbody></table></section>';
+        $this->view->page('Sales', $content, true, $this->auth->navigation());
     }
 
     public function logs(): never

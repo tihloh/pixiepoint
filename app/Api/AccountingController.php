@@ -111,6 +111,88 @@ final class AccountingController
         $this->json(['ok' => true]);
     }
 
+    public function loginEvent(): never
+    {
+        header('Content-Type: application/json; charset=utf-8');
+        try {
+            $result = Input::fromRequest()->process([
+                'event_key' => 'trim|required|string|max:191',
+                'router_identity' => 'trim|required|string|max:160',
+                'username' => 'trim|required|string|max:128',
+                'mac' => 'trim|null_if_empty|nullable|string|max:64',
+                'client_ip' => 'trim|null_if_empty|nullable|string|max:45',
+                'interface_name' => 'trim|null_if_empty|nullable|string|max:128',
+                'device_name' => 'trim|null_if_empty|nullable|string|max:255',
+                'vendo_name' => 'trim|null_if_empty|nullable|string|max:255',
+                'amount_pesos' => 'default:0|integer|min:0|max:1000000',
+                'duration_seconds' => 'default:0|integer|min:0',
+                'is_extension' => 'default:0|integer|min:0|max:1',
+            ]);
+        } catch (InvalidArgumentException $e) {
+            $this->json(['ok' => false, 'error' => $e->getMessage()], 422);
+        }
+        if ($result->fails()) {
+            $this->json(['ok' => false, 'error' => 'invalid_payload', 'fields' => $result->errors()], 422);
+        }
+
+        $payload = $result->validated();
+        $routerStmt = $this->db->prepare('SELECT * FROM routers WHERE identity=? AND enabled=1 LIMIT 1');
+        $routerStmt->execute([(string)$payload['router_identity']]);
+        $router = $routerStmt->fetch();
+        $provided = trim((string)($_SERVER['HTTP_X_PIXIEPOINT_KEY'] ?? ''));
+        if (!$router || $provided === '' || !hash_equals((string)$router['api_key'], $provided)) {
+            $this->json(['ok' => false, 'error' => 'unauthorized_router'], 401);
+        }
+
+        $eventKey = (string)$payload['event_key'];
+        $duplicate = $this->db->prepare('SELECT id,points_awarded FROM router_login_events WHERE event_key=? LIMIT 1');
+        $duplicate->execute([$eventKey]);
+        if ($existing = $duplicate->fetch()) {
+            $this->json(['ok' => true, 'duplicate' => true, 'event_id' => (int)$existing['id'], 'points_awarded' => (int)$existing['points_awarded']]);
+        }
+
+        $mac = client_mac((string)($payload['mac'] ?? ''));
+        $clientIp = (string)($payload['client_ip'] ?? '');
+        $deviceId = $userId = $voucherId = null;
+        $amount = (int)$payload['amount_pesos'];
+        $divisor = max(1, (int)($this->config['points_pesos_per_point'] ?? 5));
+        $excludeAt = max(0, (int)($this->config['points_exclude_sales_at_or_above'] ?? 50));
+        $points = ($excludeAt > 0 && $amount >= $excludeAt) ? 0 : intdiv($amount, $divisor);
+
+        $this->db->beginTransaction();
+        try {
+            if ($mac !== '') {
+                $this->db->prepare('INSERT INTO devices(mac,last_ip,last_seen_at) VALUES(?,?,?) ON DUPLICATE KEY UPDATE last_ip=VALUES(last_ip),last_seen_at=VALUES(last_seen_at)')->execute([$mac, $clientIp, now()]);
+                $deviceStmt = $this->db->prepare('SELECT id,user_id FROM devices WHERE mac=? LIMIT 1');
+                $deviceStmt->execute([$mac]);
+                $device = $deviceStmt->fetch() ?: [];
+                $deviceId = $device['id'] ?? null;
+                $userId = $device['user_id'] ?? null;
+            }
+            $voucherStmt = $this->db->prepare('SELECT id FROM vouchers WHERE code=? LIMIT 1');
+            $voucherStmt->execute([(string)$payload['username']]);
+            $voucherId = $voucherStmt->fetchColumn() ?: null;
+
+            $stmt = $this->db->prepare('INSERT INTO router_login_events(event_key,router_id,device_id,user_id,voucher_id,username,mac,client_ip,interface_name,device_name,vendo_name,amount_pesos,duration_seconds,is_extension,points_awarded) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)');
+            $stmt->execute([$eventKey,$router['id'],$deviceId,$userId,$voucherId,(string)$payload['username'],$mac?:null,$clientIp?:null,$payload['interface_name']??null,$payload['device_name']??null,$payload['vendo_name']??null,$amount,(int)$payload['duration_seconds'],(int)$payload['is_extension'],$points]);
+            $eventId = (int)$this->db->lastInsertId();
+            if ($userId && $points > 0) {
+                $this->db->prepare('UPDATE users SET points=points+? WHERE id=?')->execute([$points, $userId]);
+            }
+            $this->db->prepare('UPDATE routers SET last_seen_at=? WHERE id=?')->execute([now(), $router['id']]);
+            $this->db->commit();
+        } catch (\Throwable) {
+            if ($this->db->inTransaction()) $this->db->rollBack();
+            $duplicate->execute([$eventKey]);
+            if ($existing = $duplicate->fetch()) {
+                $this->json(['ok' => true, 'duplicate' => true, 'event_id' => (int)$existing['id'], 'points_awarded' => (int)$existing['points_awarded']]);
+            }
+            $this->json(['ok' => false, 'error' => 'login_event_failed'], 500);
+        }
+
+        $this->json(['ok' => true, 'duplicate' => false, 'event_id' => $eventId, 'points_awarded' => $points]);
+    }
+
     private function json(array $payload, int $status = 200): never
     {
         http_response_code($status);

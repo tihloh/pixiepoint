@@ -33,6 +33,11 @@ return [
         'description' => 'View MikroTik hotspot sessions and accounting data.',
         'default' => false,
     ],
+    'sales.view' => [
+        'name' => 'View sales',
+        'description' => 'View idempotent RouterOS login and vendo sales events.',
+        'default' => false,
+    ],
     'users.view' => [
         'name' => 'View users',
         'description' => 'View PixiePoint accounts.',

@@ -20,6 +20,7 @@ final class View
             if ($access['vouchers'] ?? false) $manage .= '<a href="/admin/vouchers">Vouchers</a>';
             if ($access['devices'] ?? false) $manage .= '<a href="/admin/devices">Devices</a>';
             if ($access['sessions'] ?? false) $manage .= '<a href="/admin/sessions">Sessions</a>';
+            if ($access['sales'] ?? false) $manage .= '<a href="/admin/sales">Sales</a>';
             if ($access['logs'] ?? false) $manage .= '<a href="/admin/logs">Logs</a>';
 
             $nav = '<nav><div class="wrap"><strong>' . $name . '</strong><div class="navlinks"><a href="/dashboard">Dashboard</a>' . $manage . '<a href="/logout">Log out</a></div></div></nav>';

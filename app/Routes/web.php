@@ -51,6 +51,9 @@ return static function (RouteManager $routes, array $c): void {
     $routes->get('/admin/sessions', [$c['admin'], 'sessions'])
         ->name('admin.sessions.index')
         ->auth()->permission('sessions.view')->middleware('prefab.access');
+    $routes->get('/admin/sales', [$c['admin'], 'sales'])
+        ->name('admin.sales.index')
+        ->auth()->permission('sales.view')->middleware('prefab.access');
     $routes->get('/admin/logs', [$c['admin'], 'logs'])
         ->name('admin.logs.index')
         ->auth()->permission('logs.view')->middleware('prefab.access');

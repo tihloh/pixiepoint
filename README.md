@@ -80,3 +80,7 @@ The management API accepts normalized accounting events at `POST /api/accounting
 ## Diagnostic contract
 
 `GET /hotspot/health` returns HTTP 200, CORS permission, and `{ "ready": true }` only when the hosted app and its database are available. The local bootstrapper navigates nowhere unless all three checks succeed.
+
+## Legacy JuanFi login migration
+
+The recommended RouterOS v7 on-login replacement is [routeros/LoginScript_PixiePoint.rsc](routeros/LoginScript_PixiePoint.rsc). It preserves JuanFi's `duration,amount,extension,vendo` comment format while moving sales, points, devices, and idempotency into PixiePoint. See [routeros/README.md](routeros/README.md) for provisioning and security guidance.

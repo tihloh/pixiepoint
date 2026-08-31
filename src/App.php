@@ -116,6 +116,32 @@ CREATE TABLE IF NOT EXISTS sessions (
     FOREIGN KEY(router_id) REFERENCES routers(id),
     FOREIGN KEY(device_id) REFERENCES devices(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS router_login_events (
+    id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    event_key VARCHAR(191) NOT NULL UNIQUE,
+    router_id BIGINT UNSIGNED NOT NULL,
+    device_id BIGINT UNSIGNED NULL,
+    user_id BIGINT UNSIGNED NULL,
+    voucher_id BIGINT UNSIGNED NULL,
+    username VARCHAR(128) NOT NULL,
+    mac CHAR(17) NULL,
+    client_ip VARCHAR(45) NULL,
+    interface_name VARCHAR(128) NULL,
+    device_name VARCHAR(255) NULL,
+    vendo_name VARCHAR(255) NULL,
+    amount_pesos INT UNSIGNED NOT NULL DEFAULT 0,
+    duration_seconds BIGINT UNSIGNED NOT NULL DEFAULT 0,
+    is_extension TINYINT(1) NOT NULL DEFAULT 0,
+    points_awarded BIGINT UNSIGNED NOT NULL DEFAULT 0,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_login_events_created (created_at),
+    INDEX idx_login_events_vendo (vendo_name),
+    FOREIGN KEY(router_id) REFERENCES routers(id),
+    FOREIGN KEY(device_id) REFERENCES devices(id) ON DELETE SET NULL,
+    FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY(voucher_id) REFERENCES vouchers(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 SQL);
 
         // Upgrade existing PixiePoint databases without removing guest or legacy data.

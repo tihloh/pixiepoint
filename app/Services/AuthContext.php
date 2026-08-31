@@ -77,6 +77,7 @@ final class AuthContext
             'vouchers' => $this->can('vouchers.view') || $this->can('vouchers.manage'),
             'devices' => $this->can('devices.view'),
             'sessions' => $this->can('sessions.view'),
+            'sales' => $this->can('sales.view'),
             'logs' => $this->can('logs.view'),
         ];
     }
