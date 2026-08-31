@@ -4,14 +4,12 @@
   "type": "project",
   "require": {
     "php": ">=8.3",
-    "tihloh/prefab-users": "dev-main",
-    "tihloh/prefab-auth": "dev-main"
+    "tihloh/prefab-users": "^0.2.1",
+    "tihloh/prefab-auth": "^0.2.0"
   },
   "autoload": {
     "psr-4": {
       "PixiePoint\\": "src/"
     }
-  },
-  "minimum-stability": "dev",
-  "prefer-stable": true
+  }
 }
