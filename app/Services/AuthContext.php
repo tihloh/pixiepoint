@@ -48,14 +48,12 @@ final class AuthContext
         $user = $this->user();
         if (!$user) return false;
 
-        // Platform owner remains a separate platform security boundary.
+        // The owner bypass is intentional: platform ownership is a separate
+        // security boundary, while all delegated access uses Prefab Permissions.
         if (($user['platform_role'] ?? '') === 'platform_owner') return true;
 
         $groupIds = $this->users->groups()->groupIdsForUser($user['id']);
-        return $this->permissions->can(
-            new PermissionUser($user['id'], $groupIds),
-            $permission,
-        );
+        return $this->permissions->can(new PermissionUser($user['id'], $groupIds), $permission);
     }
 
     public function requirePermission(string $permission, View $view): array
@@ -69,5 +67,17 @@ final class AuthContext
             );
         }
         return $user;
+    }
+
+    /** @return array<string,bool> */
+    public function navigation(): array
+    {
+        return [
+            'routers' => $this->can('routers.view') || $this->can('routers.manage'),
+            'vouchers' => $this->can('vouchers.view') || $this->can('vouchers.manage'),
+            'devices' => $this->can('devices.view'),
+            'sessions' => $this->can('sessions.view'),
+            'logs' => $this->can('logs.view'),
+        ];
     }
 }
