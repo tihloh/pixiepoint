@@ -155,7 +155,8 @@ function duration_nice(int $seconds): string
 
 function admin_required(): void
 {
-    if (empty($_SESSION['admin_id'])) {
+    global $adminAuth;
+    if (!isset($adminAuth) || !$adminAuth->check()) {
         redirect('/admin/login');
     }
 }
