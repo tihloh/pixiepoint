@@ -10,4 +10,6 @@ return [
     'cookie_secure' => filter_var(getenv('COOKIE_SECURE') ?: 'true', FILTER_VALIDATE_BOOL),
     'timezone' => getenv('APP_TIMEZONE') ?: 'Asia/Manila',
     'accounting_key' => getenv('ACCOUNTING_KEY') ?: '',
+    'google_client_id' => getenv('GOOGLE_CLIENT_ID') ?: '',
+    'google_client_secret' => getenv('GOOGLE_CLIENT_SECRET') ?: '',
 ];
