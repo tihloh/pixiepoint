@@ -8,8 +8,8 @@ use PDOException;
 use PixiePoint\App\Http\Request;
 use PixiePoint\App\Models\User;
 use PixiePoint\App\Services\AuthContext;
+use PixiePoint\App\Services\GoogleOAuth;
 use PixiePoint\App\Services\View;
-use PixiePoint\GoogleOAuth;
 use Throwable;
 
 final class AuthController
