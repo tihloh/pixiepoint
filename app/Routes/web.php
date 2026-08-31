@@ -2,28 +2,51 @@
 
 declare(strict_types=1);
 
-use PixiePoint\App\Http\Router;
+use Tihloh\Prefab\Routes\RouteManager;
 
-return static function (Router $router, array $c): void {
-    $router->any('/', [$c['hotspot'], 'portal']);
-    $router->add('POST', '/hotspot/authenticate', [$c['hotspot'], 'authenticate']);
-    $router->add('POST', '/hotspot/session', [$c['hotspot'], 'session']);
-    $router->add('POST', '/hotspot/disconnected', [$c['hotspot'], 'disconnected']);
+return static function (RouteManager $routes, array $c): void {
+    $routes->matchMethods(['GET', 'POST'], '/', [$c['hotspot'], 'portal'])->name('hotspot.portal');
+    $routes->post('/hotspot/authenticate', [$c['hotspot'], 'authenticate'])->name('hotspot.authenticate');
+    $routes->post('/hotspot/session', [$c['hotspot'], 'session'])->name('hotspot.session');
+    $routes->post('/hotspot/disconnected', [$c['hotspot'], 'disconnected'])->name('hotspot.disconnected');
 
-    $router->any('/setup', [$c['auth'], 'setup']);
-    $router->any('/register', [$c['auth'], 'register']);
-    $router->any('/login', [$c['auth'], 'login']);
-    $router->add('GET', '/logout', [$c['auth'], 'logout']);
-    $router->add('GET', '/auth/google', [$c['auth'], 'googleStart']);
-    $router->add('GET', '/auth/google/callback', [$c['auth'], 'googleCallback']);
+    $routes->matchMethods(['GET', 'POST'], '/setup', [$c['auth'], 'setup'])->name('setup');
+    $routes->matchMethods(['GET', 'POST'], '/register', [$c['auth'], 'register'])->name('register');
+    $routes->matchMethods(['GET', 'POST'], '/login', [$c['auth'], 'login'])->name('login');
+    $routes->get('/logout', [$c['auth'], 'logout'])->name('logout')->auth()->middleware('prefab.access');
+    $routes->get('/auth/google', [$c['auth'], 'googleStart'])->name('auth.google');
+    $routes->get('/auth/google/callback', [$c['auth'], 'googleCallback'])->name('auth.google.callback');
 
-    $router->add('GET', '/admin/login', static fn () => redirect('/login'));
-    $router->add('GET', '/admin/logout', static fn () => redirect('/logout'));
-    $router->add('GET', '/admin', static fn () => redirect('/dashboard'));
+    $routes->redirect('/admin/login', '/login');
+    $routes->redirect('/admin/logout', '/logout');
+    $routes->redirect('/admin', '/dashboard');
 
-    $router->add('GET', '/dashboard', [$c['dashboard'], 'index']);
-    $router->any('/admin/routers', [$c['admin'], 'routers']);
-    $router->any('/admin/vouchers', [$c['admin'], 'vouchers']);
-    $router->add('GET', '/admin/devices', [$c['admin'], 'devices']);
-    $router->add('GET', '/admin/sessions', [$c['admin'], 'sessions']);
+    $routes->get('/dashboard', [$c['dashboard'], 'index'])
+        ->name('dashboard')
+        ->auth()
+        ->middleware('prefab.access');
+
+    $routes->get('/admin/routers', [$c['admin'], 'routers'])
+        ->name('admin.routers.index')
+        ->auth()->permission('routers.view')->middleware('prefab.access');
+    $routes->post('/admin/routers', [$c['admin'], 'routers'])
+        ->name('admin.routers.store')
+        ->auth()->permission('routers.manage')->middleware('prefab.access');
+
+    $routes->get('/admin/vouchers', [$c['admin'], 'vouchers'])
+        ->name('admin.vouchers.index')
+        ->auth()->permission('vouchers.view')->middleware('prefab.access');
+    $routes->post('/admin/vouchers', [$c['admin'], 'vouchers'])
+        ->name('admin.vouchers.store')
+        ->auth()->permission('vouchers.manage')->middleware('prefab.access');
+
+    $routes->get('/admin/devices', [$c['admin'], 'devices'])
+        ->name('admin.devices.index')
+        ->auth()->permission('devices.view')->middleware('prefab.access');
+    $routes->get('/admin/sessions', [$c['admin'], 'sessions'])
+        ->name('admin.sessions.index')
+        ->auth()->permission('sessions.view')->middleware('prefab.access');
+    $routes->get('/admin/logs', [$c['admin'], 'logs'])
+        ->name('admin.logs.index')
+        ->auth()->permission('logs.view')->middleware('prefab.access');
 };
