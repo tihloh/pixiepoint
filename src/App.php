@@ -32,7 +32,9 @@ CREATE TABLE IF NOT EXISTS users (
     id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
     name VARCHAR(160) NOT NULL,
     email VARCHAR(254) NOT NULL UNIQUE,
-    password_hash VARCHAR(255) NOT NULL,
+    password_hash VARCHAR(255) NULL,
+    google_sub VARCHAR(255) NULL UNIQUE,
+    avatar_url VARCHAR(1000) NULL,
     active TINYINT(1) NOT NULL DEFAULT 1,
     platform_role VARCHAR(32) NOT NULL DEFAULT 'user',
     points BIGINT NOT NULL DEFAULT 0,
@@ -144,9 +146,18 @@ CREATE TABLE IF NOT EXISTS sessions (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 SQL);
 
-        // Upgrade existing PixiePoint v1 databases without removing guest data.
+        // Upgrade existing PixiePoint v1/v2 databases without removing guest data.
+        $this->db->exec("ALTER TABLE users MODIFY COLUMN password_hash VARCHAR(255) NULL");
+        $this->db->exec("ALTER TABLE users ADD COLUMN IF NOT EXISTS google_sub VARCHAR(255) NULL AFTER password_hash");
+        $this->db->exec("ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url VARCHAR(1000) NULL AFTER google_sub");
         $this->db->exec("ALTER TABLE devices ADD COLUMN IF NOT EXISTS user_id BIGINT UNSIGNED NULL AFTER id");
         $this->db->exec("ALTER TABLE sessions ADD COLUMN IF NOT EXISTS user_id BIGINT UNSIGNED NULL AFTER id");
+
+        try {
+            $this->db->exec("CREATE UNIQUE INDEX idx_users_google_sub ON users (google_sub)");
+        } catch (PDOException $exception) {
+            // Index already exists on upgraded installations.
+        }
 
         // Carry forward an existing first-install administrator as the platform owner.
         $this->db->exec("INSERT IGNORE INTO users(name,email,password_hash,platform_role,created_at) SELECT name,email,password_hash,'platform_owner',created_at FROM admins");
