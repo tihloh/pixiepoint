@@ -4,12 +4,18 @@ declare(strict_types=1);
 
 namespace PixiePoint\App\Services;
 
-use PDO;
+use PixiePoint\App\Models\PermissionUser;
 use Tihloh\Prefab\Auth\Services\AuthManager;
+use Tihloh\Prefab\Permissions\Services\PermissionManager;
+use Tihloh\Prefab\Users\Services\UserManager;
 
 final class AuthContext
 {
-    public function __construct(private PDO $db, private AuthManager $auth) {}
+    public function __construct(
+        private UserManager $users,
+        private AuthManager $auth,
+        private PermissionManager $permissions,
+    ) {}
 
     public function auth(): AuthManager
     {
@@ -20,9 +26,8 @@ final class AuthContext
     {
         $id = $this->auth->id();
         if ($id === null) return null;
-        $stmt = $this->db->prepare('SELECT * FROM users WHERE id=? AND active=1');
-        $stmt->execute([$id]);
-        return $stmt->fetch() ?: null;
+        $user = $this->users->find($id);
+        return $user && $user->active ? $user->toArray() : null;
     }
 
     public function requireAccount(): array
@@ -38,12 +43,30 @@ final class AuthContext
         return ($this->user()['platform_role'] ?? '') === 'platform_owner';
     }
 
-    public function requirePlatformOwner(View $view): array
+    public function can(string $permission): bool
+    {
+        $user = $this->user();
+        if (!$user) return false;
+
+        // Platform owner remains a separate platform security boundary.
+        if (($user['platform_role'] ?? '') === 'platform_owner') return true;
+
+        $groupIds = $this->users->groups()->groupIdsForUser($user['id']);
+        return $this->permissions->can(
+            new PermissionUser($user['id'], $groupIds),
+            $permission,
+        );
+    }
+
+    public function requirePermission(string $permission, View $view): array
     {
         $user = $this->requireAccount();
-        if (($user['platform_role'] ?? '') !== 'platform_owner') {
+        if (!$this->can($permission)) {
             http_response_code(403);
-            $view->page('Access denied', $view->portalCard('<h1>Access denied</h1><p class="muted">Your account does not have platform management access.</p><a class="button full" href="/dashboard">Back to dashboard</a>'));
+            $view->page(
+                'Access denied',
+                $view->portalCard('<h1>Access denied</h1><p class="muted">Your account does not have <span class="code">' . e($permission) . '</span>.</p><a class="button full" href="/dashboard">Back to dashboard</a>'),
+            );
         }
         return $user;
     }
