@@ -13,9 +13,7 @@ require $root . '/src/App.php';
 
 $app = new App($root);
 $sessionPath = $root . '/data/sessions';
-if (!is_dir($sessionPath)) {
-    mkdir($sessionPath, 0775, true);
-}
+if (!is_dir($sessionPath)) mkdir($sessionPath, 0775, true);
 session_save_path($sessionPath);
 session_name($app->config['session_name'] ?? 'pixiepoint_session');
 session_set_cookie_params([
@@ -32,11 +30,46 @@ $adminAuth = $prefabAdmin['auth'];
 $path = rtrim(parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH), '/') ?: '/';
 $method = strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET');
 
+function current_user_record(): ?array
+{
+    global $app, $adminAuth;
+    $id = $adminAuth->id();
+    if ($id === null) return null;
+    $stmt = $app->db->prepare('SELECT * FROM users WHERE id=? AND active=1');
+    $stmt->execute([$id]);
+    return $stmt->fetch() ?: null;
+}
+
+function is_platform_owner(): bool
+{
+    $user = current_user_record();
+    return ($user['platform_role'] ?? '') === 'platform_owner';
+}
+
+function account_required(): void
+{
+    global $adminAuth;
+    if (!$adminAuth->check()) redirect('/login');
+}
+
+function platform_required(): void
+{
+    account_required();
+    if (!is_platform_owner()) {
+        http_response_code(403);
+        page('Access denied', portal_card('<h1>Access denied</h1><p class="muted">Your account does not have platform management access.</p><a class="button full" href="/dashboard">Back to dashboard</a>'));
+    }
+}
+
 function page(string $title, string $content, bool $admin = false): never
 {
-    global $app;
+    global $app, $adminAuth;
     $name = e($app->config['app_name'] ?? 'PixiePoint Wi-Fi');
-    $nav = $admin ? '<nav><div class="wrap"><strong>' . $name . '</strong><div class="navlinks"><a href="/admin">Dashboard</a><a href="/admin/routers">Routers</a><a href="/admin/vouchers">Vouchers</a><a href="/admin/devices">Devices</a><a href="/admin/sessions">Sessions</a><a href="/admin/logout">Log out</a></div></div></nav>' : '';
+    $nav = '';
+    if ($admin) {
+        $manage = is_platform_owner() ? '<a href="/admin/routers">Routers</a><a href="/admin/vouchers">Vouchers</a><a href="/admin/devices">Devices</a><a href="/admin/sessions">Sessions</a>' : '';
+        $nav = '<nav><div class="wrap"><strong>' . $name . '</strong><div class="navlinks"><a href="/dashboard">Dashboard</a>' . $manage . '<a href="/logout">Log out</a></div></div></nav>';
+    }
     $class = $admin ? '<main class="wrap main">' : '<main class="portal">';
     echo '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#07111f"><title>' . e($title) . ' · ' . $name . '</title><link rel="stylesheet" href="/assets/app.css"></head><body>' . $nav . $class . $content . '</main></body></html>';
     exit;
@@ -44,13 +77,13 @@ function page(string $title, string $content, bool $admin = false): never
 
 function portal_card(string $body): string
 {
-    return '<section class="card"><div class="brand"><div class="logo">P</div><div><strong>PixiePoint Wi-Fi</strong><div class="muted">Secure guest access</div></div></div>' . $body . '</section>';
+    return '<section class="card"><div class="brand"><div class="logo">P</div><div><strong>PixiePoint Wi-Fi</strong><div class="muted">MikroTik hotspot access</div></div></div>' . $body . '</section>';
 }
 
-function admin_count(): int
+function user_count(): int
 {
     global $app;
-    return (int)$app->db->query('SELECT COUNT(*) FROM admins')->fetchColumn();
+    return (int)$app->db->query('SELECT COUNT(*) FROM users')->fetchColumn();
 }
 
 function find_router(string $identity): array|false
@@ -92,7 +125,10 @@ if ($path === '/hotspot/health') {
 }
 
 if ($path === '/' && $method === 'GET') {
-    page('Portal', portal_card('<h1>Wi-Fi portal</h1><p class="muted">Connect to the guest Wi-Fi network to begin a session.</p>'));
+    $account = $adminAuth->check()
+        ? '<a class="button full" href="/dashboard">Open my PixiePoint dashboard</a>'
+        : '<a class="button full" href="/login">Log in</a><p class="muted" style="text-align:center">New here? <a href="/register">Create a free account</a>. Registration is optional for basic Wi-Fi access.</p>';
+    page('Portal', portal_card('<h1>Wi-Fi portal</h1><p class="muted">Connect to a participating MikroTik hotspot to begin a session. Guests can still use basic access without registering.</p>' . $account));
 }
 
 if ($path === '/' && $method === 'POST') {
@@ -109,24 +145,24 @@ if ($path === '/' && $method === 'POST') {
         'chap_challenge' => (string)($_POST['chap_challenge'] ?? ''),
     ];
     $_SESSION['hotspot'] = $context;
+    $userId = $adminAuth->id();
 
     if ($context['mac'] !== '') {
-        $stmt = $app->db->prepare('INSERT INTO devices(mac,last_ip,user_agent,last_seen_at) VALUES(?,?,?,?) ON DUPLICATE KEY UPDATE last_ip=VALUES(last_ip),user_agent=VALUES(user_agent),last_seen_at=VALUES(last_seen_at)');
-        $stmt->execute([$context['mac'], $context['ip'], substr((string)($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 500), now()]);
+        $stmt = $app->db->prepare('INSERT INTO devices(user_id,mac,last_ip,user_agent,last_seen_at) VALUES(?,?,?,?,?) ON DUPLICATE KEY UPDATE user_id=IF(user_id IS NULL,VALUES(user_id),user_id),last_ip=VALUES(last_ip),user_agent=VALUES(user_agent),last_seen_at=VALUES(last_seen_at)');
+        $stmt->execute([$userId, $context['mac'], $context['ip'], substr((string)($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 500), now()]);
     }
 
     $router = find_router($context['router_identity']);
-    $notice = $router ? '' : '<div class="alert">This hotspot router is not registered or is disabled. Ask the network administrator to add identity <span class="code">' . e($context['router_identity']) . '</span>.</div>';
+    $notice = $router ? '' : '<div class="alert">This hotspot router is not registered or is disabled. Ask the operator to add identity <span class="code">' . e($context['router_identity']) . '</span>.</div>';
     $form = $router ? '<form method="post" action="/hotspot/authenticate"><input type="hidden" name="_csrf" value="' . e(csrf_token()) . '"><div class="field"><label for="voucher">Access code</label><input id="voucher" name="voucher" autocomplete="one-time-code" autocapitalize="characters" required autofocus></div><button class="button full" type="submit">Connect this device</button></form>' : '';
-    page('Sign in', portal_card('<h1>Connect to Wi-Fi</h1><p class="muted">Enter your access code to start this device’s session.</p>' . $notice . '<div class="context"><div><small>Device</small>' . e($context['mac'] ?: 'Unknown') . '</div><div><small>Router</small>' . e($context['router_identity'] ?: 'Unknown') . '</div></div>' . $form));
+    $account = $adminAuth->check() ? '<p class="muted">This session can be linked to your PixiePoint account for history, points and support.</p>' : '<p class="muted">Guest access works normally. <a href="/login">Log in</a> or <a href="/register">register</a> to build points and keep your history.</p>';
+    page('Sign in', portal_card('<h1>Connect to Wi-Fi</h1><p class="muted">Enter your access code to start this device’s MikroTik Hotspot session.</p>' . $notice . '<div class="context"><div><small>Device</small>' . e($context['mac'] ?: 'Unknown') . '</div><div><small>Router</small>' . e($context['router_identity'] ?: 'Unknown') . '</div></div>' . $form . $account));
 }
 
 if ($path === '/hotspot/authenticate' && $method === 'POST') {
     require_csrf();
     $context = $_SESSION['hotspot'] ?? null;
-    if (!is_array($context) || empty($context['login_url'])) {
-        page('Session expired', portal_card('<h1>Start again</h1><div class="alert">The hotspot context has expired. Reconnect to the Wi-Fi network.</div>'));
-    }
+    if (!is_array($context) || empty($context['login_url'])) page('Session expired', portal_card('<h1>Start again</h1><div class="alert">The hotspot context has expired. Reconnect to the Wi-Fi network.</div>'));
     $router = find_router((string)$context['router_identity']);
     if (!$router) {
         http_response_code(403);
@@ -134,23 +170,24 @@ if ($path === '/hotspot/authenticate' && $method === 'POST') {
     }
     if (!router_login_url_is_safe($context, $router)) {
         http_response_code(403);
-        page('Router address mismatch', portal_card('<h1>Router address mismatch</h1><div class="alert">The router login address does not match the hostname registered by the administrator. No credential was sent.</div>'));
+        page('Router address mismatch', portal_card('<h1>Router address mismatch</h1><div class="alert">The router login address does not match the hostname registered by the operator. No credential was sent.</div>'));
     }
     $code = strtoupper(trim((string)($_POST['voucher'] ?? '')));
     $stmt = $app->db->prepare("SELECT * FROM vouchers WHERE code=? AND enabled=1 AND uses<max_uses AND (expires_at IS NULL OR expires_at='' OR expires_at>?)");
     $stmt->execute([$code, now()]);
     $voucher = $stmt->fetch();
-    if (!$voucher) {
-        page('Invalid code', portal_card('<h1>Code not accepted</h1><div class="alert">That access code is invalid, expired, or has already been used.</div><a class="button full" href="javascript:history.back()">Try another code</a>'));
-    }
-    $deviceStmt = $app->db->prepare('SELECT id FROM devices WHERE mac=?');
+    if (!$voucher) page('Invalid code', portal_card('<h1>Code not accepted</h1><div class="alert">That access code is invalid, expired, or has already been used.</div><a class="button full" href="javascript:history.back()">Try another code</a>'));
+
+    $deviceStmt = $app->db->prepare('SELECT id,user_id FROM devices WHERE mac=?');
     $deviceStmt->execute([$context['mac']]);
-    $deviceId = $deviceStmt->fetchColumn() ?: null;
+    $device = $deviceStmt->fetch() ?: [];
+    $deviceId = $device['id'] ?? null;
+    $userId = $adminAuth->id() ?? ($device['user_id'] ?? null);
 
     $app->db->beginTransaction();
     $app->db->prepare('UPDATE vouchers SET uses=uses+1 WHERE id=?')->execute([$voucher['id']]);
-    $app->db->prepare("INSERT INTO sessions(voucher_id,router_id,device_id,username,client_ip,status,started_at,updated_at) VALUES(?,?,?,?,?,'authorizing',?,?)")
-        ->execute([$voucher['id'], $router['id'], $deviceId, $voucher['code'], $context['ip'], now(), now()]);
+    $app->db->prepare("INSERT INTO sessions(user_id,voucher_id,router_id,device_id,username,client_ip,status,started_at,updated_at) VALUES(?,?,?,?,?,?,'authorizing',?,?)")
+        ->execute([$userId, $voucher['id'], $router['id'], $deviceId, $voucher['code'], $context['ip'], now(), now()]);
     $app->db->prepare('UPDATE routers SET last_seen_at=? WHERE id=?')->execute([now(), $router['id']]);
     $app->db->commit();
 
@@ -165,7 +202,8 @@ if ($path === '/hotspot/session' && $method === 'POST') {
     $in = max(0, (int)($_POST['bytes_in'] ?? 0));
     $out = max(0, (int)($_POST['bytes_out'] ?? 0));
     $uptime = max(0, (int)($_POST['uptime'] ?? 0));
-    page('Session', portal_card('<h1>You’re connected</h1><p class="muted">Live Wi-Fi session for ' . e($mac ?: 'this device') . '.</p><div class="context"><div><small>Connected</small>' . e(duration_nice($uptime)) . '</div><div><small>IP address</small>' . e($_POST['ip'] ?? '') . '</div><div><small>Downloaded</small>' . e(bytes_nice($out)) . '</div><div><small>Uploaded</small>' . e(bytes_nice($in)) . '</div></div><form method="post" action="' . e($_POST['logout_url'] ?? '#') . '"><button class="button full" type="submit">Disconnect</button></form>'));
+    $account = $adminAuth->check() ? '<a class="button full" href="/dashboard">My PixiePoint account</a>' : '<p class="muted">Create a PixiePoint account later to earn points and get easier support.</p>';
+    page('Session', portal_card('<h1>You’re connected</h1><p class="muted">Live Wi-Fi session for ' . e($mac ?: 'this device') . '.</p><div class="context"><div><small>Connected</small>' . e(duration_nice($uptime)) . '</div><div><small>IP address</small>' . e($_POST['ip'] ?? '') . '</div><div><small>Downloaded</small>' . e(bytes_nice($out)) . '</div><div><small>Uploaded</small>' . e(bytes_nice($in)) . '</div></div><form method="post" action="' . e($_POST['logout_url'] ?? '#') . '"><button class="button full" type="submit">Disconnect</button></form>' . $account));
 }
 
 if ($path === '/hotspot/disconnected' && $method === 'POST') {
@@ -193,15 +231,16 @@ if ($path === '/api/accounting' && $method === 'POST') {
     $clientIp = substr((string)($payload['client_ip'] ?? ''), 0, 45);
     $mac = client_mac((string)($payload['mac'] ?? ''));
     $routerIdentity = substr((string)($payload['router_identity'] ?? ''), 0, 128);
-    $deviceId = null;
-    $routerId = null;
+    $deviceId = $routerId = $userId = null;
 
     $app->db->beginTransaction();
     if ($mac !== '') {
         $app->db->prepare('INSERT INTO devices(mac,last_ip,last_seen_at) VALUES(?,?,?) ON DUPLICATE KEY UPDATE last_ip=VALUES(last_ip),last_seen_at=VALUES(last_seen_at)')->execute([$mac,$clientIp,now()]);
-        $lookup = $app->db->prepare('SELECT id FROM devices WHERE mac=?');
+        $lookup = $app->db->prepare('SELECT id,user_id FROM devices WHERE mac=?');
         $lookup->execute([$mac]);
-        $deviceId = $lookup->fetchColumn() ?: null;
+        $device = $lookup->fetch() ?: [];
+        $deviceId = $device['id'] ?? null;
+        $userId = $device['user_id'] ?? null;
     }
     if ($routerIdentity !== '') {
         $lookup = $app->db->prepare('SELECT id FROM routers WHERE identity=?');
@@ -219,11 +258,11 @@ if ($path === '/api/accounting' && $method === 'POST') {
         $recordId = $candidate->fetchColumn();
     }
     if ($recordId) {
-        $stmt = $app->db->prepare('UPDATE sessions SET radius_session_id=?,router_id=COALESCE(?,router_id),device_id=COALESCE(?,device_id),client_ip=?,status=?,started_at=COALESCE(started_at,?),updated_at=?,ended_at=?,uptime_seconds=?,bytes_in=?,bytes_out=?,terminate_cause=? WHERE id=?');
-        $stmt->execute([$sessionId,$routerId,$deviceId,$clientIp,$mapped,$status==='start'?now():null,now(),$status==='stop'?now():null,max(0,(int)($payload['uptime']??0)),max(0,(int)($payload['bytes_in']??0)),max(0,(int)($payload['bytes_out']??0)),substr((string)($payload['terminate_cause']??''),0,128),$recordId]);
+        $stmt = $app->db->prepare('UPDATE sessions SET user_id=COALESCE(user_id,?),radius_session_id=?,router_id=COALESCE(?,router_id),device_id=COALESCE(?,device_id),client_ip=?,status=?,started_at=COALESCE(started_at,?),updated_at=?,ended_at=?,uptime_seconds=?,bytes_in=?,bytes_out=?,terminate_cause=? WHERE id=?');
+        $stmt->execute([$userId,$sessionId,$routerId,$deviceId,$clientIp,$mapped,$status==='start'?now():null,now(),$status==='stop'?now():null,max(0,(int)($payload['uptime']??0)),max(0,(int)($payload['bytes_in']??0)),max(0,(int)($payload['bytes_out']??0)),substr((string)($payload['terminate_cause']??''),0,128),$recordId]);
     } else {
-        $stmt = $app->db->prepare('INSERT INTO sessions(radius_session_id,router_id,device_id,username,client_ip,status,started_at,updated_at,ended_at,uptime_seconds,bytes_in,bytes_out,terminate_cause) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)');
-        $stmt->execute([$sessionId,$routerId,$deviceId,$username,$clientIp,$mapped,$status==='start'?now():null,now(),$status==='stop'?now():null,max(0,(int)($payload['uptime']??0)),max(0,(int)($payload['bytes_in']??0)),max(0,(int)($payload['bytes_out']??0)),substr((string)($payload['terminate_cause']??''),0,128)]);
+        $stmt = $app->db->prepare('INSERT INTO sessions(user_id,radius_session_id,router_id,device_id,username,client_ip,status,started_at,updated_at,ended_at,uptime_seconds,bytes_in,bytes_out,terminate_cause) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)');
+        $stmt->execute([$userId,$sessionId,$routerId,$deviceId,$username,$clientIp,$mapped,$status==='start'?now():null,now(),$status==='stop'?now():null,max(0,(int)($payload['uptime']??0)),max(0,(int)($payload['bytes_in']??0)),max(0,(int)($payload['bytes_out']??0)),substr((string)($payload['terminate_cause']??''),0,128)]);
     }
     $app->db->commit();
     echo json_encode(['ok' => true]);
@@ -231,7 +270,7 @@ if ($path === '/api/accounting' && $method === 'POST') {
 }
 
 if ($path === '/setup') {
-    if (admin_count() > 0) redirect('/admin/login');
+    if (user_count() > 0) redirect('/login');
     $error = '';
     if ($method === 'POST') {
         require_csrf();
@@ -241,67 +280,99 @@ if ($path === '/setup') {
         if ($name === '' || !filter_var($email, FILTER_VALIDATE_EMAIL) || strlen($password) < 12) {
             $error = '<div class="alert">Use a valid name and email plus a password of at least 12 characters.</div>';
         } else {
-            $stmt = $app->db->prepare('INSERT INTO admins(name,email,password_hash) VALUES(?,?,?)');
+            $stmt = $app->db->prepare("INSERT INTO users(name,email,password_hash,platform_role) VALUES(?,?,?,'platform_owner')");
             $stmt->execute([$name, $email, password_hash($password, PASSWORD_DEFAULT)]);
-            redirect('/admin/login');
+            redirect('/login');
         }
     }
-    page('Initial setup', portal_card('<h1>Create administrator</h1><p class="muted">Complete the one-time setup for this installation.</p>' . $error . '<form method="post"><input type="hidden" name="_csrf" value="' . e(csrf_token()) . '"><div class="field"><label>Name</label><input name="name" required></div><div class="field"><label>Email</label><input name="email" type="email" required></div><div class="field"><label>Password</label><input name="password" type="password" minlength="12" required></div><button class="button full">Create administrator</button></form>'));
+    page('Initial setup', portal_card('<h1>Create platform owner</h1><p class="muted">This one-time account owns the centralized PixiePoint service. All other users register through the normal account flow.</p>' . $error . '<form method="post"><input type="hidden" name="_csrf" value="' . e(csrf_token()) . '"><div class="field"><label>Name</label><input name="name" required></div><div class="field"><label>Email</label><input name="email" type="email" required></div><div class="field"><label>Password</label><input name="password" type="password" minlength="12" required></div><button class="button full">Create platform owner</button></form>'));
 }
 
-if ($path === '/admin/login') {
-    if (admin_count() === 0) redirect('/setup');
-    if ($adminAuth->check()) redirect('/admin');
+if ($path === '/register') {
+    if (user_count() === 0) redirect('/setup');
+    if ($adminAuth->check()) redirect('/dashboard');
+    $error = '';
+    if ($method === 'POST') {
+        require_csrf();
+        $name = trim((string)($_POST['name'] ?? ''));
+        $email = strtolower(trim((string)($_POST['email'] ?? '')));
+        $password = (string)($_POST['password'] ?? '');
+        if ($name === '' || !filter_var($email, FILTER_VALIDATE_EMAIL) || strlen($password) < 8) {
+            $error = '<div class="alert">Use a valid name and email plus a password of at least 8 characters.</div>';
+        } else {
+            try {
+                $stmt = $app->db->prepare("INSERT INTO users(name,email,password_hash,platform_role) VALUES(?,?,?,'user')");
+                $stmt->execute([$name, $email, password_hash($password, PASSWORD_DEFAULT)]);
+                $result = $adminAuth->attempt($email, $password);
+                if ($result->success) {
+                    session_regenerate_id(true);
+                    redirect('/dashboard');
+                }
+                redirect('/login');
+            } catch (PDOException $exception) {
+                $error = '<div class="alert">An account with that email already exists.</div>';
+            }
+        }
+    }
+    page('Create account', portal_card('<h1>Create your PixiePoint account</h1><p class="muted">Registration is optional for basic PisoWiFi access. An account unlocks points, saved devices, history and better support.</p>' . $error . '<form method="post"><input type="hidden" name="_csrf" value="' . e(csrf_token()) . '"><div class="field"><label>Name</label><input name="name" autocomplete="name" required></div><div class="field"><label>Email</label><input name="email" type="email" autocomplete="email" required></div><div class="field"><label>Password</label><input name="password" type="password" minlength="8" autocomplete="new-password" required></div><button class="button full">Create free account</button></form><p class="muted" style="text-align:center">Already registered? <a href="/login">Log in</a></p>'));
+}
+
+if ($path === '/login') {
+    if (user_count() === 0) redirect('/setup');
+    if ($adminAuth->check()) redirect('/dashboard');
     $error = '';
     if ($method === 'POST') {
         require_csrf();
         $result = $adminAuth->attempt(
             strtolower(trim((string)($_POST['email'] ?? ''))),
             (string)($_POST['password'] ?? ''),
-            [
-                'ip_address' => $_SERVER['REMOTE_ADDR'] ?? null,
-                'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? null,
-            ],
+            ['ip_address' => $_SERVER['REMOTE_ADDR'] ?? null, 'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? null],
         );
         if ($result->success) {
             session_regenerate_id(true);
-            redirect('/admin');
+            redirect('/dashboard');
         }
         $error = '<div class="alert">The email or password is incorrect.</div>';
     }
-    page('Admin login', portal_card('<h1>Management login</h1><p class="muted">Administrator authentication is powered by Tihloh Prefab Auth.</p>' . $error . '<form method="post"><input type="hidden" name="_csrf" value="' . e(csrf_token()) . '"><div class="field"><label>Email</label><input name="email" type="email" autocomplete="username" required autofocus></div><div class="field"><label>Password</label><input name="password" type="password" autocomplete="current-password" required></div><button class="button full">Log in</button></form>'));
+    page('Log in', portal_card('<h1>PixiePoint login</h1><p class="muted">One account for Wi-Fi rewards, devices, history, support and authorized management features.</p>' . $error . '<form method="post"><input type="hidden" name="_csrf" value="' . e(csrf_token()) . '"><div class="field"><label>Email</label><input name="email" type="email" autocomplete="username" required autofocus></div><div class="field"><label>Password</label><input name="password" type="password" autocomplete="current-password" required></div><button class="button full">Log in</button></form><p class="muted" style="text-align:center">No account? <a href="/register">Register free</a></p>'));
 }
 
-if ($path === '/admin/logout') {
-    if ($adminAuth->check()) {
-        $adminAuth->logout([
-            'ip_address' => $_SERVER['REMOTE_ADDR'] ?? null,
-            'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? null,
-        ]);
-    }
+if ($path === '/logout') {
+    if ($adminAuth->check()) $adminAuth->logout(['ip_address' => $_SERVER['REMOTE_ADDR'] ?? null, 'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? null]);
     session_regenerate_id(true);
-    redirect('/admin/login');
+    redirect('/login');
 }
 
-if (str_starts_with($path, '/admin')) {
-    admin_required();
-}
+if ($path === '/admin/login') redirect('/login');
+if ($path === '/admin/logout') redirect('/logout');
+if ($path === '/admin') redirect('/dashboard');
 
-if ($path === '/admin') {
-    $metrics = [
-        'Routers' => (int)$app->db->query('SELECT COUNT(*) FROM routers WHERE enabled=1')->fetchColumn(),
-        'Active sessions' => (int)$app->db->query("SELECT COUNT(*) FROM sessions WHERE status='active'")->fetchColumn(),
-        'Known devices' => (int)$app->db->query('SELECT COUNT(*) FROM devices')->fetchColumn(),
-        'Available vouchers' => (int)$app->db->query('SELECT COUNT(*) FROM vouchers WHERE enabled=1 AND uses<max_uses')->fetchColumn(),
-    ];
+if ($path === '/dashboard') {
+    account_required();
+    $user = current_user_record();
+    $uid = (int)$user['id'];
+    $deviceStmt = $app->db->prepare('SELECT COUNT(*) FROM devices WHERE user_id=?');
+    $deviceStmt->execute([$uid]);
+    $sessionStmt = $app->db->prepare('SELECT COUNT(*) FROM sessions WHERE user_id=?');
+    $sessionStmt->execute([$uid]);
+    $metrics = ['Points' => (int)$user['points'], 'My devices' => (int)$deviceStmt->fetchColumn(), 'My sessions' => (int)$sessionStmt->fetchColumn()];
+    if (is_platform_owner()) {
+        $metrics['Routers'] = (int)$app->db->query('SELECT COUNT(*) FROM routers WHERE enabled=1')->fetchColumn();
+        $metrics['Active sessions'] = (int)$app->db->query("SELECT COUNT(*) FROM sessions WHERE status='active'")->fetchColumn();
+        $metrics['Users'] = (int)$app->db->query('SELECT COUNT(*) FROM users')->fetchColumn();
+    }
     $cards = '';
     foreach ($metrics as $label => $value) $cards .= '<div class="metric"><small>' . e($label) . '</small><strong>' . e($value) . '</strong></div>';
-    $recent = $app->db->query('SELECT s.*,d.mac,r.name router_name FROM sessions s LEFT JOIN devices d ON d.id=s.device_id LEFT JOIN routers r ON r.id=s.router_id ORDER BY s.updated_at DESC LIMIT 8')->fetchAll();
+    $recentStmt = $app->db->prepare('SELECT s.*,d.mac,r.name router_name FROM sessions s LEFT JOIN devices d ON d.id=s.device_id LEFT JOIN routers r ON r.id=s.router_id WHERE s.user_id=? ORDER BY s.updated_at DESC LIMIT 8');
+    $recentStmt->execute([$uid]);
     $rows = '';
-    foreach ($recent as $session) $rows .= '<tr><td>' . e($session['username'] ?: '—') . '</td><td class="code">' . e($session['mac'] ?: '—') . '</td><td>' . e($session['router_name'] ?: '—') . '</td><td><span class="badge ' . ($session['status']==='active'?'':'off') . '">' . e($session['status']) . '</span></td><td>' . e($session['updated_at']) . '</td></tr>';
-    $currentAdmin = $adminAuth->user();
-    page('Dashboard', '<div class="heading"><div><h1>Network overview</h1><p class="muted">Welcome back, ' . e($currentAdmin?->name ?? 'Administrator') . '.</p></div></div><section class="grid">' . $cards . '</section><section class="panel"><h2>Recent sessions</h2><table><thead><tr><th>User</th><th>Device</th><th>Router</th><th>Status</th><th>Updated</th></tr></thead><tbody>' . ($rows ?: '<tr><td colspan="5" class="empty">No sessions recorded yet.</td></tr>') . '</tbody></table></section>', true);
+    foreach ($recentStmt->fetchAll() as $session) $rows .= '<tr><td>' . e($session['username'] ?: '—') . '</td><td class="code">' . e($session['mac'] ?: '—') . '</td><td>' . e($session['router_name'] ?: '—') . '</td><td><span class="badge ' . ($session['status']==='active'?'':'off') . '">' . e($session['status']) . '</span></td><td>' . e($session['updated_at']) . '</td></tr>';
+    $role = is_platform_owner() ? 'Platform owner' : 'PixiePoint user';
+    $ownerNote = is_platform_owner() ? '<section class="panel"><h2>Platform management</h2><p class="muted">Your owner account can manage the centralized MikroTik Hotspot service using the navigation above. Group- and permission-based operator access will build on the new permission-ready schema.</p></section>' : '';
+    page('Dashboard', '<div class="heading"><div><h1>My dashboard</h1><p class="muted">Welcome, ' . e($user['name']) . ' · ' . e($role) . '</p></div></div><section class="grid">' . $cards . '</section>' . $ownerNote . '<section class="panel"><h2>My recent Wi-Fi sessions</h2><table><thead><tr><th>Access</th><th>Device</th><th>Router</th><th>Status</th><th>Updated</th></tr></thead><tbody>' . ($rows ?: '<tr><td colspan="5" class="empty">No account-linked sessions yet. Guest sessions continue to work normally.</td></tr>') . '</tbody></table></section>', true);
 }
+
+if (str_starts_with($path, '/admin/')) platform_required();
 
 if ($path === '/admin/routers') {
     $message = '';
@@ -340,13 +411,13 @@ if ($path === '/admin/vouchers') {
 }
 
 if ($path === '/admin/devices') {
-    $rows='';foreach($app->db->query('SELECT d.*,COUNT(s.id) sessions FROM devices d LEFT JOIN sessions s ON s.device_id=d.id GROUP BY d.id ORDER BY d.last_seen_at DESC') as $d)$rows.='<tr><td class="code">'.e($d['mac']).'</td><td>'.e($d['last_ip']?:'—').'</td><td>'.e($d['sessions']).'</td><td>'.e($d['first_seen_at']).'</td><td>'.e($d['last_seen_at']).'</td></tr>';
-    page('Devices','<div class="heading"><div><h1>Devices</h1><p class="muted">Devices observed by the captive portal.</p></div></div><section class="panel"><table><thead><tr><th>MAC address</th><th>Last IP</th><th>Sessions</th><th>First seen</th><th>Last seen</th></tr></thead><tbody>'.($rows?:'<tr><td colspan="5" class="empty">No devices observed.</td></tr>').'</tbody></table></section>',true);
+    $rows='';foreach($app->db->query('SELECT d.*,u.email,COUNT(s.id) sessions FROM devices d LEFT JOIN users u ON u.id=d.user_id LEFT JOIN sessions s ON s.device_id=d.id GROUP BY d.id ORDER BY d.last_seen_at DESC') as $d)$rows.='<tr><td class="code">'.e($d['mac']).'</td><td>'.e($d['email']?:'Guest').'</td><td>'.e($d['last_ip']?:'—').'</td><td>'.e($d['sessions']).'</td><td>'.e($d['last_seen_at']).'</td></tr>';
+    page('Devices','<div class="heading"><div><h1>Devices</h1><p class="muted">MikroTik hotspot devices. Guest devices remain valid and may later be linked to accounts.</p></div></div><section class="panel"><table><thead><tr><th>MAC address</th><th>Account</th><th>Last IP</th><th>Sessions</th><th>Last seen</th></tr></thead><tbody>'.($rows?:'<tr><td colspan="5" class="empty">No devices observed.</td></tr>').'</tbody></table></section>',true);
 }
 
 if ($path === '/admin/sessions') {
-    $rows='';foreach($app->db->query('SELECT s.*,d.mac,r.name router_name FROM sessions s LEFT JOIN devices d ON d.id=s.device_id LEFT JOIN routers r ON r.id=s.router_id ORDER BY s.updated_at DESC LIMIT 250') as $s)$rows.='<tr><td>'.e($s['username']?:'—').'</td><td class="code">'.e($s['mac']?:'—').'</td><td>'.e($s['router_name']?:'—').'</td><td><span class="badge '.($s['status']==='active'?'':'off').'">'.e($s['status']).'</span></td><td>'.e(duration_nice((int)$s['uptime_seconds'])).'</td><td>'.e(bytes_nice((int)$s['bytes_in']+(int)$s['bytes_out'])).'</td><td>'.e($s['updated_at']).'</td></tr>';
-    page('Sessions','<div class="heading"><div><h1>Sessions</h1><p class="muted">Authentication and accounting history.</p></div></div><section class="panel"><table><thead><tr><th>User</th><th>Device</th><th>Router</th><th>Status</th><th>Uptime</th><th>Transfer</th><th>Updated</th></tr></thead><tbody>'.($rows?:'<tr><td colspan="7" class="empty">No sessions recorded.</td></tr>').'</tbody></table></section>',true);
+    $rows='';foreach($app->db->query('SELECT s.*,d.mac,r.name router_name,u.email account_email FROM sessions s LEFT JOIN devices d ON d.id=s.device_id LEFT JOIN routers r ON r.id=s.router_id LEFT JOIN users u ON u.id=s.user_id ORDER BY s.updated_at DESC LIMIT 250') as $s)$rows.='<tr><td>'.e($s['account_email']?:'Guest').'</td><td>'.e($s['username']?:'—').'</td><td class="code">'.e($s['mac']?:'—').'</td><td>'.e($s['router_name']?:'—').'</td><td><span class="badge '.($s['status']==='active'?'':'off').'">'.e($s['status']).'</span></td><td>'.e(duration_nice((int)$s['uptime_seconds'])).'</td><td>'.e(bytes_nice((int)$s['bytes_in']+(int)$s['bytes_out'])).'</td></tr>';
+    page('Sessions','<div class="heading"><div><h1>Sessions</h1><p class="muted">MikroTik authentication and accounting history, including guests and registered users.</p></div></div><section class="panel"><table><thead><tr><th>Account</th><th>Hotspot user</th><th>Device</th><th>Router</th><th>Status</th><th>Uptime</th><th>Transfer</th></tr></thead><tbody>'.($rows?:'<tr><td colspan="7" class="empty">No sessions recorded.</td></tr>').'</tbody></table></section>',true);
 }
 
 http_response_code(404);
