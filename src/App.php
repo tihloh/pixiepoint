@@ -17,6 +17,7 @@ final class App
         if (!str_starts_with($dsn, 'mysql:')) {
             throw new RuntimeException('PixiePoint requires a MariaDB/MySQL PDO DSN.');
         }
+
         $this->db = new PDO($dsn, (string)($this->config['database_user'] ?? ''), (string)($this->config['database_password'] ?? ''), [
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
@@ -48,36 +49,6 @@ CREATE TABLE IF NOT EXISTS admins (
     email VARCHAR(254) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS groups (
-    id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-    name VARCHAR(100) NOT NULL UNIQUE,
-    description VARCHAR(255),
-    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS permissions (
-    id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-    name VARCHAR(120) NOT NULL UNIQUE,
-    description VARCHAR(255),
-    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS user_groups (
-    user_id BIGINT UNSIGNED NOT NULL,
-    group_id BIGINT UNSIGNED NOT NULL,
-    PRIMARY KEY(user_id, group_id),
-    FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY(group_id) REFERENCES groups(id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS group_permissions (
-    group_id BIGINT UNSIGNED NOT NULL,
-    permission_id BIGINT UNSIGNED NOT NULL,
-    PRIMARY KEY(group_id, permission_id),
-    FOREIGN KEY(group_id) REFERENCES groups(id) ON DELETE CASCADE,
-    FOREIGN KEY(permission_id) REFERENCES permissions(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS routers (
@@ -146,7 +117,7 @@ CREATE TABLE IF NOT EXISTS sessions (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 SQL);
 
-        // Upgrade existing PixiePoint v1/v2 databases without removing guest data.
+        // Upgrade existing PixiePoint databases without removing guest or legacy data.
         $this->db->exec("ALTER TABLE users MODIFY COLUMN password_hash VARCHAR(255) NULL");
         $this->db->exec("ALTER TABLE users ADD COLUMN IF NOT EXISTS google_sub VARCHAR(255) NULL AFTER password_hash");
         $this->db->exec("ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url VARCHAR(1000) NULL AFTER google_sub");
@@ -155,12 +126,16 @@ SQL);
 
         try {
             $this->db->exec("CREATE UNIQUE INDEX idx_users_google_sub ON users (google_sub)");
-        } catch (PDOException $exception) {
+        } catch (PDOException) {
             // Index already exists on upgraded installations.
         }
 
         // Carry forward an existing first-install administrator as the platform owner.
         $this->db->exec("INSERT IGNORE INTO users(name,email,password_hash,platform_role,created_at) SELECT name,email,password_hash,'platform_owner',created_at FROM admins");
+
+        // Legacy groups/permissions tables, if present on an upgraded database,
+        // are intentionally not dropped. New authorization storage is owned by
+        // Prefab Users + Prefab Permissions.
     }
 }
 
@@ -221,12 +196,4 @@ function duration_nice(int $seconds): string
     $hours = intdiv($seconds, 3600);
     $minutes = intdiv($seconds % 3600, 60);
     return $hours > 0 ? "{$hours}h {$minutes}m" : "{$minutes}m";
-}
-
-function admin_required(): void
-{
-    global $adminAuth;
-    if (!isset($adminAuth) || !$adminAuth->check()) {
-        redirect('/login');
-    }
 }
