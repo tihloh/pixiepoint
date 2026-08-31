@@ -9,14 +9,12 @@ use PixiePoint\App\Controllers\AdminController;
 use PixiePoint\App\Controllers\AuthController;
 use PixiePoint\App\Controllers\DashboardController;
 use PixiePoint\App\Controllers\HotspotController;
-use PixiePoint\App\Http\Request;
-use PixiePoint\App\Http\Router as HttpRouter;
 use PixiePoint\App\Models\Router as RouterModel;
-use PixiePoint\App\Models\User;
 use PixiePoint\App\Services\AuthContext;
 use PixiePoint\App\Services\GoogleOAuth;
+use PixiePoint\App\Services\PrefabKernel;
 use PixiePoint\App\Services\View;
-use PixiePoint\PrefabAdmin;
+use Tihloh\Prefab\Routes\RouteMatch;
 
 final class Application
 {
@@ -27,28 +25,57 @@ final class Application
         $app = new \App($root);
         self::startSession($root, $app->config);
 
-        $prefab = PrefabAdmin::boot($app->db);
-        $auth = new AuthContext($app->db, $prefab['auth']);
+        $prefab = PrefabKernel::boot($app->db, $root);
+        $auth = new AuthContext($prefab['users'], $prefab['auth'], $prefab['permissions']);
         $view = new View($app->config);
         $google = new GoogleOAuth($app->db, $app->config);
+        $logs = $prefab['logs'];
+        $routes = $prefab['routes'];
 
         $controllers = [
-            'auth' => new AuthController(new User($app->db), $auth, $google, $view),
+            'auth' => new AuthController($prefab['users'], $auth, $google, $view),
             'dashboard' => new DashboardController($app->db, $auth, $view),
             'hotspot' => new HotspotController($app->db, new RouterModel($app->db), $auth, $view),
-            'admin' => new AdminController($app->db, $auth, $view),
+            'admin' => new AdminController($app->db, $auth, $view, $logs),
             'api' => new AccountingController($app->db, $app->config),
         ];
 
-        $router = new HttpRouter();
-        (require $root . '/app/Routes/web.php')($router, $controllers);
-        (require $root . '/app/Routes/api.php')($router, $controllers);
+        $routes->middleware('prefab.access', static function (callable $next, RouteMatch $match) use ($auth, $view, $logs) {
+            $meta = $match->route()->metadata();
 
-        $request = Request::capture();
-        if ($router->dispatch($request) === null) {
+            if ($meta['auth'] ?? false) {
+                $auth->requireAccount();
+            }
+            if (!empty($meta['permission'])) {
+                $auth->requirePermission((string)$meta['permission'], $view);
+            }
+            if (!empty($meta['log'])) {
+                $logs->record([
+                    'action' => (string)$meta['log'],
+                    'subject_type' => 'route',
+                    'subject_id' => $match->route()->routeName(),
+                    'actor_id' => $auth->auth()->id(),
+                    'metadata' => [
+                        'path' => $match->route()->path(),
+                        'method' => $_SERVER['REQUEST_METHOD'] ?? 'GET',
+                    ],
+                    'ip_address' => $_SERVER['REMOTE_ADDR'] ?? null,
+                    'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? null,
+                ]);
+            }
+
+            return $next();
+        });
+
+        (require $root . '/app/Routes/web.php')($routes, $controllers);
+        (require $root . '/app/Routes/api.php')($routes, $controllers);
+
+        $routes->fallback(static function () use ($view): never {
             http_response_code(404);
             $view->page('Not found', $view->portalCard('<h1>Page not found</h1><p class="muted">The requested page does not exist.</p>'));
-        }
+        });
+
+        $routes->dispatch();
         exit;
     }
 
