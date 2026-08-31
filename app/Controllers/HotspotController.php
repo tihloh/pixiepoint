@@ -22,10 +22,7 @@ final class HotspotController
     public function portal(): never
     {
         if ($this->method() === 'GET') {
-            $account = $this->auth->auth()->check()
-                ? '<a class="button full" href="/dashboard">Open my PixiePoint dashboard</a>'
-                : '<a class="button full" href="/login">Log in</a><p class="muted auth-footer">New here? <a href="/register">Create a free account</a>. Registration is optional for basic Wi-Fi access.</p>';
-            $this->view->page('Portal', $this->view->portalCard('<h1>Wi-Fi portal</h1><p class="muted">Connect to a participating MikroTik hotspot to begin a session. Guests can still use basic access without registering.</p>' . $account));
+            redirect('/');
         }
 
         $result = Input::fromRequest()->process([
@@ -72,7 +69,7 @@ final class HotspotController
         $form = $router ? '<form method="post" action="/hotspot/authenticate"><input type="hidden" name="_csrf" value="' . e(csrf_token()) . '"><div class="field"><label for="voucher">Access code</label><input id="voucher" name="voucher" autocomplete="one-time-code" autocapitalize="characters" required autofocus></div><button class="button full" type="submit">Connect this device</button></form>' : '';
         $account = $this->auth->auth()->check()
             ? '<p class="muted">This session can be linked to your PixiePoint account for history, points and support.</p>'
-            : '<p class="muted">Guest access works normally. <a href="/login">Log in</a> or <a href="/register">register</a> to build points and keep your history.</p>';
+            : '<p class="muted">Guest access works normally. <a href="/">Log in</a> or <a href="/register">register</a> to build points and keep your history.</p>';
         $this->view->page('Sign in', $this->view->portalCard('<h1>Connect to Wi-Fi</h1><p class="muted">Enter your access code to start this device’s MikroTik Hotspot session.</p>' . $notice . '<div class="context"><div><small>Device</small>' . e($context['mac'] ?: 'Unknown') . '</div><div><small>Router</small>' . e($context['router_identity'] ?: 'Unknown') . '</div></div>' . $form . $account));
     }
 
