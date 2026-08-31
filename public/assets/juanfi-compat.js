@@ -5,6 +5,27 @@
   var pending = Object.create(null), sequence = 0, pollTimer = null, activeVoucher = "", transactionMode = "internet";
   var $ = function (id) { return document.getElementById(id); };
 
+  function renderPortal() {
+    if ($("compat-app")) return;
+    var root = $("pixiepoint-root");
+    if (!root) return;
+    document.body.className = "";
+    root.outerHTML = '<main class="portal"><section class="card"><div class="brand"><div class="logo">P</div><div><strong>PixiePoint Wi-Fi</strong><div class="muted">MikroTik hotspot access</div></div></div><div class="compat" id="compat-app"><h1>Connect to Wi-Fi</h1><p class="muted">Insert coins or enter an existing voucher.</p><div id="compat-alert" class="alert" hidden></div><div class="field"><label for="compat-vendo">Coin slot</label><select id="compat-vendo"></select><small id="compat-health" class="compat-status">Connecting to the local vendo…</small></div><button class="button full" id="compat-topup" type="button" disabled>Insert coin</button><button class="button secondary full" id="compat-rates" type="button" disabled>View rates</button><div class="compat-tools"><button class="button secondary" id="compat-extend-toggle" type="button" disabled>Extend voucher</button><button class="button secondary" id="compat-charging" type="button" hidden>Phone charging</button><button class="button secondary" id="compat-eload" type="button" hidden>Buy e-load</button></div><form id="compat-extend-form" class="compat-inline" hidden><div class="field"><label for="compat-extend-code">Voucher to extend</label><input id="compat-extend-code" required></div><button class="button full" type="submit">Insert coins to extend</button></form><div id="compat-transaction" class="compat-transaction" hidden><small>Your voucher</small><strong id="compat-code">—</strong><div class="context"><div><small>Coin total</small><span id="compat-amount">₱0</span></div><div><small>Time</small><span id="compat-time">—</span></div></div><p id="compat-progress" class="muted">Waiting for coins…</p><div class="actions"><button class="button" id="compat-finish" type="button">Done &amp; connect</button><button class="button secondary" id="compat-cancel" type="button">Cancel</button></div></div><form id="compat-convert-form" class="compat-inline" hidden><div class="field"><label for="compat-convert-code">Convert time into another voucher</label><input id="compat-convert-code" required></div><button class="button full" type="submit">Convert voucher</button></form><form id="compat-voucher-form" class="compat-voucher"><div class="field"><label for="compat-voucher">Have a voucher?</label><input id="compat-voucher" required></div><button class="button full" type="submit">Connect</button></form><div id="compat-rate-list" class="compat-rate-list" hidden></div><div id="compat-charger-list" class="compat-rate-list" hidden></div><div id="compat-eload-panel" class="compat-rate-list" hidden><div id="compat-eload-products">Loading products…</div></div></div></section></main>';
+  }
+
+  function localRequest(path, method, data) {
+    return new Promise(function (resolve, reject) {
+      var xhr = new XMLHttpRequest(), query = method === "GET" && data && Object.keys(data).length ? "?" + new URLSearchParams(data).toString() : "";
+      if (!selected) return reject(new Error("No local vendo is selected."));
+      xhr.open(method || "GET", selected.baseUrl + path + query, true);
+      xhr.timeout = 7000;
+      xhr.onload = function () { var body = xhr.responseText; try { body = JSON.parse(body); } catch (_) {} resolve({ ok: xhr.status >= 200 && xhr.status < 300, status: xhr.status, body: body }); };
+      xhr.onerror = function () { reject(new Error("The local vendo is unreachable.")); };
+      xhr.ontimeout = function () { reject(new Error("The local vendo timed out.")); };
+      if (method === "POST") { xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded"); xhr.send(new URLSearchParams(data || {}).toString()); } else xhr.send();
+    });
+  }
+
   function alertMessage(message) {
     var el = $("compat-alert");
     el.textContent = message || "";
@@ -12,6 +33,7 @@
   }
 
   function rpc(path, method, data) {
+    if (window.PIXIEPOINT_BOOTSTRAP) return localRequest(path, method || "GET", data || {});
     return new Promise(function (resolve, reject) {
       var id = "rpc-" + (++sequence) + "-" + Date.now();
       var timeout = setTimeout(function () {
@@ -135,6 +157,13 @@
   }
 
   function login(voucher) {
+    if (window.PIXIEPOINT_BOOTSTRAP) {
+      var password = selected && selected.passwordMode === "voucher" ? voucher : "", chap = window.PIXIEPOINT_CHAP || {}, form;
+      if (chap.id && $("chap-login")) { form = $("chap-login"); form.username.value = voucher; form.password.value = hexMD5(chap.id + password + chap.challenge); }
+      else { form = $("pap-login"); form.username.value = voucher; form.password.value = password; }
+      form.submit();
+      return;
+    }
     window.parent.postMessage({ type: "pixiepoint:login", voucher: voucher, vendoId: selected && selected.id }, parentOrigin);
   }
 
@@ -232,6 +261,7 @@
     }).catch(function (error) { products.textContent = error.message; });
   }
 
+  renderPortal();
   window.addEventListener("message", function (event) {
     var data = event.data || {};
     if (data.type === "pixiepoint:init") {
@@ -259,5 +289,6 @@
     event.preventDefault();
     login($("compat-voucher").value.trim().toUpperCase());
   });
-  window.parent.postMessage({ type: "pixiepoint:ready" }, "*");
+  if (window.PIXIEPOINT_BOOTSTRAP) init({ context: window.PIXIEPOINT_CONTEXT || {}, vendos: window.PIXIEPOINT_VENDOS || [] });
+  else window.parent.postMessage({ type: "pixiepoint:ready" }, "*");
 }());

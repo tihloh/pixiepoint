@@ -1,8 +1,8 @@
 # PixiePoint local JuanFi bridge
 
-This directory is the small trusted component installed on MikroTik. The customer interface remains hosted at `https://hs.portalx.win`; the local page embeds it and relays only approved requests to the unchanged JuanFi ESP/NodeMCU on the customer LAN.
+This directory is the small bootstrap installed on MikroTik. The complete customer interface, styling, and JuanFi workflow are downloaded from `https://hs.portalx.win` and rendered natively into the local document. There is no iframe and therefore no nested viewport or double scrollbar.
 
-This is necessary because the hosted server cannot route to addresses such as `10.0.0.2`, and an HTTPS page cannot reliably call an HTTP device directly. The browser can reach both, so the local MikroTik origin acts as the bridge. It also computes MikroTik HTTP-CHAP locally, so the hosted site never needs direct router access.
+The document retains the MikroTik origin so the downloaded application can communicate with an unchanged ESP such as `http://10.0.0.2`. A top-level HTTPS page could not reliably make that HTTP private-network request. The bootstrap also computes MikroTik HTTP-CHAP locally, so the hosted site never needs direct router access.
 
 ## Install
 
@@ -21,11 +21,11 @@ Use `passwordMode: "blank"` for standard JuanFi voucher users whose password is 
 
 - `login.html` never navigates while checking availability.
 - It polls `/hotspot/health` asynchronously and shows a persistent local error screen if DNS, internet, TLS, CORS, the PHP app, or its database is unavailable.
-- Only after a valid health response does it embed `/hotspot/compat`.
+- Only after a valid health response does it download the hosted stylesheet and portal application.
 - If PixiePoint is reachable but the ESP is not, the hosted UI remains responsive and reports the local vendo failure separately.
 - Coin checks use background AJAX and update the visible transaction without page reloads.
 
-The bridge permits only the known JuanFi routes declared in `bridge.js`. All customer-facing behavior stays in the hosted `/hotspot/compat` application. The bridge contains no rates, transaction rules, product catalog, account UI, sales logic, or operator interface.
+All customer-facing behavior stays in the hosted `juanfi-compat.js` application. The MikroTik files contain no rates, transaction rules, product catalog, account UI, sales logic, or operator interface. `vendo-config.js` contains only the locally trusted ESP addresses and feature switches, while `md5.js` performs the required local CHAP calculation.
 
 The hosted compatibility layer currently implements coin/voucher login, legacy rate parsing, voucher extension and conversion, charging-station discovery and charging top-up. It can detect the JuanFi e-load service, but purchasing remains hidden by default and must not be enabled until the compressed product catalog and real transaction flow pass a physical-device test.
 

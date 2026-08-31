@@ -87,6 +87,6 @@ The recommended RouterOS v7 on-login replacement is [routeros/LoginScript_PixieP
 
 ## Unmodified JuanFi ESP compatibility
 
-PixiePoint can operate with the existing JuanFi ESP/NodeMCU firmware while a native device platform is developed. The local MikroTik page embeds the hosted portal and acts as a constrained browser bridge to the ESP. This preserves the current coin acceptor and voucher protocol without exposing arbitrary LAN requests to the hosted application.
+PixiePoint can operate with the existing JuanFi ESP/NodeMCU firmware while a native device platform is developed. The MikroTik bootstrap loads the portal application and stylesheet from PixiePoint into one native local document. The hosted application then communicates with the ESP from the browser, preserving the current coin acceptor and voucher protocol without an iframe, nested scrolling, or a second portal layout stored on the router.
 
 Configure the local device allowlist in `mt_hotspot/vendo-config.js`, upload that directory to the MikroTik, and use `/hotspot/compat` through the local bootstrap page. The hosted compatibility UI supports local health, JuanFi-delimited rates, coin polling, generated and existing vouchers, extension, conversion, charging discovery/top-up, cancellation, and local MikroTik CHAP/PAP handoff. E-load stays disabled until its compressed catalog and purchase transaction pass hardware validation. See [mt_hotspot/README.md](mt_hotspot/README.md) for installation details.
