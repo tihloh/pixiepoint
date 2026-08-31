@@ -9,8 +9,9 @@ final class App
 
     public function __construct(string $root)
     {
-        $configFile = is_file($root . '/config.php') ? $root . '/config.php' : $root . '/config.example.php';
-        $this->config = require $configFile;
+        $defaults = require $root . '/config.example.php';
+        $local = is_file($root . '/config.php') ? require $root . '/config.php' : [];
+        $this->config = array_replace($defaults, is_array($local) ? $local : []);
         date_default_timezone_set($this->config['timezone'] ?? 'UTC');
 
         $dsn = (string)($this->config['database_dsn'] ?? '');
