@@ -1,0 +1,17 @@
+{
+  "name": "tihloh/pixiepoint",
+  "description": "Centralized MikroTik hotspot portal and management system.",
+  "type": "project",
+  "require": {
+    "php": ">=8.3",
+    "tihloh/prefab-users": "dev-main",
+    "tihloh/prefab-auth": "dev-main"
+  },
+  "autoload": {
+    "psr-4": {
+      "PixiePoint\\": "src/"
+    }
+  },
+  "minimum-stability": "dev",
+  "prefer-stable": true
+}
