@@ -1,46 +1,35 @@
-# PixiePoint hosted-portal bootstrapper
+# PixiePoint local JuanFi bridge
 
-Upload the contents of this directory to a folder on the MikroTik, for example `flash/mt_hotspot`, then point the HotSpot server profile to it:
+This directory is the small trusted component installed on MikroTik. The customer interface remains hosted at `https://hs.portalx.win`; the local page embeds it and relays only approved requests to the unchanged JuanFi ESP/NodeMCU on the customer LAN.
+
+This is necessary because the hosted server cannot route to addresses such as `10.0.0.2`, and an HTTPS page cannot reliably call an HTTP device directly. The browser can reach both, so the local MikroTik origin acts as the bridge. It also computes MikroTik HTTP-CHAP locally, so the hosted site never needs direct router access.
+
+## Install
+
+1. Edit `vendo-config.js`. Set the hosted origin and list every allowed local vendo. This file is the local security allowlist.
+2. Upload all files in this directory to `flash/mt_hotspot`.
+3. Configure RouterOS:
 
 ```routeros
 /ip hotspot profile set [find name="hsprof1"] html-directory="flash/mt_hotspot"
-```
-
-The router stores only a small bootstrap page. It checks whether the hosted portal is reachable, securely POSTs the client/router context to it, and displays a completely local error screen when the portal or upstream internet cannot be reached. When unavailable, it keeps checking indefinitely in the background and opens the hosted portal automatically as soon as service returns.
-
-The bootstrapper is configured for `https://hs.portalx.win`. The hosted server must provide:
-
-- `GET /hotspot/health` — returns HTTP 200 and exactly identifies readiness with JSON such as `{ "ready": true }`
-- `POST /` — accepts the MikroTik context and renders the hosted portal
-- `POST /hotspot/session` — renders current device and live session information
-- `POST /hotspot/disconnected` — renders the final session summary
-
-Allow the portal through the HotSpot walled garden:
-
-```routeros
 /ip hotspot walled-garden add dst-host=hs.portalx.win
-/ip hotspot walled-garden add dst-host=www.gstatic.com
 ```
 
-The health response must allow the MikroTik HotSpot origin through CORS. A simple development response is:
+Use `passwordMode: "blank"` for standard JuanFi voucher users whose password is empty, or `passwordMode: "voucher"` when username and password are the same.
 
-```http
-HTTP/1.1 200 OK
-Content-Type: application/json
-Access-Control-Allow-Origin: *
-Cache-Control: no-store
+## Runtime behavior
 
-{"ready":true}
-```
+- `login.html` never navigates while checking availability.
+- It polls `/hotspot/health` asynchronously and shows a persistent local error screen if DNS, internet, TLS, CORS, the PHP app, or its database is unavailable.
+- Only after a valid health response does it embed `/hotspot/compat`.
+- If PixiePoint is reachable but the ESP is not, the hosted UI remains responsive and reports the local vendo failure separately.
+- Coin checks use background AJAX and update the visible transaction without page reloads.
 
-The bootstrapper stays on its local UI for DNS errors, network failures, CORS failures, non-2xx responses, invalid JSON, or any response where `ready` is not exactly `true`. It retries in the background without refreshing or navigating the local page. A separate Google connectivity endpoint distinguishes an available internet connection with a broken portal from an unavailable upstream connection. If that diagnostic domain is not in the walled garden, failures will be reported as upstream connectivity failures.
+The bridge permits only the known JuanFi routes declared in `bridge.js`. Compatibility covers health, rates, top-up, coin polling, voucher activation/cancellation/conversion, charging discovery, and e-load routes. The first portal revision exposes coin/voucher login and rates; charging and e-load can use the same adapter in a later UI revision.
 
-## Included pages
+## Security notes
 
-- `login.html` — connectivity check, local fallback UI, and POST bootstrapper
-- `status.html` and `logout.html` — AJAX-gated POST bootstrappers for live and completed sessions
-- `online-bootstrap.js` — shared background health loop; it never refreshes a page while checking
-- `alogin.html`, `error.html`, `rlogin.html`, `flogin.html`, `redirect.html` — minimal RouterOS redirect helpers
-- `api.json` — captive portal API response
-
-The hosted application must eventually submit credentials back to the supplied `login_url`; the next implementation step is the hosted `/hotspot/start` endpoint and its RADIUS-backed login flow.
+- Treat `vendo-config.js` as router configuration and restrict MikroTik administrative access.
+- Do not put Telegram tokens, database passwords, API keys, or operator credentials in hotspot files or ESP-visible requests.
+- Rotate any secrets embedded in the former JuanFi login script before deployment.
+- Keep the ESP on the hotspot LAN and block management access from untrusted upstream networks.

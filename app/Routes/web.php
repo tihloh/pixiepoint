@@ -9,6 +9,7 @@ return static function (RouteManager $routes, array $c): void {
     // context to the same root path, so browser GET and hotspot POST coexist.
     $routes->get('/', [$c['auth'], 'home'])->name('home');
     $routes->post('/', [$c['hotspot'], 'portal'])->name('hotspot.portal');
+    $routes->get('/hotspot/compat', [$c['hotspot'], 'compatibilityPortal'])->name('hotspot.compat');
 
     $routes->post('/hotspot/authenticate', [$c['hotspot'], 'authenticate'])->name('hotspot.authenticate');
     $routes->post('/hotspot/session', [$c['hotspot'], 'session'])->name('hotspot.session');

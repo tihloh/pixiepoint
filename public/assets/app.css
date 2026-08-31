@@ -175,3 +175,10 @@ tbody tr:last-child td{border-bottom:0}
 }
 
 @media(max-width:380px){.grid{grid-template-columns:1fr}}
+
+.compat .brand{margin-bottom:18px}.compat select{width:100%;padding:13px;border:1px solid var(--border);border-radius:12px;background:var(--surface);color:var(--text)}
+.compat .secondary{margin-top:9px;background:transparent;border:1px solid var(--border);color:var(--text)}
+.compat-status{display:block;margin-top:8px;color:var(--muted)}.compat-status.online{color:#72e6c7}.compat-status.offline{color:#ff9aaa}
+.compat-transaction,.compat-rate-list{margin-top:18px;padding:16px;border:1px solid var(--border);border-radius:16px;background:rgba(255,255,255,.025)}
+.compat-transaction>strong{display:block;margin:4px 0 12px;font:700 25px ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:.06em}
+.compat-voucher{margin-top:22px;padding-top:18px;border-top:1px solid var(--border)}.compat-rate{padding:10px 0;border-bottom:1px solid var(--border)}.compat-rate:last-child{border-bottom:0}

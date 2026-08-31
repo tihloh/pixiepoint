@@ -73,6 +73,24 @@ final class HotspotController
         $this->view->page('Sign in', $this->view->portalCard('<h1>Connect to Wi-Fi</h1><p class="muted">Enter your access code to start this device’s MikroTik Hotspot session.</p>' . $notice . '<div class="context"><div><small>Device</small>' . e($context['mac'] ?: 'Unknown') . '</div><div><small>Router</small>' . e($context['router_identity'] ?: 'Unknown') . '</div></div>' . $form . $account));
     }
 
+    /** Hosted UI for the local MikroTik/legacy JuanFi browser bridge. */
+    public function compatibilityPortal(): never
+    {
+        $body = '<div class="compat" id="compat-app">'
+            . '<div class="brand"><span class="brandmark">P</span><span>PixiePoint</span></div>'
+            . '<h1>Connect to Wi-Fi</h1><p class="muted">Insert coins or enter an existing voucher.</p>'
+            . '<div id="compat-alert" class="alert" hidden></div>'
+            . '<div class="field"><label for="compat-vendo">Coin slot</label><select id="compat-vendo"></select><small id="compat-health" class="compat-status">Connecting to the local vendo…</small></div>'
+            . '<button class="button full" id="compat-topup" type="button" disabled>Insert coin</button>'
+            . '<button class="button secondary full" id="compat-rates" type="button" disabled>View rates</button>'
+            . '<div id="compat-transaction" class="compat-transaction" hidden><small>Your voucher</small><strong id="compat-code">—</strong><div class="context"><div><small>Coin total</small><span id="compat-amount">₱0</span></div><div><small>Time</small><span id="compat-time">—</span></div></div><p id="compat-progress" class="muted">Waiting for coins…</p><div class="actions"><button class="button" id="compat-finish" type="button">Done &amp; connect</button><button class="button secondary" id="compat-cancel" type="button">Cancel</button></div></div>'
+            . '<form id="compat-voucher-form" class="compat-voucher"><div class="field"><label for="compat-voucher">Have a voucher?</label><input id="compat-voucher" autocomplete="one-time-code" autocapitalize="characters" required></div><button class="button full" type="submit">Connect</button></form>'
+            . '<div id="compat-rate-list" class="compat-rate-list" hidden></div>'
+            . '<noscript><div class="alert">JavaScript is required to communicate with the local coin slot.</div></noscript>'
+            . '</div><script src="/assets/juanfi-compat.js" defer></script>';
+        $this->view->page('Connect to Wi-Fi', $this->view->portalCard($body));
+    }
+
     public function authenticate(): never
     {
         require_csrf();

@@ -84,3 +84,9 @@ The management API accepts normalized accounting events at `POST /api/accounting
 ## Legacy JuanFi login migration
 
 The recommended RouterOS v7 on-login replacement is [routeros/LoginScript_PixiePoint.rsc](routeros/LoginScript_PixiePoint.rsc). It preserves JuanFi's `duration,amount,extension,vendo` comment format while moving sales, points, devices, and idempotency into PixiePoint. See [routeros/README.md](routeros/README.md) for provisioning and security guidance.
+
+## Unmodified JuanFi ESP compatibility
+
+PixiePoint can operate with the existing JuanFi ESP/NodeMCU firmware while a native device platform is developed. The local MikroTik page embeds the hosted portal and acts as a constrained browser bridge to the ESP. This preserves the current coin acceptor and voucher protocol without exposing arbitrary LAN requests to the hosted application.
+
+Configure the local device allowlist in `mt_hotspot/vendo-config.js`, upload that directory to the MikroTik, and use `/hotspot/compat` through the local bootstrap page. The initial compatibility UI supports local health, rates, coin top-up polling, generated-voucher activation, cancellation, existing vouchers, and local MikroTik CHAP/PAP handoff. See [mt_hotspot/README.md](mt_hotspot/README.md) for installation details.
