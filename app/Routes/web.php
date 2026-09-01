@@ -5,6 +5,22 @@ declare(strict_types=1);
 use Tihloh\Prefab\Routes\RouteManager;
 
 return static function (RouteManager $routes, array $c): void {
+    $nativeUrl = static function (mixed $value): ?string {
+        $url = trim((string)$value);
+        $parts = $url !== '' ? parse_url($url) : false;
+        if (!$parts) {
+            return null;
+        }
+
+        $scheme = strtolower((string)($parts['scheme'] ?? ''));
+        $host = trim((string)($parts['host'] ?? ''));
+        if (!in_array($scheme, ['http', 'https'], true) || $host === '') {
+            return null;
+        }
+
+        return $url;
+    };
+
     // Public PixiePoint home/login page. MikroTik still POSTs its hotspot
     // context to the same root path, so browser GET and hotspot POST coexist.
     $routes->get('/', [$c['auth'], 'home'])->name('home');
@@ -12,8 +28,29 @@ return static function (RouteManager $routes, array $c): void {
     $routes->get('/hotspot/compat', [$c['hotspot'], 'compatibilityPortal'])->name('hotspot.compat');
 
     $routes->post('/hotspot/authenticate', [$c['hotspot'], 'authenticate'])->name('hotspot.authenticate');
-    $routes->post('/hotspot/session', [$c['hotspot'], 'session'])->name('hotspot.session');
-    $routes->post('/hotspot/disconnected', [$c['hotspot'], 'disconnected'])->name('hotspot.disconnected');
+
+    // Legacy bridge fallback only. The real status/disconnected UIs now live
+    // inside the native MikroTik vessels, so hosted transition routes send the
+    // browser straight back to the router instead of rendering another page.
+    $routes->post('/hotspot/session', static function () use ($c, $nativeUrl): never {
+        $refreshUrl = $nativeUrl($_POST['refresh_url'] ?? null);
+        if ($refreshUrl !== null) {
+            header('Location: ' . $refreshUrl, true, 303);
+            exit;
+        }
+
+        $c['hotspot']->session();
+    })->name('hotspot.session');
+
+    $routes->post('/hotspot/disconnected', static function () use ($c, $nativeUrl): never {
+        $loginUrl = $nativeUrl($_POST['login_url'] ?? null);
+        if ($loginUrl !== null) {
+            header('Location: ' . $loginUrl, true, 303);
+            exit;
+        }
+
+        $c['hotspot']->disconnected();
+    })->name('hotspot.disconnected');
 
     $routes->matchMethods(['GET', 'POST'], '/setup', [$c['auth'], 'setup'])->name('setup');
     $routes->matchMethods(['GET', 'POST'], '/register', [$c['auth'], 'register'])->name('register');
