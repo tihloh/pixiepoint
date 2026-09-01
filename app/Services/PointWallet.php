@@ -31,10 +31,20 @@ final class PointWallet
     {
         $stmt = $this->db->prepare("SELECT * FROM point_wallets WHERE user_id=? AND status='active' LIMIT 1");
         $stmt->execute([$userId]);
-        if ($wallet = $stmt->fetch()) return $wallet;
+        if ($wallet = $stmt->fetch()) {
+            $points = (int)$this->db->query('SELECT points FROM users WHERE id=' . $userId)->fetchColumn();
+            if ((int)$wallet['balance'] !== $points) {
+                $this->db->prepare('UPDATE point_wallets SET balance=?,updated_at=? WHERE id=?')->execute([$points, now(), $wallet['id']]);
+                $wallet['balance'] = $points;
+            }
+            return $wallet;
+        }
 
-        $this->db->prepare("INSERT INTO point_wallets(user_id,status,created_at,updated_at) VALUES(?,'active',?,?)")
-            ->execute([$userId, now(), now()]);
+        $lookup = $this->db->prepare('SELECT points FROM users WHERE id=?');
+        $lookup->execute([$userId]);
+        $points = max(0, (int)$lookup->fetchColumn());
+        $this->db->prepare("INSERT INTO point_wallets(user_id,balance,status,created_at,updated_at) VALUES(?,?,'active',?,?)")
+            ->execute([$userId, $points, now(), now()]);
         return $this->find((int)$this->db->lastInsertId());
     }
 
@@ -57,25 +67,24 @@ final class PointWallet
         return $this->find((int)$wallet['id']);
     }
 
-    /** Convert old unawarded event points into a real device wallet before claiming. */
+    /** Convert old/unclaimed guest event points into a real device wallet. */
     public function importLegacyGuestPoints(int $deviceId): int
     {
         $wallet = $this->walletForDevice($deviceId, null);
-        $stmt = $this->db->prepare('SELECT id,event_key,GREATEST(points_earned-points_awarded,0) points FROM router_login_events WHERE device_id=? AND points_earned>points_awarded ORDER BY id FOR UPDATE');
+        $stmt = $this->db->prepare('SELECT id,event_key,GREATEST(points_earned-points_awarded,0) points FROM router_login_events WHERE device_id=? AND points_earned>points_awarded ORDER BY id');
         $stmt->execute([$deviceId]);
         $imported = 0;
 
         foreach ($stmt->fetchAll() as $event) {
             $points = max(0, (int)$event['points']);
             if ($points === 0) continue;
-            $insert = $this->db->prepare("INSERT IGNORE INTO point_ledger(wallet_id,points,entry_type,source_type,source_key,description,created_at) VALUES(?,?,'earn','router_login',?,'Imported guest points',?)");
+            $insert = $this->db->prepare("INSERT IGNORE INTO point_ledger(wallet_id,points,entry_type,source_type,source_key,description,created_at) VALUES(?,?,'earn','router_login',?,'Guest PisoWiFi points',?)");
             $insert->execute([(int)$wallet['id'], $points, (string)$event['event_key'], now()]);
             if ($insert->rowCount() > 0) {
                 $imported += $points;
                 $this->db->prepare('UPDATE point_wallets SET balance=balance+?,updated_at=? WHERE id=?')->execute([$points, now(), $wallet['id']]);
             }
-            $this->db->prepare('UPDATE router_login_events SET points_awarded=points_earned WHERE id=?')
-                ->execute([$event['id']]);
+            $this->db->prepare('UPDATE router_login_events SET points_awarded=points_earned WHERE id=?')->execute([$event['id']]);
         }
 
         return $imported;
@@ -113,6 +122,7 @@ final class PointWallet
     public function balanceForDevice(int $deviceId, ?int $userId = null): int
     {
         if ($userId) return (int)$this->walletForUser($userId)['balance'];
+        $this->importLegacyGuestPoints($deviceId);
         return (int)$this->walletForDevice($deviceId, null)['balance'];
     }
 
