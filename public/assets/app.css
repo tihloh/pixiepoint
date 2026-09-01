@@ -183,3 +183,158 @@ tbody tr:last-child td{border-bottom:0}
 .compat-transaction>strong{display:block;margin:4px 0 12px;font:700 25px ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:.06em}
 .compat-voucher{margin-top:22px;padding-top:18px;border-top:1px solid var(--border)}.compat-rate{padding:10px 0;border-bottom:1px solid var(--border)}.compat-rate:last-child{border-bottom:0}
 .compat-tools{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:10px}.compat-tools .button{margin:0;padding-inline:8px}.compat-inline{margin-top:14px;padding:14px;border:1px solid var(--border);border-radius:14px}.compat-rate button{margin-top:8px}@media(max-width:560px){.compat-tools{grid-template-columns:1fr}}
+
+/* Compact captive-portal layout: keep hotspot controls visible with less scrolling. */
+.portal{
+  padding:18px 12px;
+}
+.portal .card{
+  width:min(100%,440px);
+  padding:20px;
+  border-radius:18px;
+}
+.portal .brand{
+  gap:10px;
+  margin-bottom:14px;
+}
+.portal .logo{
+  width:36px;
+  height:36px;
+  flex-basis:36px;
+  border-radius:11px;
+  font-size:15px;
+}
+.portal h1{
+  margin-bottom:6px;
+  font-size:clamp(24px,6vw,30px);
+}
+.portal h2{
+  margin-bottom:8px;
+}
+.portal p{
+  margin-bottom:10px;
+}
+.portal form{
+  margin-top:12px;
+}
+.portal .field{
+  margin-bottom:10px;
+}
+.portal label{
+  margin-bottom:4px;
+  font-size:12px;
+}
+.portal input,
+.portal select{
+  min-height:42px;
+  padding:8px 11px;
+  border-radius:10px;
+}
+.portal .button{
+  min-height:40px;
+  padding:8px 12px;
+  border-radius:10px;
+  gap:7px;
+}
+.portal .google-button{
+  min-height:42px;
+  margin-top:12px;
+  border-radius:10px;
+}
+.portal .auth-divider{
+  margin:12px 0;
+}
+.portal .auth-footer{
+  margin-top:11px;
+}
+.portal .alert{
+  margin:10px 0;
+  padding:9px 11px;
+}
+.portal .context{
+  gap:7px;
+  margin:12px 0;
+}
+.portal .context div{
+  padding:9px 10px;
+  border-radius:10px;
+}
+.portal .actions{
+  gap:7px;
+}
+.portal .compat-status{
+  margin-top:4px;
+  font-size:12px;
+}
+.portal .compat .secondary{
+  margin-top:6px;
+}
+.portal .compat-tools{
+  gap:6px;
+  margin-top:6px;
+}
+.portal .compat-transaction,
+.portal .compat-rate-list{
+  margin-top:10px;
+  padding:11px;
+  border-radius:12px;
+}
+.portal .compat-transaction>strong{
+  margin:2px 0 7px;
+  font-size:21px;
+}
+.portal .compat-voucher{
+  margin-top:12px;
+  padding-top:11px;
+}
+.portal .compat-inline{
+  margin-top:9px;
+  padding:10px;
+  border-radius:11px;
+}
+.portal .compat-rate{
+  padding:7px 0;
+}
+.portal .compat-rate button{
+  margin-top:5px;
+}
+.portal details summary{
+  padding-block:3px;
+}
+
+@media(max-width:560px){
+  .portal{
+    align-items:start;
+    padding:8px;
+  }
+  .portal .card{
+    padding:14px;
+    border-radius:14px;
+  }
+  .portal .brand{
+    margin-bottom:10px;
+  }
+  .portal h1{
+    font-size:23px;
+  }
+  .portal .context{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+  .portal .compat-tools{
+    grid-template-columns:repeat(3,minmax(0,1fr));
+  }
+  .portal .compat-tools .button{
+    min-height:38px;
+    padding-inline:5px;
+    font-size:12px;
+  }
+}
+
+@media(max-width:360px){
+  .portal .card{
+    padding:12px;
+  }
+  .portal .compat-tools{
+    grid-template-columns:1fr;
+  }
+}
