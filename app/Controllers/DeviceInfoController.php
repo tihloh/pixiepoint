@@ -93,6 +93,7 @@ final class DeviceInfoController
                 'device' => [
                     'uuid' => (string)($device['uuid'] ?? ''),
                     'mac' => (string)($device['mac'] ?? $mac),
+                    'ip' => $ip !== '' ? $ip : (string)($device['last_ip'] ?? ''),
                     'first_seen_at' => (string)($device['first_seen_at'] ?? ''),
                     'last_seen_at' => (string)($device['last_seen_at'] ?? ''),
                 ],
