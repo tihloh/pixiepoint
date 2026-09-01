@@ -42,7 +42,11 @@ final class DeviceIdentity
         }
 
         if (!$device) {
-            $device = $this->createDevice($mac, $userId, $ip, $userAgent);
+            // If this account already owns devices, keep a totally unknown
+            // observation unclaimed until the user says whether it is a new
+            // device or a randomized identity of an existing one.
+            $owner = $userId !== null && !$this->hasUserDevices($userId) ? $userId : null;
+            $device = $this->createDevice($mac, $owner, $ip, $userAgent);
         } else {
             $device = $this->canonicalDevice($device);
             $this->touchDevice((int)$device['id'], $ip, $userAgent);
@@ -128,6 +132,13 @@ final class DeviceIdentity
         $device = $stmt->fetch();
         if (!$device) return null;
         return $this->canonicalDevice($device);
+    }
+
+    private function hasUserDevices(int $userId): bool
+    {
+        $stmt = $this->db->prepare('SELECT 1 FROM devices WHERE user_id=? AND merged_into_device_id IS NULL LIMIT 1');
+        $stmt->execute([$userId]);
+        return (bool)$stmt->fetchColumn();
     }
 
     private function createDevice(string $mac, ?int $userId, string $ip, string $userAgent): array
