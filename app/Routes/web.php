@@ -31,6 +31,10 @@ return static function (RouteManager $routes, array $c): void {
         ->name('dashboard')
         ->auth()
         ->middleware('prefab.access');
+    $routes->post('/devices/claim', [$c['dashboard'], 'claimDevice'])
+        ->name('devices.claim')
+        ->auth()
+        ->middleware('prefab.access');
 
     $routes->get('/admin/routers', [$c['admin'], 'routers'])
         ->name('admin.routers.index')
