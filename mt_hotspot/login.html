@@ -115,7 +115,8 @@
 
       var hostedOrigin = window.PIXIEPOINT_HOSTED_ORIGIN;
       var checking = false;
-      var assetsStarted = false;
+      var loadingAssets = false;
+      var portalStarted = false;
       var retryTimer = 0;
 
       function showStatus(message) {
@@ -125,41 +126,70 @@
         }
       }
 
-      function scheduleRetry(message) {
-        checking = false;
-        showStatus(message);
-        clearTimeout(retryTimer);
-        retryTimer = setTimeout(checkHostedPortal, 3000);
+      function clearHostedAssets() {
+        var stylesheet = document.getElementById("pixiepoint-css");
+        var application = document.getElementById("pixiepoint-app");
+        if (stylesheet) stylesheet.remove();
+        if (application) application.remove();
+        loadingAssets = false;
       }
 
-      function loadHostedAssets(version) {
-        if (assetsStarted) {
+      function scheduleRetry(message) {
+        checking = false;
+        clearHostedAssets();
+        showStatus(message);
+        clearTimeout(retryTimer);
+        retryTimer = setTimeout(checkHostedPortal, 4000);
+      }
+
+      function startHostedPortal(version) {
+        if (portalStarted || loadingAssets) {
           return;
         }
 
-        assetsStarted = true;
+        loadingAssets = true;
+        showStatus("Hosted portal found · loading…");
 
-        if (!document.getElementById("pixiepoint-css")) {
-          var stylesheet = document.createElement("link");
-          stylesheet.id = "pixiepoint-css";
-          stylesheet.rel = "stylesheet";
-          stylesheet.href = hostedOrigin + "/assets/app.css?v=" + version;
-          document.head.appendChild(stylesheet);
-        }
+        var stylesheet = document.createElement("link");
+        stylesheet.id = "pixiepoint-css";
+        stylesheet.rel = "stylesheet";
+        stylesheet.href = hostedOrigin + "/assets/app.css?v=" + version;
 
-        var application = document.createElement("script");
-        application.id = "pixiepoint-app";
-        application.src = hostedOrigin + "/assets/juanfi-compat.js?v=" + version;
-        application.onerror = function handleAssetError() {
-          assetsStarted = false;
-          application.remove();
-          scheduleRetry("Hosted portal assets unavailable · checking again…");
+        stylesheet.onerror = function handleStylesheetError() {
+          if (!portalStarted) {
+            scheduleRetry("Hosted portal assets unavailable · checking again…");
+          }
         };
-        document.head.appendChild(application);
+
+        stylesheet.onload = function handleStylesheetReady() {
+          if (portalStarted || document.getElementById("pixiepoint-app")) {
+            return;
+          }
+
+          var application = document.createElement("script");
+          application.id = "pixiepoint-app";
+          application.src = hostedOrigin + "/assets/juanfi-compat.js?v=" + version;
+
+          application.onerror = function handleApplicationError() {
+            if (!portalStarted) {
+              scheduleRetry("Hosted portal assets unavailable · checking again…");
+            }
+          };
+
+          application.onload = function handleApplicationReady() {
+            portalStarted = true;
+            loadingAssets = false;
+            clearTimeout(retryTimer);
+          };
+
+          document.head.appendChild(application);
+        };
+
+        document.head.appendChild(stylesheet);
       }
 
       function checkHostedPortal() {
-        if (checking || assetsStarted) {
+        if (checking || loadingAssets || portalStarted) {
           return;
         }
 
@@ -190,7 +220,7 @@
             health &&
             health.ready === true
           ) {
-            loadHostedAssets(Date.now());
+            startHostedPortal(Date.now());
             return;
           }
 
@@ -209,6 +239,7 @@
       }
 
       window.addEventListener("online", function handleOnline() {
+        if (portalStarted) return;
         clearTimeout(retryTimer);
         checkHostedPortal();
       });
