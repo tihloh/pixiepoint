@@ -5,60 +5,33 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#07111f">
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <meta http-equiv="Pragma" content="no-cache">
-  <meta http-equiv="Expires" content="0">
   <title>PixiePoint Wi-Fi</title>
   <style>
-    * { box-sizing: border-box; }
     html, body { min-height: 100%; margin: 0; }
-    body.booting {
-      display: grid;
-      place-items: center;
-      padding: 24px;
-      color: #eef4ff;
-      background: #07111f;
-      font: 16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
-      text-align: center;
-    }
-    .boot { max-width: 420px; }
-    .boot strong { display: block; font-size: 22px; margin-bottom: 10px; }
-    .boot p { margin: 0; color: #9fb0c7; }
-    .dot {
-      display: inline-block;
-      width: 9px;
-      height: 9px;
-      margin-right: 8px;
-      border-radius: 50%;
-      background: #20d6b5;
-      animation: pulse 1.5s infinite;
-    }
-    @keyframes pulse { 50% { opacity: .3; } }
+    body { display: grid; place-items: center; background: #07111f; color: #eef4ff; font: 16px system-ui; text-align: center; }
+    p { color: #9fb0c7; }
   </style>
 </head>
-<body class="booting" data-bs-theme="dark">
-  <div hidden>
-    $(if chap-id)
-    <form id="chap-login" action="$(link-login-only)" method="post">
-      <input type="hidden" name="username">
-      <input type="hidden" name="password">
-      <input type="hidden" name="dst" value="$(link-orig)">
-      <input type="hidden" name="popup" value="true">
-    </form>
-    $(endif)
-  </div>
+<body>
+  $(if chap-id)
+  <form id="chap-login" action="$(link-login-only)" method="post" hidden>
+    <input name="username">
+    <input name="password">
+    <input name="dst" value="$(link-orig)">
+    <input name="popup" value="true">
+  </form>
+  $(endif)
 
   <form id="pap-login" action="$(link-login-only)" method="post" hidden>
-    <input type="hidden" name="username">
-    <input type="hidden" name="password">
-    <input type="hidden" name="dst" value="$(link-orig)">
-    <input type="hidden" name="popup" value="true">
+    <input name="username">
+    <input name="password">
+    <input name="dst" value="$(link-orig)">
+    <input name="popup" value="true">
   </form>
 
   <main id="pixiepoint-root">
-    <div class="boot">
-      <strong>PixiePoint Wi-Fi</strong>
-      <p><span class="dot"></span><span id="boot-status">Checking the hosted portal…</span></p>
-    </div>
+    <strong>PixiePoint Wi-Fi</strong>
+    <p id="boot-status">Checking the hosted portal…</p>
   </main>
 
   <script src="vendo-config.js"></script>
@@ -74,143 +47,9 @@
       sessionTimeLeft: "$(session-time-left-secs)",
       error: "$(error)"
     };
-
-    window.PIXIEPOINT_CHAP = {
-      id: "$(chap-id)",
-      challenge: "$(chap-challenge)"
-    };
-
+    window.PIXIEPOINT_CHAP = { id: "$(chap-id)", challenge: "$(chap-challenge)" };
     window.PIXIEPOINT_BOOTSTRAP = true;
-
-    (function bootstrapHostedPortal() {
-      "use strict";
-
-      var hostedOrigin = window.PIXIEPOINT_HOSTED_ORIGIN;
-      var checking = false;
-      var loadingAssets = false;
-      var portalStarted = false;
-      var retryTimer = 0;
-
-      function showStatus(message) {
-        var statusElement = document.getElementById("boot-status");
-        if (statusElement) statusElement.textContent = message;
-      }
-
-      function clearHostedAssets() {
-        var bootstrapCss = document.getElementById("pixiepoint-bootstrap-css");
-        var bootstrapJs = document.getElementById("pixiepoint-bootstrap-js");
-        var stylesheet = document.getElementById("pixiepoint-css");
-        var application = document.getElementById("pixiepoint-app");
-        var deviceInfo = document.getElementById("pixiepoint-device-info");
-        if (bootstrapCss) bootstrapCss.remove();
-        if (bootstrapJs) bootstrapJs.remove();
-        if (stylesheet) stylesheet.remove();
-        if (application) application.remove();
-        if (deviceInfo) deviceInfo.remove();
-        loadingAssets = false;
-      }
-
-      function scheduleRetry(message) {
-        checking = false;
-        clearHostedAssets();
-        showStatus(message);
-        clearTimeout(retryTimer);
-        retryTimer = setTimeout(checkHostedPortal, 4000);
-      }
-
-      function startHostedPortal(version) {
-        if (portalStarted || loadingAssets) return;
-
-        loadingAssets = true;
-        showStatus("Hosted portal found · loading…");
-
-        var bootstrapCss = document.createElement("link");
-        bootstrapCss.id = "pixiepoint-bootstrap-css";
-        bootstrapCss.rel = "stylesheet";
-        bootstrapCss.href = "https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css";
-        document.head.appendChild(bootstrapCss);
-
-        var stylesheet = document.createElement("link");
-        stylesheet.id = "pixiepoint-css";
-        stylesheet.rel = "stylesheet";
-        stylesheet.href = hostedOrigin + "/assets/app.css?v=" + version;
-
-        stylesheet.onerror = function () {
-          if (!portalStarted) scheduleRetry("Hosted portal assets unavailable · checking again…");
-        };
-
-        stylesheet.onload = function () {
-          if (portalStarted || document.getElementById("pixiepoint-bootstrap-js")) return;
-
-          var bootstrapJs = document.createElement("script");
-          bootstrapJs.id = "pixiepoint-bootstrap-js";
-          bootstrapJs.src = "https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js";
-          bootstrapJs.onerror = function () {
-            if (!portalStarted) scheduleRetry("Bootstrap unavailable · checking again…");
-          };
-          bootstrapJs.onload = function () {
-            var application = document.createElement("script");
-            application.id = "pixiepoint-app";
-            application.src = hostedOrigin + "/assets/juanfi-compat.js?v=" + version;
-            application.onerror = function () {
-              if (!portalStarted) scheduleRetry("Hosted portal assets unavailable · checking again…");
-            };
-            application.onload = function () {
-              var deviceInfo = document.createElement("script");
-              deviceInfo.id = "pixiepoint-device-info";
-              deviceInfo.src = hostedOrigin + "/assets/device-info.js?v=" + version;
-              document.head.appendChild(deviceInfo);
-
-              portalStarted = true;
-              loadingAssets = false;
-              clearTimeout(retryTimer);
-            };
-            document.head.appendChild(application);
-          };
-          document.head.appendChild(bootstrapJs);
-        };
-
-        document.head.appendChild(stylesheet);
-      }
-
-      function checkHostedPortal() {
-        if (checking || loadingAssets || portalStarted) return;
-        checking = true;
-
-        var request = new XMLHttpRequest();
-        request.open("GET", hostedOrigin + "/hotspot/health?t=" + Date.now(), true);
-        request.timeout = 5000;
-        request.setRequestHeader("Accept", "application/json");
-
-        request.onload = function () {
-          checking = false;
-          var health = null;
-          try { health = JSON.parse(request.responseText); } catch (_) {}
-
-          if (request.status >= 200 && request.status < 300 && health && health.ready === true) {
-            startHostedPortal(Date.now());
-            return;
-          }
-          scheduleRetry("Hosted portal unavailable · checking again…");
-        };
-
-        request.onerror = function () {
-          scheduleRetry(navigator.onLine === false
-            ? "No network connection · checking again…"
-            : "Hosted portal unavailable · checking again…");
-        };
-        request.ontimeout = request.onerror;
-        request.send();
-      }
-
-      window.addEventListener("online", function () {
-        if (portalStarted) return;
-        clearTimeout(retryTimer);
-        checkHostedPortal();
-      });
-
-      checkHostedPortal();
-    }());
   </script>
+  <script src="https://hs.portalx.win/assets/hotspot-loader.js"></script>
 </body>
 </html>
