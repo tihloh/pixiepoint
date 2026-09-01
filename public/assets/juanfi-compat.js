@@ -3,6 +3,7 @@
 
   var parentOrigin = "*", context = {}, vendos = [], selected = null;
   var pending = Object.create(null), sequence = 0, pollTimer = null, activeVoucher = "", transactionMode = "internet";
+  var totalCoinReceived = 0, finalizingTopup = false;
   var $ = function (id) { return document.getElementById(id); };
 
   function renderPortal() {
@@ -50,8 +51,18 @@
             </div>
 
             <div id="compat-transaction" class="compat-transaction" hidden>
-              <small>Your voucher</small>
-              <strong id="compat-code">—</strong>
+              <div class="d-flex justify-content-between gap-3 align-items-start">
+                <div>
+                  <small>Your voucher</small>
+                  <strong id="compat-code" class="d-block">—</strong>
+                </div>
+                <small id="compat-countdown" class="compat-countdown">Waiting…</small>
+              </div>
+
+              <div class="compat-coin-progress" aria-label="Coin slot timeout">
+                <div id="compat-progress-bar" class="compat-coin-progress-bar"></div>
+              </div>
+
               <div class="context">
                 <div>
                   <small>Coin total</small>
@@ -62,9 +73,10 @@
                   <span id="compat-time">—</span>
                 </div>
               </div>
-              <p id="compat-progress" class="muted">Waiting for coins…</p>
+
+              <p id="compat-progress" class="muted mb-2">Insert a coin now.</p>
               <div class="actions">
-                <button class="button" id="compat-finish" type="button">Done &amp; connect</button>
+                <button class="button" id="compat-finish" type="button" disabled>Done</button>
                 <button class="button secondary" id="compat-cancel" type="button">Cancel</button>
               </div>
             </div>
@@ -144,6 +156,11 @@
     return value === true || value === "true" || value === 1 || value === "1";
   }
 
+  function number(value) {
+    value = Number(value);
+    return Number.isFinite(value) && value > 0 ? value : 0;
+  }
+
   function currentVoucher() {
     var input = $("compat-voucher");
     return input ? input.value.trim().toUpperCase() : "";
@@ -210,79 +227,52 @@
     return String(data.voucher || data.voucherCode || data.code || "").trim().toUpperCase();
   }
 
+  function transactionAmount(data) {
+    return number(data.totalCoin !== undefined ? data.totalCoin : (data.amount !== undefined ? data.amount : data.coin));
+  }
+
   function displayTransaction(data) {
     activeVoucher = generatedVoucher(data) || activeVoucher;
     if (transactionMode === "internet") setCurrentVoucher(activeVoucher);
-    $("compat-code").textContent = activeVoucher || "Preparing…";
-    $("compat-amount").textContent = "₱" + (data.totalCoin || data.amount || data.coin || 0);
 
-    var seconds = Number(data.timeAdded || 0);
+    totalCoinReceived = Math.max(totalCoinReceived, transactionAmount(data));
+    $("compat-code").textContent = activeVoucher || "Preparing…";
+    $("compat-amount").textContent = "₱" + totalCoinReceived;
+
+    var seconds = number(data.timeAdded || 0);
     var time = data.time || data.minutes || data.duration;
     if (!time && seconds) time = Math.floor(seconds / 3600) + "h " + Math.floor((seconds % 3600) / 60) + "m";
     $("compat-time").textContent = time || "—";
     $("compat-transaction").hidden = false;
+
+    $("compat-finish").disabled = totalCoinReceived <= 0;
+    $("compat-cancel").disabled = totalCoinReceived > 0;
   }
 
-  function pollCoin() {
+  function updateCountdown(data) {
+    var remainMs = number(data.remainTime);
+    var waitMs = number(data.waitTime);
+    var percent = waitMs > 0 ? Math.max(0, Math.min(100, (remainMs / waitMs) * 100)) : 100;
+    var seconds = Math.max(0, Math.ceil(remainMs / 1000));
+
+    $("compat-progress-bar").style.width = percent + "%";
+    $("compat-countdown").textContent = seconds > 0 ? seconds + "s" : "0s";
+    return seconds;
+  }
+
+  function resetTransaction(message) {
     clearTimeout(pollTimer);
-    if (!activeVoucher) return;
-
-    rpc("/checkCoin", "POST", { voucher: activeVoucher }).then(function (result) {
-      var data = responseData(result);
-      if (result.ok && (isTrue(data.status) || isTrue(data.success))) {
-        displayTransaction(data);
-      } else if (data.errorCode !== "coin.not.inserted" && data.errorCode !== "coin.is.reading") {
-        throw new Error(data.message || "The coin slot reported an error.");
-      }
-      pollTimer = setTimeout(pollCoin, 1000);
-    }).catch(function (error) {
-      alertMessage(error.message);
-      pollTimer = setTimeout(pollCoin, 3000);
-    });
-  }
-
-  function beginTopup(options) {
-    options = options || {};
-    transactionMode = options.mode || "internet";
-    alertMessage("");
-    $("compat-topup").disabled = true;
-
-    var voucher = options.voucher || (transactionMode === "internet" ? currentVoucher() : "");
-    activeVoucher = String(voucher || "").trim().toUpperCase();
-
-    if (!activeVoucher) {
-      alertMessage("A voucher code is required before inserting coins.");
-      $("compat-topup").disabled = false;
-      return;
-    }
-
-    if (transactionMode === "internet") setCurrentVoucher(activeVoucher);
-
-    var payload = {
-      voucher: activeVoucher,
-      mac: context.mac || "",
-      ipAddress: context.ip || "",
-      extendTime: 0
-    };
-
-    if (options.chargerPort !== undefined) {
-      payload.topupType = "CHARGER";
-      payload.chargerPort = options.chargerPort;
-    }
-
-    rpc("/topUp", "POST", payload).then(function (result) {
-      var data = responseData(result);
-      if (!result.ok || (!isTrue(data.status) && !isTrue(data.success))) {
-        throw new Error(data.message || data.errorCode || "The coin slot rejected the request.");
-      }
-
-      displayTransaction(data);
-      $("compat-finish").textContent = transactionMode === "charger" ? "Finish charging purchase" : "Done & connect";
-      pollCoin();
-    }).catch(function (error) {
-      alertMessage(error.message);
-      $("compat-topup").disabled = false;
-    });
+    pollTimer = null;
+    activeVoucher = "";
+    totalCoinReceived = 0;
+    finalizingTopup = false;
+    $("compat-transaction").hidden = true;
+    $("compat-progress-bar").style.width = "100%";
+    $("compat-countdown").textContent = "Waiting…";
+    $("compat-finish").disabled = true;
+    $("compat-cancel").disabled = false;
+    $("compat-topup").disabled = false;
+    if (message) alertMessage(message);
   }
 
   function login(voucher) {
@@ -310,8 +300,16 @@
     window.parent.postMessage({ type: "pixiepoint:login", voucher: voucher, vendoId: selected && selected.id }, parentOrigin);
   }
 
-  function finishTopup() {
+  function finishTopup(autoLogin) {
+    if (finalizingTopup || !activeVoucher || totalCoinReceived <= 0) return;
+
+    finalizingTopup = true;
     clearTimeout(pollTimer);
+    pollTimer = null;
+    $("compat-finish").disabled = true;
+    $("compat-cancel").disabled = true;
+    $("compat-progress").textContent = autoLogin ? "Coin time ended. Connecting…" : "Saving credit…";
+
     rpc("/useVoucher", "POST", { voucher: activeVoucher }).then(function (result) {
       var data = responseData(result);
       if (!result.ok || (!isTrue(data.status) && !isTrue(data.success))) {
@@ -322,23 +320,161 @@
         setCurrentVoucher(activeVoucher);
         login(activeVoucher);
       } else {
-        alertMessage("Charging time was added successfully.");
-        activeVoucher = "";
-        $("compat-transaction").hidden = true;
-        $("compat-topup").disabled = false;
+        resetTransaction("Charging time was added successfully.");
       }
     }).catch(function (error) {
-      alertMessage(error.message);
+      // JuanFi finalizes a credited transaction when the vendo wait timer expires.
+      // If that has already happened, /useVoucher can reject even though the voucher is usable.
+      if (autoLogin && transactionMode === "internet" && totalCoinReceived > 0) {
+        setCurrentVoucher(activeVoucher);
+        login(activeVoucher);
+        return;
+      }
+
+      finalizingTopup = false;
+      $("compat-finish").disabled = totalCoinReceived <= 0;
+      $("compat-progress").textContent = error.message;
     });
   }
 
-  function cancelTopup() {
+  function cancelTopup(autoCancel) {
+    if (!activeVoucher) {
+      resetTransaction();
+      return;
+    }
+
     clearTimeout(pollTimer);
-    rpc("/cancelTopUp", "POST", { voucher: activeVoucher, mac: context.mac || "" }).catch(function () {}).then(function () {
-      activeVoucher = "";
-      $("compat-transaction").hidden = true;
-      $("compat-topup").disabled = false;
+    pollTimer = null;
+    $("compat-cancel").disabled = true;
+
+    rpc("/cancelTopUp", "POST", {
+      voucher: activeVoucher,
+      mac: context.mac || ""
+    }).catch(function () {}).then(function () {
+      resetTransaction(autoCancel ? "No coin received. Coin slot closed." : "Coin insertion cancelled.");
     });
+  }
+
+  function handleCoinTimeout() {
+    if (finalizingTopup) return;
+    clearTimeout(pollTimer);
+    pollTimer = null;
+
+    if (totalCoinReceived > 0) {
+      finishTopup(true);
+    } else {
+      cancelTopup(true);
+    }
+  }
+
+  function pollCoin() {
+    clearTimeout(pollTimer);
+    if (!activeVoucher || finalizingTopup) return;
+
+    rpc("/checkCoin", "POST", { voucher: activeVoucher }).then(function (result) {
+      var data = responseData(result);
+      var errorCode = String(data.errorCode || "");
+
+      if (result.ok && (isTrue(data.status) || isTrue(data.success))) {
+        displayTransaction(data);
+        $("compat-progress").textContent = "Coin received. Insert another coin or wait for the timer.";
+        $("compat-progress-bar").style.width = "100%";
+        $("compat-countdown").textContent = "Renewed";
+      } else if (errorCode === "coin.is.reading") {
+        $("compat-progress").textContent = "Verifying coin, please wait…";
+      } else if (errorCode === "coin.not.inserted") {
+        displayTransaction(data);
+        var seconds = updateCountdown(data);
+        $("compat-progress").textContent = totalCoinReceived > 0
+          ? "Insert another coin to renew the timer, or press Done."
+          : "Waiting for coin…";
+
+        if (seconds <= 0) {
+          handleCoinTimeout();
+          return;
+        }
+      } else if (errorCode === "coinslot.busy") {
+        if (totalCoinReceived > 0) {
+          finishTopup(true);
+        } else {
+          resetTransaction("Coin slot was cancelled or is busy.");
+        }
+        return;
+      } else {
+        throw new Error(data.message || errorCode || "The coin slot reported an error.");
+      }
+
+      pollTimer = setTimeout(pollCoin, 1000);
+    }).catch(function (error) {
+      $("compat-progress").textContent = error.message;
+      pollTimer = setTimeout(pollCoin, 2500);
+    });
+  }
+
+  function startTopup(payload, retryCount) {
+    rpc("/topUp", "POST", payload).then(function (result) {
+      var data = responseData(result);
+      if (!result.ok || (!isTrue(data.status) && !isTrue(data.success))) {
+        throw new Error(data.message || data.errorCode || "The coin slot rejected the request.");
+      }
+
+      activeVoucher = generatedVoucher(data) || activeVoucher;
+      displayTransaction(data);
+      $("compat-progress").textContent = "Coin slot active. Insert a coin now.";
+      $("compat-progress-bar").style.width = "100%";
+      $("compat-countdown").textContent = "Ready";
+      pollCoin();
+    }).catch(function (error) {
+      if (retryCount < 3) {
+        setTimeout(function () { startTopup(payload, retryCount + 1); }, 1000);
+        return;
+      }
+
+      resetTransaction(error.message || "Coin slot is unavailable.");
+    });
+  }
+
+  function beginTopup(options) {
+    options = options || {};
+    transactionMode = options.mode || "internet";
+    alertMessage("");
+    totalCoinReceived = 0;
+    finalizingTopup = false;
+    $("compat-topup").disabled = true;
+    $("compat-finish").disabled = true;
+    $("compat-cancel").disabled = false;
+
+    var voucher = options.voucher || (transactionMode === "internet" ? currentVoucher() : "");
+    activeVoucher = String(voucher || "").trim().toUpperCase();
+
+    if (!activeVoucher) {
+      resetTransaction("A voucher code is required before inserting coins.");
+      return;
+    }
+
+    if (transactionMode === "internet") setCurrentVoucher(activeVoucher);
+
+    $("compat-code").textContent = activeVoucher;
+    $("compat-amount").textContent = "₱0";
+    $("compat-time").textContent = "—";
+    $("compat-progress").textContent = "Activating coin slot…";
+    $("compat-progress-bar").style.width = "100%";
+    $("compat-countdown").textContent = "Starting…";
+    $("compat-transaction").hidden = false;
+
+    var payload = {
+      voucher: activeVoucher,
+      mac: context.mac || "",
+      ipAddress: context.ip || "",
+      extendTime: 0
+    };
+
+    if (options.chargerPort !== undefined) {
+      payload.topupType = "CHARGER";
+      payload.chargerPort = options.chargerPort;
+    }
+
+    startTopup(payload, 0);
   }
 
   function showRates() {
@@ -439,8 +575,8 @@
   $("compat-topup").addEventListener("click", function () {
     beginTopup({ voucher: currentVoucher(), mode: "internet" });
   });
-  $("compat-finish").addEventListener("click", finishTopup);
-  $("compat-cancel").addEventListener("click", cancelTopup);
+  $("compat-finish").addEventListener("click", function () { finishTopup(false); });
+  $("compat-cancel").addEventListener("click", function () { cancelTopup(false); });
   $("compat-rates").addEventListener("click", showRates);
   $("compat-charging").addEventListener("click", showCharging);
   $("compat-eload").addEventListener("click", showEload);
