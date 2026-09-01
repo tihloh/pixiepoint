@@ -6,11 +6,16 @@ namespace PixiePoint\App\Api;
 
 use PDO;
 use InvalidArgumentException;
+use PixiePoint\App\Services\NetworkDeviceIdentity;
 use Tihloh\Prefab\Input\Input;
 
 final class AccountingController
 {
-    public function __construct(private PDO $db, private array $config) {}
+    public function __construct(
+        private PDO $db,
+        private array $config,
+        private NetworkDeviceIdentity $devices,
+    ) {}
 
     public function health(): never
     {
@@ -69,10 +74,8 @@ final class AccountingController
         $this->db->beginTransaction();
         try {
             if ($mac !== '') {
-                $this->db->prepare('INSERT INTO devices(mac,last_ip,last_seen_at) VALUES(?,?,?) ON DUPLICATE KEY UPDATE last_ip=VALUES(last_ip),last_seen_at=VALUES(last_seen_at)')->execute([$mac, $clientIp, now()]);
-                $lookup = $this->db->prepare('SELECT id,user_id FROM devices WHERE mac=?');
-                $lookup->execute([$mac]);
-                $device = $lookup->fetch() ?: [];
+                $scope = 'router:' . ($routerIdentity !== '' ? $routerIdentity : 'unknown');
+                $device = $this->devices->resolve($mac, $scope, $clientIp) ?: [];
                 $deviceId = $device['id'] ?? null;
                 $userId = $device['user_id'] ?? null;
             }
@@ -157,15 +160,13 @@ final class AccountingController
         $amount = (int)$payload['amount_pesos'];
         $divisor = max(1, (int)($this->config['points_pesos_per_point'] ?? 5));
         $excludeAt = max(0, (int)($this->config['points_exclude_sales_at_or_above'] ?? 50));
-        $points = ($excludeAt > 0 && $amount >= $excludeAt) ? 0 : intdiv($amount, $divisor);
+        $earnedPoints = ($excludeAt > 0 && $amount >= $excludeAt) ? 0 : intdiv($amount, $divisor);
 
         $this->db->beginTransaction();
         try {
             if ($mac !== '') {
-                $this->db->prepare('INSERT INTO devices(mac,last_ip,last_seen_at) VALUES(?,?,?) ON DUPLICATE KEY UPDATE last_ip=VALUES(last_ip),last_seen_at=VALUES(last_seen_at)')->execute([$mac, $clientIp, now()]);
-                $deviceStmt = $this->db->prepare('SELECT id,user_id FROM devices WHERE mac=? LIMIT 1');
-                $deviceStmt->execute([$mac]);
-                $device = $deviceStmt->fetch() ?: [];
+                $scope = 'router:' . (string)$payload['router_identity'] . '|interface:' . (string)($payload['interface_name'] ?? '');
+                $device = $this->devices->resolve($mac, $scope, $clientIp) ?: [];
                 $deviceId = $device['id'] ?? null;
                 $userId = $device['user_id'] ?? null;
             }
@@ -173,11 +174,12 @@ final class AccountingController
             $voucherStmt->execute([(string)$payload['username']]);
             $voucherId = $voucherStmt->fetchColumn() ?: null;
 
-            $stmt = $this->db->prepare('INSERT INTO router_login_events(event_key,router_id,device_id,user_id,voucher_id,username,mac,client_ip,interface_name,device_name,vendo_name,amount_pesos,duration_seconds,is_extension,points_awarded) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)');
-            $stmt->execute([$eventKey,$router['id'],$deviceId,$userId,$voucherId,(string)$payload['username'],$mac?:null,$clientIp?:null,$payload['interface_name']??null,$payload['device_name']??null,$payload['vendo_name']??null,$amount,(int)$payload['duration_seconds'],(int)$payload['is_extension'],$points]);
+            $awardedPoints = $userId ? $earnedPoints : 0;
+            $stmt = $this->db->prepare('INSERT INTO router_login_events(event_key,router_id,device_id,user_id,voucher_id,username,mac,client_ip,interface_name,device_name,vendo_name,amount_pesos,duration_seconds,is_extension,points_earned,points_awarded) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)');
+            $stmt->execute([$eventKey,$router['id'],$deviceId,$userId,$voucherId,(string)$payload['username'],$mac?:null,$clientIp?:null,$payload['interface_name']??null,$payload['device_name']??null,$payload['vendo_name']??null,$amount,(int)$payload['duration_seconds'],(int)$payload['is_extension'],$earnedPoints,$awardedPoints]);
             $eventId = (int)$this->db->lastInsertId();
-            if ($userId && $points > 0) {
-                $this->db->prepare('UPDATE users SET points=points+? WHERE id=?')->execute([$points, $userId]);
+            if ($userId && $awardedPoints > 0) {
+                $this->db->prepare('UPDATE users SET points=points+? WHERE id=?')->execute([$awardedPoints, $userId]);
             }
             $this->db->prepare('UPDATE routers SET last_seen_at=? WHERE id=?')->execute([now(), $router['id']]);
             $this->db->commit();
@@ -190,7 +192,7 @@ final class AccountingController
             $this->json(['ok' => false, 'error' => 'login_event_failed'], 500);
         }
 
-        $this->json(['ok' => true, 'duplicate' => false, 'event_id' => $eventId, 'points_awarded' => $points]);
+        $this->json(['ok' => true, 'duplicate' => false, 'event_id' => $eventId, 'points_awarded' => $awardedPoints]);
     }
 
     private function json(array $payload, int $status = 200): never
