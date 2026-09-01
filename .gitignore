@@ -3,3 +3,4 @@
 /data/sessions/
 /.env
 /config.php
+/vendor/

@@ -1,0 +1,415 @@
+{
+    "_readme": [
+        "This file locks the dependencies of your project to a known state",
+        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
+        "This file is @generated automatically"
+    ],
+    "content-hash": "4c596029e33716ae101f4b3f06e2eb23",
+    "packages": [
+        {
+            "name": "tihloh/prefab-auth",
+            "version": "v0.5.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/tihloh/prefab-auth.git",
+                "reference": "d8480400e65d6c90cba114a0126288ded555e0ef"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/tihloh/prefab-auth/zipball/d8480400e65d6c90cba114a0126288ded555e0ef",
+                "reference": "d8480400e65d6c90cba114a0126288ded555e0ef",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=8.1",
+                "tihloh/prefab-core": "^0.4"
+            },
+            "suggest": {
+                "tihloh/prefab-logs": "Optional structured activity logging for authentication events.",
+                "tihloh/prefab-users": "Optional user provider that Prefab Auth can discover automatically."
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Tihloh\\Prefab\\Auth\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Christian Bustamante"
+                }
+            ],
+            "description": "Standalone, framework-independent authentication building blocks for Prefab PHP.",
+            "homepage": "https://github.com/tihloh/prefab-php",
+            "keywords": [
+                "Authentication",
+                "auth",
+                "framework-independent",
+                "modular",
+                "oauth",
+                "php",
+                "prefab"
+            ],
+            "support": {
+                "issues": "https://github.com/tihloh/prefab-php/issues",
+                "source": "https://github.com/tihloh/prefab-php"
+            },
+            "time": "2026-08-29T19:24:46+00:00"
+        },
+        {
+            "name": "tihloh/prefab-core",
+            "version": "v0.4.2",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/tihloh/prefab-core.git",
+                "reference": "bfaae8ea40cc2f605339c1fa7ba98efbcf86de00"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/tihloh/prefab-core/zipball/bfaae8ea40cc2f605339c1fa7ba98efbcf86de00",
+                "reference": "bfaae8ea40cc2f605339c1fa7ba98efbcf86de00",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=8.1"
+            },
+            "suggest": {
+                "ext-pdo": "Required when using Core database infrastructure."
+            },
+            "type": "library",
+            "autoload": {
+                "files": [
+                    "src/prefab-debug-ui.php",
+                    "src/prefab-diagnostics.php",
+                    "src/prefab.php",
+                    "src/database.php"
+                ],
+                "psr-4": {
+                    "Tihloh\\Prefab\\Core\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Christian Bustamante"
+                }
+            ],
+            "description": "Shared infrastructure for Prefab PHP modules: runtime, config, database, session, cache, contracts and diagnostics.",
+            "homepage": "https://github.com/tihloh/prefab-php",
+            "keywords": [
+                "cache",
+                "core",
+                "database",
+                "framework-independent",
+                "modular",
+                "php",
+                "prefab",
+                "runtime",
+                "session"
+            ],
+            "support": {
+                "issues": "https://github.com/tihloh/prefab-php/issues",
+                "source": "https://github.com/tihloh/prefab-php"
+            },
+            "time": "2026-08-30T05:37:02+00:00"
+        },
+        {
+            "name": "tihloh/prefab-input",
+            "version": "v0.5.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/tihloh/prefab-input.git",
+                "reference": "3e4d9527e831e034a11eac0d1096777e43b63928"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/tihloh/prefab-input/zipball/3e4d9527e831e034a11eac0d1096777e43b63928",
+                "reference": "3e4d9527e831e034a11eac0d1096777e43b63928",
+                "shasum": ""
+            },
+            "require": {
+                "ext-fileinfo": "*",
+                "php": ">=8.1",
+                "tihloh/prefab-core": "^0.4"
+            },
+            "suggest": {
+                "tihloh/prefab-routes": "Optional routing integration for request input processing."
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Tihloh\\Prefab\\Input\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Christian Bustamante"
+                }
+            ],
+            "description": "Framework-independent input validation, normalization, casting, wildcard arrays and multipart upload handling for Prefab PHP.",
+            "homepage": "https://github.com/tihloh/prefab-php",
+            "keywords": [
+                "casting",
+                "filtering",
+                "framework-independent",
+                "input",
+                "modular",
+                "multipart",
+                "normalization",
+                "php",
+                "prefab",
+                "sanitization",
+                "upload",
+                "validation"
+            ],
+            "support": {
+                "issues": "https://github.com/tihloh/prefab-php/issues",
+                "source": "https://github.com/tihloh/prefab-php"
+            },
+            "time": "2026-08-29T19:24:46+00:00"
+        },
+        {
+            "name": "tihloh/prefab-logs",
+            "version": "v0.5.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/tihloh/prefab-logs.git",
+                "reference": "9cc37920eb946ad5d3be3b3b68a6109d7f0e7c2d"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/tihloh/prefab-logs/zipball/9cc37920eb946ad5d3be3b3b68a6109d7f0e7c2d",
+                "reference": "9cc37920eb946ad5d3be3b3b68a6109d7f0e7c2d",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=8.1",
+                "tihloh/prefab-core": "^0.4"
+            },
+            "suggest": {
+                "ext-pdo": "Required only when using Prefab's built-in PDO/database-backed log repository.",
+                "tihloh/prefab-auth": "Optional actor provider for automatic current-user attribution.",
+                "tihloh/prefab-users": "Optional user name resolution for human-friendly logs."
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Tihloh\\Prefab\\Logs\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Christian Bustamante"
+                }
+            ],
+            "description": "Standalone, framework-independent structured activity and audit logging for Prefab PHP.",
+            "homepage": "https://github.com/tihloh/prefab-php",
+            "keywords": [
+                "activity-log",
+                "audit-log",
+                "framework-independent",
+                "logging",
+                "modular",
+                "php",
+                "prefab"
+            ],
+            "support": {
+                "issues": "https://github.com/tihloh/prefab-php/issues",
+                "source": "https://github.com/tihloh/prefab-php"
+            },
+            "time": "2026-08-29T19:24:46+00:00"
+        },
+        {
+            "name": "tihloh/prefab-permissions",
+            "version": "v0.5.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/tihloh/prefab-permissions.git",
+                "reference": "4be83c554fccaa4343576f0c18f154ebffbffb0a"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/tihloh/prefab-permissions/zipball/4be83c554fccaa4343576f0c18f154ebffbffb0a",
+                "reference": "4be83c554fccaa4343576f0c18f154ebffbffb0a",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=8.1",
+                "tihloh/prefab-core": "^0.4"
+            },
+            "suggest": {
+                "ext-pdo": "Required only when using Prefab's built-in PDO/database-backed permission store.",
+                "tihloh/prefab-logs": "Optional structured activity logging for permission changes.",
+                "tihloh/prefab-users": "Optional user integration for permission subjects and group membership."
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Tihloh\\Prefab\\Permissions\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Christian Bustamante"
+                }
+            ],
+            "description": "Standalone, framework-independent permissions with group inheritance and user overrides for Prefab PHP.",
+            "homepage": "https://github.com/tihloh/prefab-php",
+            "keywords": [
+                "acl",
+                "authorization",
+                "framework-independent",
+                "modular",
+                "permissions",
+                "php",
+                "prefab",
+                "rbac"
+            ],
+            "support": {
+                "issues": "https://github.com/tihloh/prefab-php/issues",
+                "source": "https://github.com/tihloh/prefab-php"
+            },
+            "time": "2026-08-29T19:24:46+00:00"
+        },
+        {
+            "name": "tihloh/prefab-routes",
+            "version": "v0.5.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/tihloh/prefab-routes.git",
+                "reference": "7941a27e422ab54240118615408d39838b790ef9"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/tihloh/prefab-routes/zipball/7941a27e422ab54240118615408d39838b790ef9",
+                "reference": "7941a27e422ab54240118615408d39838b790ef9",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=8.1",
+                "tihloh/prefab-core": "^0.4"
+            },
+            "suggest": {
+                "tihloh/prefab-auth": "Optional authentication integration.",
+                "tihloh/prefab-logs": "Optional route activity/audit integration.",
+                "tihloh/prefab-permissions": "Optional route permission integration."
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Tihloh\\Prefab\\Routes\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Christian Bustamante"
+                }
+            ],
+            "description": "Lightweight, framework-independent routing for Prefab PHP that scales from small sites to modular applications.",
+            "homepage": "https://github.com/tihloh/prefab-php",
+            "keywords": [
+                "framework-independent",
+                "middleware",
+                "modular",
+                "php",
+                "prefab",
+                "router",
+                "routes",
+                "routing"
+            ],
+            "support": {
+                "issues": "https://github.com/tihloh/prefab-php/issues",
+                "source": "https://github.com/tihloh/prefab-php"
+            },
+            "time": "2026-08-29T19:24:46+00:00"
+        },
+        {
+            "name": "tihloh/prefab-users",
+            "version": "v0.5.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/tihloh/prefab-users.git",
+                "reference": "23dc8791f8ebd8c219f4180a90cb416c5be7a631"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/tihloh/prefab-users/zipball/23dc8791f8ebd8c219f4180a90cb416c5be7a631",
+                "reference": "23dc8791f8ebd8c219f4180a90cb416c5be7a631",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=8.1",
+                "tihloh/prefab-core": "^0.4"
+            },
+            "suggest": {
+                "ext-pdo": "Required only when using Prefab's built-in PDO/database-backed user provider.",
+                "tihloh/prefab-auth": "Optional authentication module that can automatically use Prefab Users.",
+                "tihloh/prefab-logs": "Optional structured activity logging for user operations."
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Tihloh\\Prefab\\Users\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Christian Bustamante"
+                }
+            ],
+            "description": "Standalone, framework-independent user management and project-table mapping for Prefab PHP.",
+            "homepage": "https://github.com/tihloh/prefab-php",
+            "keywords": [
+                "Users",
+                "framework-independent",
+                "modular",
+                "php",
+                "prefab",
+                "user-management"
+            ],
+            "support": {
+                "issues": "https://github.com/tihloh/prefab-php/issues",
+                "source": "https://github.com/tihloh/prefab-php"
+            },
+            "time": "2026-08-29T19:24:46+00:00"
+        }
+    ],
+    "packages-dev": [],
+    "aliases": [],
+    "minimum-stability": "stable",
+    "stability-flags": {},
+    "prefer-stable": false,
+    "prefer-lowest": false,
+    "platform": {
+        "php": ">=8.3"
+    },
+    "platform-dev": {},
+    "plugin-api-version": "2.6.0"
+}
