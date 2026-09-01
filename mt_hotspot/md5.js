@@ -1,2 +1,168 @@
-/* Compact MD5 for MikroTik HTTP-CHAP. */
-(function(r){function a(x,y){var l=(x&65535)+(y&65535),h=(x>>>16)+(y>>>16)+(l>>>16);return(h<<16)|(l&65535)}function o(x,n){return(x<<n)|(x>>>(32-n))}function c(q,x,y,z,k,s,t){return a(o(a(a(x,q),a(k,t)),s),y)}function f(x,y,z,w,k,s,t){return c((y&z)|(~y&w),x,y,z,k,s,t)}function g(x,y,z,w,k,s,t){return c((y&w)|(z&~w),x,y,z,k,s,t)}function h(x,y,z,w,k,s,t){return c(y^z^w,x,y,z,k,s,t)}function i(x,y,z,w,k,s,t){return c(z^(y|~w),x,y,z,k,s,t)}r.hexMD5=function(s){var n=s.length,p=s+String.fromCharCode(128),z=(56-p.length%64+64)%64,j;p+=new Array(z+1).join(String.fromCharCode(0));var lo=n*8,hi=Math.floor(n/536870912);for(j=0;j<4;j++)p+=String.fromCharCode(lo>>>j*8&255);for(j=0;j<4;j++)p+=String.fromCharCode(hi>>>j*8&255);var A=1732584193,B=-271733879,C=-1732584194,D=271733878;for(var q=0;q<p.length;q+=64){var X=[],aa=A,bb=B,cc=C,dd=D;for(j=0;j<64;j+=4)X[j>>2]=p.charCodeAt(q+j)|(p.charCodeAt(q+j+1)<<8)|(p.charCodeAt(q+j+2)<<16)|(p.charCodeAt(q+j+3)<<24);var F=[f,g,h,i],S=[[7,12,17,22],[5,9,14,20],[4,11,16,23],[6,10,15,21]],T=[];for(j=0;j<64;j++)T[j]=(Math.abs(Math.sin(j+1))*4294967296)|0;for(j=0;j<64;j++){var round=j>>4,k;if(round===0)k=j;else if(round===1)k=(5*j+1)%16;else if(round===2)k=(3*j+5)%16;else k=7*j%16;var tmp=D;D=C;C=B;B=F[round](A,B,C,D,X[k],S[round][j%4],T[j]);A=tmp}A=a(A,aa);B=a(B,bb);C=a(C,cc);D=a(D,dd)}function hex(v){var s="";for(var k=0;k<4;k++)s+=("0"+(v>>>k*8&255).toString(16)).slice(-2);return s}return hex(A)+hex(B)+hex(C)+hex(D)}})(this);
+/* MD5 implementation used for MikroTik HTTP-CHAP authentication. */
+(function exposeMd5(globalScope) {
+  "use strict";
+
+  function addWords(left, right) {
+    var low = (left & 0xffff) + (right & 0xffff);
+    var high = (left >>> 16) + (right >>> 16) + (low >>> 16);
+    return (high << 16) | (low & 0xffff);
+  }
+
+  function rotateLeft(value, amount) {
+    return (value << amount) | (value >>> (32 - amount));
+  }
+
+  function combine(result, current, next, message, shift, constant) {
+    var sum = addWords(addWords(current, result), addWords(message, constant));
+    return addWords(rotateLeft(sum, shift), next);
+  }
+
+  function roundF(current, next, third, fourth, message, shift, constant) {
+    return combine(
+      (next & third) | (~next & fourth),
+      current,
+      next,
+      message,
+      shift,
+      constant
+    );
+  }
+
+  function roundG(current, next, third, fourth, message, shift, constant) {
+    return combine(
+      (next & fourth) | (third & ~fourth),
+      current,
+      next,
+      message,
+      shift,
+      constant
+    );
+  }
+
+  function roundH(current, next, third, fourth, message, shift, constant) {
+    return combine(
+      next ^ third ^ fourth,
+      current,
+      next,
+      message,
+      shift,
+      constant
+    );
+  }
+
+  function roundI(current, next, third, fourth, message, shift, constant) {
+    return combine(
+      third ^ (next | ~fourth),
+      current,
+      next,
+      message,
+      shift,
+      constant
+    );
+  }
+
+  function wordToHex(value) {
+    var output = "";
+    var byteIndex;
+
+    for (byteIndex = 0; byteIndex < 4; byteIndex += 1) {
+      output += ("0" + ((value >>> (byteIndex * 8)) & 0xff).toString(16)).slice(-2);
+    }
+
+    return output;
+  }
+
+  globalScope.hexMD5 = function hexMD5(input) {
+    var inputLength = input.length;
+    var paddedInput = input + String.fromCharCode(128);
+    var paddingLength = (56 - (paddedInput.length % 64) + 64) % 64;
+    var lowBitLength = inputLength * 8;
+    var highBitLength = Math.floor(inputLength / 536870912);
+    var index;
+
+    paddedInput += new Array(paddingLength + 1).join(String.fromCharCode(0));
+
+    for (index = 0; index < 4; index += 1) {
+      paddedInput += String.fromCharCode((lowBitLength >>> (index * 8)) & 0xff);
+    }
+
+    for (index = 0; index < 4; index += 1) {
+      paddedInput += String.fromCharCode((highBitLength >>> (index * 8)) & 0xff);
+    }
+
+    var accumulatorA = 1732584193;
+    var accumulatorB = -271733879;
+    var accumulatorC = -1732584194;
+    var accumulatorD = 271733878;
+    var roundFunctions = [roundF, roundG, roundH, roundI];
+    var shifts = [
+      [7, 12, 17, 22],
+      [5, 9, 14, 20],
+      [4, 11, 16, 23],
+      [6, 10, 15, 21]
+    ];
+    var constants = [];
+
+    for (index = 0; index < 64; index += 1) {
+      constants[index] = (Math.abs(Math.sin(index + 1)) * 4294967296) | 0;
+    }
+
+    var blockOffset;
+    for (blockOffset = 0; blockOffset < paddedInput.length; blockOffset += 64) {
+      var words = [];
+      var savedA = accumulatorA;
+      var savedB = accumulatorB;
+      var savedC = accumulatorC;
+      var savedD = accumulatorD;
+
+      for (index = 0; index < 64; index += 4) {
+        words[index >> 2] =
+          paddedInput.charCodeAt(blockOffset + index) |
+          (paddedInput.charCodeAt(blockOffset + index + 1) << 8) |
+          (paddedInput.charCodeAt(blockOffset + index + 2) << 16) |
+          (paddedInput.charCodeAt(blockOffset + index + 3) << 24);
+      }
+
+      for (index = 0; index < 64; index += 1) {
+        var round = index >> 4;
+        var wordIndex;
+
+        if (round === 0) {
+          wordIndex = index;
+        } else if (round === 1) {
+          wordIndex = ((5 * index) + 1) % 16;
+        } else if (round === 2) {
+          wordIndex = ((3 * index) + 5) % 16;
+        } else {
+          wordIndex = (7 * index) % 16;
+        }
+
+        var nextB = roundFunctions[round](
+          accumulatorA,
+          accumulatorB,
+          accumulatorC,
+          accumulatorD,
+          words[wordIndex],
+          shifts[round][index % 4],
+          constants[index]
+        );
+        accumulatorA = accumulatorD;
+        accumulatorD = accumulatorC;
+        accumulatorC = accumulatorB;
+        accumulatorB = nextB;
+      }
+
+      accumulatorA = addWords(accumulatorA, savedA);
+      accumulatorB = addWords(accumulatorB, savedB);
+      accumulatorC = addWords(accumulatorC, savedC);
+      accumulatorD = addWords(accumulatorD, savedD);
+    }
+
+    return (
+      wordToHex(accumulatorA) +
+      wordToHex(accumulatorB) +
+      wordToHex(accumulatorC) +
+      wordToHex(accumulatorD)
+    );
+  };
+}(this));

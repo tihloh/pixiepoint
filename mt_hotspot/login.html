@@ -1,12 +1,220 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#07111f"><title>PixiePoint Wi-Fi</title>
-<style>*{box-sizing:border-box}html,body{min-height:100%;margin:0}body.booting{display:grid;place-items:center;padding:20px;color:#eef4ff;background:#07111f;font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}.boot{width:min(100%,430px);padding:30px;border:1px solid #ffffff18;border-radius:24px;background:#0e1d31}.boot strong{font-size:22px}.boot p{color:#9fb0c7}.dot{display:inline-block;width:9px;height:9px;margin-right:8px;border-radius:50%;background:#20d6b5;animation:pulse 1.5s infinite}@keyframes pulse{50%{opacity:.3}}</style></head>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#07111f">
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>PixiePoint Wi-Fi</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      min-height: 100%;
+      margin: 0;
+    }
+
+    body.booting {
+      display: grid;
+      place-items: center;
+      padding: 20px;
+      color: #eef4ff;
+      background: #07111f;
+      font: 16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+    }
+
+    .boot {
+      width: min(100%, 430px);
+      padding: 30px;
+      border: 1px solid #ffffff18;
+      border-radius: 24px;
+      background: #0e1d31;
+    }
+
+    .boot strong {
+      font-size: 22px;
+    }
+
+    .boot p {
+      color: #9fb0c7;
+    }
+
+    .dot {
+      display: inline-block;
+      width: 9px;
+      height: 9px;
+      margin-right: 8px;
+      border-radius: 50%;
+      background: #20d6b5;
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      50% {
+        opacity: 0.3;
+      }
+    }
+  </style>
+</head>
 <body class="booting">
-<div hidden>$(if chap-id)<form id="chap-login" action="$(link-login-only)" method="post"><input type="hidden" name="username"><input type="hidden" name="password"><input type="hidden" name="dst" value="$(link-orig)"><input type="hidden" name="popup" value="true"></form>$(endif)</div>
-<form id="pap-login" action="$(link-login-only)" method="post" hidden><input type="hidden" name="username"><input type="hidden" name="password"><input type="hidden" name="dst" value="$(link-orig)"><input type="hidden" name="popup" value="true"></form>
-<main id="pixiepoint-root"><section class="boot"><strong>PixiePoint Wi-Fi</strong><p><span class="dot"></span><span id="boot-status">Checking the hosted portal…</span></p></section></main>
-<script src="vendo-config.js"></script><script src="md5.js"></script>
-<script>
-window.PIXIEPOINT_CONTEXT={mac:"$(mac)",ip:"$(ip)",username:"$(username)",routerIdentity:"$(identity)",interfaceName:"$(interface-name)",serverAddress:"$(server-address)",error:"$(error)"};window.PIXIEPOINT_CHAP={id:"$(chap-id)",challenge:"$(chap-challenge)"};window.PIXIEPOINT_BOOTSTRAP=true;
-(function(){var origin=window.PIXIEPOINT_HOSTED_ORIGIN,loading=false,loaded=false;function status(text){document.getElementById("boot-status").textContent=text}function load(){if(loading||loaded)return;loading=true;fetch(origin+"/hotspot/health?t="+Date.now(),{mode:"cors",cache:"no-store",credentials:"omit"}).then(function(r){if(!r.ok)throw Error();return r.json()}).then(function(h){if(!h||h.ready!==true)throw Error();var css=document.createElement("link");css.rel="stylesheet";css.href=origin+"/assets/app.css";document.head.appendChild(css);var js=document.createElement("script");js.src=origin+"/assets/juanfi-compat.js";js.onload=function(){loaded=true;loading=false};js.onerror=function(){loading=false;status("Hosted portal assets unavailable · checking again…");setTimeout(load,3000)};document.head.appendChild(js)}).catch(function(){loading=false;status(navigator.onLine===false?"No network connection · checking again…":"Hosted portal unavailable · checking again…");setTimeout(load,3000)})}window.addEventListener("online",load);load()}());
-</script></body></html>
+  <div hidden>
+    $(if chap-id)
+    <form id="chap-login" action="$(link-login-only)" method="post">
+      <input type="hidden" name="username">
+      <input type="hidden" name="password">
+      <input type="hidden" name="dst" value="$(link-orig)">
+      <input type="hidden" name="popup" value="true">
+    </form>
+    $(endif)
+  </div>
+
+  <form id="pap-login" action="$(link-login-only)" method="post" hidden>
+    <input type="hidden" name="username">
+    <input type="hidden" name="password">
+    <input type="hidden" name="dst" value="$(link-orig)">
+    <input type="hidden" name="popup" value="true">
+  </form>
+
+  <main id="pixiepoint-root">
+    <section class="boot">
+      <strong>PixiePoint Wi-Fi</strong>
+      <p>
+        <span class="dot"></span>
+        <span id="boot-status">Checking the hosted portal…</span>
+      </p>
+    </section>
+  </main>
+
+  <script src="vendo-config.js"></script>
+  <script src="md5.js"></script>
+  <script>
+    window.PIXIEPOINT_CONTEXT = {
+      mac: "$(mac)",
+      ip: "$(ip)",
+      username: "$(username)",
+      routerIdentity: "$(identity)",
+      interfaceName: "$(interface-name)",
+      serverAddress: "$(server-address)",
+      error: "$(error)"
+    };
+
+    window.PIXIEPOINT_CHAP = {
+      id: "$(chap-id)",
+      challenge: "$(chap-challenge)"
+    };
+
+    window.PIXIEPOINT_BOOTSTRAP = true;
+
+    (function bootstrapHostedPortal() {
+      "use strict";
+
+      var hostedOrigin = window.PIXIEPOINT_HOSTED_ORIGIN;
+      var checking = false;
+      var assetsStarted = false;
+      var retryTimer = 0;
+
+      function showStatus(message) {
+        var statusElement = document.getElementById("boot-status");
+        if (statusElement) {
+          statusElement.textContent = message;
+        }
+      }
+
+      function scheduleRetry(message) {
+        checking = false;
+        showStatus(message);
+        clearTimeout(retryTimer);
+        retryTimer = setTimeout(checkHostedPortal, 3000);
+      }
+
+      function loadHostedAssets(version) {
+        if (assetsStarted) {
+          return;
+        }
+
+        assetsStarted = true;
+
+        if (!document.getElementById("pixiepoint-css")) {
+          var stylesheet = document.createElement("link");
+          stylesheet.id = "pixiepoint-css";
+          stylesheet.rel = "stylesheet";
+          stylesheet.href = hostedOrigin + "/assets/app.css?v=" + version;
+          document.head.appendChild(stylesheet);
+        }
+
+        var application = document.createElement("script");
+        application.id = "pixiepoint-app";
+        application.src = hostedOrigin + "/assets/juanfi-compat.js?v=" + version;
+        application.onerror = function handleAssetError() {
+          assetsStarted = false;
+          application.remove();
+          scheduleRetry("Hosted portal assets unavailable · checking again…");
+        };
+        document.head.appendChild(application);
+      }
+
+      function checkHostedPortal() {
+        if (checking || assetsStarted) {
+          return;
+        }
+
+        checking = true;
+
+        var request = new XMLHttpRequest();
+        request.open(
+          "GET",
+          hostedOrigin + "/hotspot/health?t=" + Date.now(),
+          true
+        );
+        request.timeout = 5000;
+        request.setRequestHeader("Accept", "application/json");
+
+        request.onload = function handleHealthResponse() {
+          checking = false;
+
+          var health = null;
+          try {
+            health = JSON.parse(request.responseText);
+          } catch (error) {
+            health = null;
+          }
+
+          if (
+            request.status >= 200 &&
+            request.status < 300 &&
+            health &&
+            health.ready === true
+          ) {
+            loadHostedAssets(Date.now());
+            return;
+          }
+
+          scheduleRetry("Hosted portal unavailable · checking again…");
+        };
+
+        request.onerror = function handleNetworkError() {
+          var message = navigator.onLine === false
+            ? "No network connection · checking again…"
+            : "Hosted portal unavailable · checking again…";
+          scheduleRetry(message);
+        };
+
+        request.ontimeout = request.onerror;
+        request.send();
+      }
+
+      window.addEventListener("online", function handleOnline() {
+        clearTimeout(retryTimer);
+        checkHostedPortal();
+      });
+
+      checkHostedPortal();
+    }());
+  </script>
+</body>
+</html>
