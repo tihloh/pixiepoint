@@ -3,6 +3,7 @@
 
   const context = window.PIXIEPOINT_SESSION || window.PIXIEPOINT_CONTEXT || {};
   const hostedOrigin = window.PIXIEPOINT_HOSTED_ORIGIN || "https://hs.portalx.win";
+  const uuidKey = "pixiepoint:device-uuid";
 
   function number(value) {
     value = Number(value);
@@ -44,6 +45,23 @@
     });
   }
 
+  function storedUuid() {
+    try {
+      return String(localStorage.getItem(uuidKey) || "").trim().toLowerCase();
+    } catch (_) {
+      return "";
+    }
+  }
+
+  function rememberUuid(uuid) {
+    uuid = String(uuid || "").trim().toLowerCase();
+    if (!uuid) return;
+
+    try {
+      localStorage.setItem(uuidKey, uuid);
+    } catch (_) {}
+  }
+
   function findCard() {
     return document.querySelector(".portal .card") || document.querySelector(".portal");
   }
@@ -66,6 +84,9 @@
   }
 
   function createHistoryModal(history) {
+    const old = document.getElementById("pp-history-modal");
+    if (old) old.remove();
+
     const modalElement = document.createElement("div");
     modalElement.className = "modal fade";
     modalElement.id = "pp-history-modal";
@@ -109,30 +130,10 @@
         </div>
 
         <div class="row g-2 mb-3">
-          <div class="col-6">
-            <div class="border rounded-3 p-2 h-100">
-              <small class="text-body-secondary d-block">Points</small>
-              <strong>${number(data.points)} pts</strong>
-            </div>
-          </div>
-          <div class="col-6">
-            <div class="border rounded-3 p-2 h-100">
-              <small class="text-body-secondary d-block">Purchases</small>
-              <strong>${number(data.stats && data.stats.purchases)}</strong>
-            </div>
-          </div>
-          <div class="col-6">
-            <div class="border rounded-3 p-2 h-100">
-              <small class="text-body-secondary d-block">Total purchased</small>
-              <strong>${duration(data.stats && data.stats.purchased_seconds)}</strong>
-            </div>
-          </div>
-          <div class="col-6">
-            <div class="border rounded-3 p-2 h-100">
-              <small class="text-body-secondary d-block">Spent</small>
-              <strong>₱${number(data.stats && data.stats.spent)}</strong>
-            </div>
-          </div>
+          <div class="col-6"><div class="border rounded-3 p-2 h-100"><small class="text-body-secondary d-block">Points</small><strong>${number(data.points)} pts</strong></div></div>
+          <div class="col-6"><div class="border rounded-3 p-2 h-100"><small class="text-body-secondary d-block">Purchases</small><strong>${number(data.stats && data.stats.purchases)}</strong></div></div>
+          <div class="col-6"><div class="border rounded-3 p-2 h-100"><small class="text-body-secondary d-block">Total purchased</small><strong>${duration(data.stats && data.stats.purchased_seconds)}</strong></div></div>
+          <div class="col-6"><div class="border rounded-3 p-2 h-100"><small class="text-body-secondary d-block">Spent</small><strong>₱${number(data.stats && data.stats.spent)}</strong></div></div>
         </div>
 
         <button class="btn btn-outline-secondary btn-sm w-100" id="pp-history-open" type="button">Recent history</button>
@@ -146,11 +147,8 @@
     `;
 
     const brand = card.querySelector(".brand");
-    if (brand && brand.nextSibling) {
-      card.insertBefore(panel, brand.nextSibling);
-    } else {
-      card.prepend(panel);
-    }
+    if (brand && brand.nextSibling) card.insertBefore(panel, brand.nextSibling);
+    else card.prepend(panel);
 
     const modal = createHistoryModal(history);
     document.getElementById("pp-history-open").onclick = function () {
@@ -158,11 +156,18 @@
     };
   }
 
-  function load() {
-    if (!context.mac) return;
+  function publish(data) {
+    const uuid = data && data.device && data.device.uuid;
+    if (uuid) rememberUuid(uuid);
 
+    window.PIXIEPOINT_DEVICE_PROFILE = data;
+    window.dispatchEvent(new CustomEvent("pixiepoint:device-profile", { detail: data }));
+  }
+
+  function requestProfile(uuid, allowMacFallback) {
     const query = new URLSearchParams({
-      mac: context.mac || "",
+      uuid: uuid || "",
+      mac: uuid ? "" : (context.mac || ""),
       ip: context.ip || "",
       router_identity: context.routerIdentity || "",
       interface: context.interfaceName || ""
@@ -174,15 +179,38 @@
     xhr.setRequestHeader("Accept", "application/json");
 
     xhr.onload = function () {
-      if (xhr.status < 200 || xhr.status >= 300) return;
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try {
+          const data = JSON.parse(xhr.responseText);
+          if (data && data.ok) {
+            publish(data);
+            render(data);
+            return;
+          }
+        } catch (_) {}
+      }
 
-      try {
-        const data = JSON.parse(xhr.responseText);
-        if (data && data.ok) render(data);
-      } catch (_) {}
+      if (uuid && allowMacFallback && context.mac) {
+        try { localStorage.removeItem(uuidKey); } catch (_) {}
+        requestProfile("", false);
+      }
+    };
+
+    xhr.onerror = xhr.ontimeout = function () {
+      if (uuid && allowMacFallback && context.mac) requestProfile("", false);
     };
 
     xhr.send();
+  }
+
+  function load() {
+    const uuid = storedUuid();
+    if (uuid) {
+      requestProfile(uuid, true);
+      return;
+    }
+
+    if (context.mac) requestProfile("", false);
   }
 
   let attempts = 0;
