@@ -14,6 +14,7 @@ use PixiePoint\App\Services\AuthContext;
 use PixiePoint\App\Services\DeviceIdentity;
 use PixiePoint\App\Services\GoogleOAuth;
 use PixiePoint\App\Services\NetworkDeviceIdentity;
+use PixiePoint\App\Services\PointWallet;
 use PixiePoint\App\Services\PrefabKernel;
 use PixiePoint\App\Services\View;
 use Tihloh\Prefab\Routes\RouteMatch;
@@ -33,13 +34,14 @@ final class Application
         $google = new GoogleOAuth($app->db, $app->config, $prefab['users']);
         $devices = new DeviceIdentity($app->db);
         $networkDevices = new NetworkDeviceIdentity($app->db);
+        $points = new PointWallet($app->db);
         $logs = $prefab['logs'];
         $routes = $prefab['routes'];
 
         $controllers = [
             'auth' => new AuthController($prefab['users'], $auth, $google, $view),
-            'dashboard' => new DashboardController($app->db, $auth, $view, $devices),
-            'hotspot' => new HotspotController($app->db, new RouterModel($app->db), $auth, $view, $devices),
+            'dashboard' => new DashboardController($app->db, $auth, $view, $devices, $points),
+            'hotspot' => new HotspotController($app->db, new RouterModel($app->db), $auth, $view, $devices, $points),
             'admin' => new AdminController($app->db, $auth, $view, $logs),
             'api' => new AccountingController($app->db, $app->config, $networkDevices),
         ];
