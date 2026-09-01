@@ -1,17 +1,172 @@
 /*
- * PixiePoint application-specific styles only.
- * Bootstrap 5.3 provides the site theme, layout, components and utilities.
+ * PixiePoint theme for Bootstrap 5.3.
+ * Bootstrap owns layout/components/utilities; this file keeps PixiePoint's visual identity.
  */
 
+:root,
+[data-bs-theme="dark"] {
+  --bs-body-color: #eef4ff;
+  --bs-body-color-rgb: 238, 244, 255;
+  --bs-body-bg: #07111f;
+  --bs-body-bg-rgb: 7, 17, 31;
+  --bs-emphasis-color: #ffffff;
+  --bs-secondary-color: #96a8c0;
+  --bs-secondary-color-rgb: 150, 168, 192;
+  --bs-tertiary-bg: #101f34;
+  --bs-border-color: #2b4059;
+  --bs-border-color-translucent: rgba(255, 255, 255, .08);
+  --bs-primary: #7c5cff;
+  --bs-primary-rgb: 124, 92, 255;
+  --bs-success: #20d6b5;
+  --bs-success-rgb: 32, 214, 181;
+  --bs-danger: #ff7187;
+  --bs-danger-rgb: 255, 113, 135;
+  --bs-warning: #ffca68;
+  --bs-warning-rgb: 255, 202, 104;
+  --bs-link-color: #b8c8ff;
+  --bs-link-hover-color: #d5dfff;
+  --bs-border-radius: .75rem;
+  --bs-border-radius-lg: 1rem;
+  --bs-border-radius-xl: 1.25rem;
+  --bs-box-shadow: 0 24px 70px rgba(0, 0, 0, .4);
+  --pixie-panel: #0e1d31;
+  --pixie-panel-soft: #101f34;
+  --pixie-line: rgba(255, 255, 255, .08);
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  background:
+    radial-gradient(circle at 10% 0, #302265 0, transparent 31rem),
+    var(--bs-body-bg);
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+/* Bootstrap components, PixiePoint look */
+.navbar {
+  --bs-navbar-color: var(--bs-secondary-color);
+  --bs-navbar-hover-color: var(--bs-body-color);
+  --bs-navbar-brand-color: var(--bs-body-color);
+  --bs-navbar-brand-hover-color: #fff;
+  background: rgba(7, 17, 31, .93);
+  border-color: var(--pixie-line) !important;
+  backdrop-filter: blur(16px);
+}
+
+.navbar-toggler {
+  border-color: var(--pixie-line);
+}
+
+.card,
+.modal-content,
+.dropdown-menu,
+.list-group-item {
+  color: var(--bs-body-color);
+  background-color: rgba(14, 29, 49, .96);
+  border-color: var(--pixie-line);
+}
+
+.card {
+  --bs-card-border-radius: 1.25rem;
+  --bs-card-inner-border-radius: calc(1.25rem - 1px);
+  box-shadow: 0 .35rem 1.1rem rgba(0, 0, 0, .18);
+}
+
+.btn {
+  --bs-btn-border-radius: .75rem;
+  --bs-btn-font-weight: 700;
+  min-height: 42px;
+}
+
+.btn-primary {
+  --bs-btn-color: #fff;
+  --bs-btn-bg: #7c5cff;
+  --bs-btn-border-color: #7c5cff;
+  --bs-btn-hover-color: #fff;
+  --bs-btn-hover-bg: #6d4fea;
+  --bs-btn-hover-border-color: #6d4fea;
+  --bs-btn-active-bg: #6346dc;
+  --bs-btn-active-border-color: #6346dc;
+  background-image: linear-gradient(135deg, #7c5cff, #538cff);
+}
+
+.btn-outline-secondary {
+  --bs-btn-color: #c5d1e0;
+  --bs-btn-border-color: #39516d;
+  --bs-btn-hover-color: #eef4ff;
+  --bs-btn-hover-bg: rgba(255, 255, 255, .07);
+  --bs-btn-hover-border-color: #506b89;
+}
+
+.form-control,
+.form-select {
+  min-height: 46px;
+  color: var(--bs-body-color);
+  background-color: #081423;
+  border-color: #2b4059;
+  border-radius: .75rem;
+}
+
+.form-control:hover,
+.form-select:hover {
+  border-color: #39516d;
+}
+
+.form-control:focus,
+.form-select:focus {
+  color: var(--bs-body-color);
+  background-color: #09172a;
+  border-color: #7c5cff;
+  box-shadow: 0 0 0 .25rem rgba(124, 92, 255, .15);
+}
+
+.form-label {
+  color: #c5d1e0;
+  font-weight: 700;
+}
+
+.table {
+  --bs-table-color: var(--bs-body-color);
+  --bs-table-bg: transparent;
+  --bs-table-border-color: var(--pixie-line);
+  --bs-table-hover-color: var(--bs-body-color);
+  --bs-table-hover-bg: rgba(255, 255, 255, .025);
+}
+
+.alert-danger {
+  --bs-alert-color: #ffc5ce;
+  --bs-alert-bg: rgba(255, 113, 135, .10);
+  --bs-alert-border-color: rgba(255, 113, 135, .16);
+}
+
+.alert-success {
+  --bs-alert-color: #a8ffea;
+  --bs-alert-bg: rgba(32, 214, 181, .10);
+  --bs-alert-border-color: rgba(32, 214, 181, .16);
+}
+
+/* PixiePoint-specific layout */
 .portal {
   min-height: 100vh;
   display: grid;
   place-items: center;
-  padding: 1rem;
+  padding: 18px 12px;
 }
 
 .portal > .card {
   width: min(100%, 440px);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
 }
 
 .logo {
@@ -20,17 +175,11 @@
   flex: 0 0 36px;
   display: grid;
   place-items: center;
-  border-radius: var(--bs-border-radius-lg);
-  background: var(--bs-primary);
-  color: var(--bs-white);
-  font-weight: 700;
-}
-
-.brand {
-  display: flex;
-  align-items: center;
-  gap: .625rem;
-  margin-bottom: 1rem;
+  border-radius: 11px;
+  color: #06121f;
+  background: var(--bs-success);
+  font-size: 15px;
+  font-weight: 900;
 }
 
 .heading {
@@ -56,6 +205,7 @@
 .metric small,
 .context small {
   display: block;
+  color: var(--bs-secondary-color);
 }
 
 .metric strong {
@@ -69,6 +219,13 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: .5rem;
   margin: .75rem 0;
+}
+
+.context > div {
+  padding: .6rem .7rem;
+  border: 1px solid var(--pixie-line);
+  border-radius: .75rem;
+  background: rgba(255, 255, 255, .03);
 }
 
 .form-grid {
@@ -89,10 +246,11 @@
 
 .empty {
   padding: 1.5rem;
+  color: var(--bs-secondary-color);
   text-align: center;
 }
 
-/* Temporary aliases for older templates while they move to Bootstrap markup. */
+/* Temporary aliases until every template uses native Bootstrap classes. */
 .muted {
   color: var(--bs-secondary-color) !important;
 }
@@ -102,21 +260,15 @@
   align-items: center;
   justify-content: center;
   gap: .5rem;
-  min-height: 38px;
-  padding: .375rem .75rem;
-  border: var(--bs-border-width) solid var(--bs-primary);
-  border-radius: var(--bs-border-radius);
-  color: var(--bs-white);
-  background: var(--bs-primary);
-  font-weight: 400;
-  line-height: 1.5;
+  min-height: 42px;
+  padding: .55rem .9rem;
+  border: 1px solid transparent;
+  border-radius: .75rem;
+  color: #fff;
+  background: linear-gradient(135deg, #7c5cff, #538cff);
+  font-weight: 700;
   text-decoration: none;
   cursor: pointer;
-}
-
-.button:hover {
-  color: var(--bs-white);
-  background: color-mix(in srgb, var(--bs-primary) 85%, black);
 }
 
 .button.full {
@@ -125,48 +277,51 @@
 
 .button.secondary,
 .button.ghost {
-  color: var(--bs-secondary-color);
+  color: #c5d1e0;
   background: transparent;
-  border-color: var(--bs-secondary-color);
+  border-color: #39516d;
 }
 
 .field {
-  margin-bottom: 1rem;
+  margin-bottom: .75rem;
 }
 
 .field label {
   display: block;
-  margin-bottom: .5rem;
+  margin-bottom: .35rem;
+  color: #c5d1e0;
+  font-weight: 700;
 }
 
 .field input,
 .field select,
 .field textarea {
-  display: block;
   width: 100%;
-  padding: .375rem .75rem;
-  border: var(--bs-border-width) solid var(--bs-border-color);
-  border-radius: var(--bs-border-radius);
+  min-height: 46px;
+  padding: .55rem .75rem;
   color: var(--bs-body-color);
-  background: var(--bs-body-bg);
+  background: #081423;
+  border: 1px solid #2b4059;
+  border-radius: .75rem;
 }
 
 .alert.ok {
-  color: var(--bs-success-text-emphasis);
-  background: var(--bs-success-bg-subtle);
-  border-color: var(--bs-success-border-subtle);
+  color: #a8ffea;
+  background: rgba(32, 214, 181, .10);
+  border-color: rgba(32, 214, 181, .16);
 }
 
-/* Google sign-in keeps its provider-specific appearance. */
+/* Provider-specific Google button */
 .google-button {
   width: 100%;
-  min-height: 42px;
+  min-height: 46px;
+  margin-top: 12px;
+  padding: 0 1rem;
   display: grid;
   grid-template-columns: 24px 1fr 24px;
   align-items: center;
-  padding: 0 1rem;
   border: 1px solid #dadce0;
-  border-radius: var(--bs-border-radius);
+  border-radius: .75rem;
   color: #1f1f1f;
   background: #fff;
   font-family: Roboto, Arial, sans-serif;
@@ -177,7 +332,7 @@
 
 .google-button:hover {
   color: #1f1f1f;
-  background: #f8f9fa;
+  background: #f8faff;
 }
 
 .google-button span {
@@ -187,7 +342,6 @@
 .google-icon {
   width: 18px;
   height: 18px;
-  display: block;
 }
 
 .auth-divider {
@@ -212,7 +366,7 @@
   text-align: center;
 }
 
-/* PixiePoint hotspot-specific widgets. */
+/* Hotspot widgets */
 .compat-status {
   display: block;
   margin-top: .25rem;
@@ -231,23 +385,21 @@
 .compat-rate-list,
 .compat-inline {
   margin-top: .75rem;
-}
-
-.compat-transaction > strong {
-  display: block;
-  font-family: var(--bs-font-monospace);
-  font-size: 1.25rem;
+  padding: .75rem;
+  border: 1px solid var(--pixie-line);
+  border-radius: .75rem;
+  background: rgba(255, 255, 255, .025);
 }
 
 .compat-voucher {
   margin-top: 1rem;
   padding-top: 1rem;
-  border-top: var(--bs-border-width) solid var(--bs-border-color);
+  border-top: 1px solid var(--pixie-line);
 }
 
 .compat-rate {
   padding: .5rem 0;
-  border-bottom: var(--bs-border-width) solid var(--bs-border-color);
+  border-bottom: 1px solid var(--pixie-line);
 }
 
 .compat-rate:last-child {
@@ -280,10 +432,6 @@
 
   .context {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .compat-tools {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
