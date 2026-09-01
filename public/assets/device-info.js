@@ -4,7 +4,6 @@
   const context = window.PIXIEPOINT_SESSION || window.PIXIEPOINT_CONTEXT || {};
   const hostedOrigin = window.PIXIEPOINT_HOSTED_ORIGIN || "https://hs.portalx.win";
   const uuidKey = "pixiepoint:device-uuid";
-  const isStatus = !!window.PIXIEPOINT_SESSION;
 
   function number(value) {
     value = Number(value);
@@ -96,13 +95,8 @@
       </div>
     `;
 
-    if (isStatus) {
-      card.appendChild(panel);
-    } else {
-      const brand = card.querySelector(".brand");
-      if (brand && brand.nextSibling) card.insertBefore(panel, brand.nextSibling);
-      else card.prepend(panel);
-    }
+    // Keep Device details at the bottom of the portal, after the main login/session actions.
+    card.appendChild(panel);
   }
 
   function publish(data) {
