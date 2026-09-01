@@ -1,37 +1,27 @@
 /*
  * PixiePoint theme for Bootstrap 5.3.
- * Bootstrap owns layout/components/utilities; this file keeps PixiePoint's visual identity.
+ * Bootstrap owns layout/components/utilities; this file also keeps the captive portal usable
+ * when the Bootstrap CDN is not yet reachable before hotspot authentication.
  */
 
 :root,
 [data-bs-theme="dark"] {
   --bs-body-color: #eef4ff;
-  --bs-body-color-rgb: 238, 244, 255;
   --bs-body-bg: #07111f;
-  --bs-body-bg-rgb: 7, 17, 31;
-  --bs-emphasis-color: #ffffff;
   --bs-secondary-color: #96a8c0;
-  --bs-secondary-color-rgb: 150, 168, 192;
-  --bs-tertiary-bg: #101f34;
   --bs-border-color: #2b4059;
-  --bs-border-color-translucent: rgba(255, 255, 255, .08);
   --bs-primary: #7c5cff;
-  --bs-primary-rgb: 124, 92, 255;
   --bs-success: #20d6b5;
-  --bs-success-rgb: 32, 214, 181;
   --bs-danger: #ff7187;
-  --bs-danger-rgb: 255, 113, 135;
-  --bs-warning: #ffca68;
-  --bs-warning-rgb: 255, 202, 104;
-  --bs-link-color: #b8c8ff;
-  --bs-link-hover-color: #d5dfff;
-  --bs-border-radius: .75rem;
-  --bs-border-radius-lg: 1rem;
-  --bs-border-radius-xl: 1.25rem;
-  --bs-box-shadow: 0 24px 70px rgba(0, 0, 0, .4);
-  --pixie-panel: #0e1d31;
-  --pixie-panel-soft: #101f34;
+  --bs-font-sans-serif: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --bs-font-monospace: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
   --pixie-line: rgba(255, 255, 255, .08);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
 
 html,
@@ -40,26 +30,41 @@ body {
 }
 
 body {
-  background:
-    radial-gradient(circle at 10% 0, #302265 0, transparent 31rem),
-    var(--bs-body-bg);
+  margin: 0;
+  color: var(--bs-body-color);
+  background: radial-gradient(circle at 10% 0, #302265 0, transparent 31rem), var(--bs-body-bg);
+  font-family: var(--bs-font-sans-serif);
   font-size: 15px;
-  line-height: 1.55;
+  line-height: 1.5;
 }
 
-/* Bootstrap components, PixiePoint look */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  margin-top: 0;
+  color: #fff;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+h1 { font-size: clamp(1.65rem, 5vw, 2rem); }
+h2 { font-size: 1.25rem; }
+p { margin-top: 0; }
+button,
+input,
+select,
+textarea { font: inherit; }
+
 .navbar {
   --bs-navbar-color: var(--bs-secondary-color);
   --bs-navbar-hover-color: var(--bs-body-color);
   --bs-navbar-brand-color: var(--bs-body-color);
-  --bs-navbar-brand-hover-color: #fff;
   background: rgba(7, 17, 31, .93);
   border-color: var(--pixie-line) !important;
   backdrop-filter: blur(16px);
-}
-
-.navbar-toggler {
-  border-color: var(--pixie-line);
 }
 
 .card,
@@ -72,60 +77,60 @@ body {
 }
 
 .card {
-  --bs-card-border-radius: 1.25rem;
-  --bs-card-inner-border-radius: calc(1.25rem - 1px);
+  border-radius: 1.25rem;
   box-shadow: 0 .35rem 1.1rem rgba(0, 0, 0, .18);
 }
 
-.btn {
-  --bs-btn-border-radius: .75rem;
-  --bs-btn-font-weight: 700;
+.btn,
+.button {
   min-height: 42px;
-}
-
-.btn-primary {
-  --bs-btn-color: #fff;
-  --bs-btn-bg: #7c5cff;
-  --bs-btn-border-color: #7c5cff;
-  --bs-btn-hover-color: #fff;
-  --bs-btn-hover-bg: #6d4fea;
-  --bs-btn-hover-border-color: #6d4fea;
-  --bs-btn-active-bg: #6346dc;
-  --bs-btn-active-border-color: #6346dc;
-  background-image: linear-gradient(135deg, #7c5cff, #538cff);
-}
-
-.btn-outline-secondary {
-  --bs-btn-color: #c5d1e0;
-  --bs-btn-border-color: #39516d;
-  --bs-btn-hover-color: #eef4ff;
-  --bs-btn-hover-bg: rgba(255, 255, 255, .07);
-  --bs-btn-hover-border-color: #506b89;
-}
-
-.form-control,
-.form-select {
-  min-height: 46px;
-  color: var(--bs-body-color);
-  background-color: #081423;
-  border-color: #2b4059;
   border-radius: .75rem;
+  font-weight: 700;
 }
 
-.form-control:hover,
-.form-select:hover {
+.btn-primary,
+.button:not(.secondary):not(.ghost) {
+  color: #fff;
+  border-color: #7c5cff;
+  background: linear-gradient(135deg, #7c5cff, #538cff);
+}
+
+.btn-outline-secondary,
+.button.secondary,
+.button.ghost {
+  color: #c5d1e0;
+  background: transparent;
   border-color: #39516d;
 }
 
-.form-control:focus,
-.form-select:focus {
+.form-control,
+.form-select,
+.field input,
+.field select,
+.field textarea {
+  width: 100%;
+  min-height: 46px;
+  padding: .55rem .75rem;
   color: var(--bs-body-color);
-  background-color: #09172a;
+  background: #081423;
+  border: 1px solid #2b4059;
+  border-radius: .75rem;
+}
+
+.form-control:focus,
+.form-select:focus,
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  outline: 0;
   border-color: #7c5cff;
   box-shadow: 0 0 0 .25rem rgba(124, 92, 255, .15);
 }
 
-.form-label {
+.form-label,
+.field label {
+  display: block;
+  margin-bottom: .35rem;
   color: #c5d1e0;
   font-weight: 700;
 }
@@ -134,39 +139,42 @@ body {
   --bs-table-color: var(--bs-body-color);
   --bs-table-bg: transparent;
   --bs-table-border-color: var(--pixie-line);
-  --bs-table-hover-color: var(--bs-body-color);
-  --bs-table-hover-bg: rgba(255, 255, 255, .025);
 }
 
-.alert-danger {
-  --bs-alert-color: #ffc5ce;
-  --bs-alert-bg: rgba(255, 113, 135, .10);
-  --bs-alert-border-color: rgba(255, 113, 135, .16);
-}
-
-.alert-success {
-  --bs-alert-color: #a8ffea;
-  --bs-alert-bg: rgba(32, 214, 181, .10);
-  --bs-alert-border-color: rgba(32, 214, 181, .16);
-}
-
-/* PixiePoint-specific layout */
+/* Hosted/captive portal */
 .portal {
   min-height: 100vh;
   display: grid;
   place-items: center;
-  padding: 18px 12px;
+  padding: 1rem;
 }
 
 .portal > .card {
   width: min(100%, 440px);
+  padding: 1.25rem;
+  border: 1px solid var(--pixie-line);
+}
+
+/* Server-rendered portalCard already has Bootstrap's card-body. */
+.portal > .card:has(> .card-body) {
+  padding: 0;
+}
+
+.portal > .card > .card-body {
+  padding: 1.25rem;
 }
 
 .brand {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 14px;
+  gap: .65rem;
+  margin-bottom: 1.25rem;
+}
+
+.brand strong {
+  display: block;
+  font-size: 1.05rem;
+  line-height: 1.2;
 }
 
 .logo {
@@ -182,6 +190,14 @@ body {
   font-weight: 900;
 }
 
+.portal h1 {
+  margin-bottom: .65rem;
+}
+
+.portal h1 + p {
+  margin-bottom: 1rem;
+}
+
 .heading {
   display: flex;
   align-items: flex-end;
@@ -190,29 +206,12 @@ body {
   margin-bottom: 1.5rem;
 }
 
-.heading p {
-  margin-bottom: 0;
-}
-
-.panel {
-  margin-top: 1rem;
-}
-
-.metric {
-  min-height: 88px;
-}
-
+.heading p { margin-bottom: 0; }
+.panel { margin-top: 1rem; }
+.metric { min-height: 88px; }
 .metric small,
-.context small {
-  display: block;
-  color: var(--bs-secondary-color);
-}
-
-.metric strong {
-  display: block;
-  margin-top: .25rem;
-  font-size: 1.5rem;
-}
+.context small { display: block; color: var(--bs-secondary-color); }
+.metric strong { display: block; margin-top: .25rem; font-size: 1.5rem; }
 
 .context {
   display: grid;
@@ -222,10 +221,17 @@ body {
 }
 
 .context > div {
-  padding: .6rem .7rem;
+  min-width: 0;
+  padding: .65rem .7rem;
   border: 1px solid var(--pixie-line);
   border-radius: .75rem;
   background: rgba(255, 255, 255, .03);
+  text-align: center;
+}
+
+.context span {
+  display: block;
+  overflow-wrap: anywhere;
 }
 
 .form-grid {
@@ -240,70 +246,34 @@ body {
   flex-wrap: wrap;
 }
 
-.code {
-  font-family: var(--bs-font-monospace);
+.actions > form,
+.actions > .button,
+.actions > .btn {
+  flex: 1 1 0;
+  min-width: 0;
 }
 
-.empty {
-  padding: 1.5rem;
-  color: var(--bs-secondary-color);
-  text-align: center;
+.actions > form > button {
+  width: 100%;
 }
 
-/* Temporary aliases until every template uses native Bootstrap classes. */
-.muted {
-  color: var(--bs-secondary-color) !important;
-}
+.code { font-family: var(--bs-font-monospace); }
+.empty { padding: 1.5rem; color: var(--bs-secondary-color); text-align: center; }
+.muted { color: var(--bs-secondary-color) !important; }
 
 .button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: .5rem;
-  min-height: 42px;
   padding: .55rem .9rem;
   border: 1px solid transparent;
-  border-radius: .75rem;
-  color: #fff;
-  background: linear-gradient(135deg, #7c5cff, #538cff);
-  font-weight: 700;
   text-decoration: none;
   cursor: pointer;
 }
 
-.button.full {
-  width: 100%;
-}
-
-.button.secondary,
-.button.ghost {
-  color: #c5d1e0;
-  background: transparent;
-  border-color: #39516d;
-}
-
-.field {
-  margin-bottom: .75rem;
-}
-
-.field label {
-  display: block;
-  margin-bottom: .35rem;
-  color: #c5d1e0;
-  font-weight: 700;
-}
-
-.field input,
-.field select,
-.field textarea {
-  width: 100%;
-  min-height: 46px;
-  padding: .55rem .75rem;
-  color: var(--bs-body-color);
-  background: #081423;
-  border: 1px solid #2b4059;
-  border-radius: .75rem;
-}
+.button.full { width: 100%; }
+.field { margin-bottom: .75rem; }
 
 .alert.ok {
   color: #a8ffea;
@@ -311,7 +281,6 @@ body {
   border-color: rgba(32, 214, 181, .16);
 }
 
-/* Provider-specific Google button */
 .google-button {
   width: 100%;
   min-height: 46px;
@@ -330,113 +299,41 @@ body {
   text-decoration: none;
 }
 
-.google-button:hover {
-  color: #1f1f1f;
-  background: #f8faff;
-}
-
-.google-button span {
-  text-align: center;
-}
-
-.google-icon {
-  width: 18px;
-  height: 18px;
-}
-
-.auth-divider {
-  display: flex;
-  align-items: center;
-  gap: .75rem;
-  margin: 1rem 0;
-  color: var(--bs-secondary-color);
-  font-size: .75rem;
-}
-
+.google-button span { text-align: center; }
+.google-icon { width: 18px; height: 18px; }
+.auth-footer { margin-top: 1rem; text-align: center; }
+.auth-divider { display: flex; align-items: center; gap: .75rem; margin: 1rem 0; color: var(--bs-secondary-color); font-size: .75rem; }
 .auth-divider::before,
-.auth-divider::after {
-  content: "";
-  height: 1px;
-  flex: 1;
-  background: var(--bs-border-color);
-}
+.auth-divider::after { content: ""; height: 1px; flex: 1; background: var(--bs-border-color); }
 
-.auth-footer {
-  margin-top: 1rem;
-  text-align: center;
-}
-
-/* Hotspot widgets */
-.compat-status {
-  display: block;
-  margin-top: .25rem;
-  color: var(--bs-secondary-color);
-}
-
-.compat-status.online {
-  color: var(--bs-success);
-}
-
-.compat-status.offline {
-  color: var(--bs-danger);
-}
-
+.compat-status { display: block; margin-top: .25rem; color: var(--bs-secondary-color); }
+.compat-status.online { color: var(--bs-success); }
+.compat-status.offline { color: var(--bs-danger); }
 .compat-transaction,
 .compat-rate-list,
-.compat-inline {
-  margin-top: .75rem;
-  padding: .75rem;
-  border: 1px solid var(--pixie-line);
-  border-radius: .75rem;
-  background: rgba(255, 255, 255, .025);
-}
-
-.compat-voucher {
-  margin-top: 1rem;
-  padding-top: 1rem;
-  border-top: 1px solid var(--pixie-line);
-}
-
-.compat-rate {
-  padding: .5rem 0;
-  border-bottom: 1px solid var(--pixie-line);
-}
-
-.compat-rate:last-child {
-  border-bottom: 0;
-}
-
-.compat-tools {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: .5rem;
-  margin-top: .5rem;
-}
+.compat-inline { margin-top: .75rem; padding: .75rem; border: 1px solid var(--pixie-line); border-radius: .75rem; background: rgba(255, 255, 255, .025); }
+.compat-voucher { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--pixie-line); }
+.compat-rate { padding: .5rem 0; border-bottom: 1px solid var(--pixie-line); }
+.compat-rate:last-child { border-bottom: 0; }
+.compat-tools { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .5rem; margin-top: .5rem; }
+.compat-tools .button { width: 100%; min-width: 0; padding-inline: .4rem; }
 
 @media (max-width: 768px) {
-  .heading {
-    align-items: flex-start;
-    flex-direction: column;
-  }
+  .heading { align-items: flex-start; flex-direction: column; }
 }
 
 @media (max-width: 576px) {
-  .portal {
-    align-items: start;
-    padding: .5rem;
-  }
-
-  .form-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .context {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
+  .portal { align-items: start; padding: .5rem; }
+  .portal > .card { padding: 1rem; border-radius: 1rem; }
+  .portal > .card:has(> .card-body) { padding: 0; }
+  .portal > .card > .card-body { padding: 1rem; }
+  .form-grid { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 360px) {
-  .compat-tools {
-    grid-template-columns: 1fr;
-  }
+  .compat-tools { grid-template-columns: 1fr; }
+  .actions { flex-direction: column; }
+  .actions > form,
+  .actions > .button,
+  .actions > .btn { width: 100%; }
 }
