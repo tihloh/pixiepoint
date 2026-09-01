@@ -1,1 +1,361 @@
-(function(){"use strict";var d=window.PIXIEPOINT_SESSION||{},root=document.getElementById("pixiepoint-root"),vendos=window.PIXIEPOINT_VENDOS||[],vendo=vendos[0]||null;if(!root)return;function n(v){v=Number(v);return isFinite(v)&&v>0?Math.floor(v):0}function dur(s){s=n(s);var h=Math.floor(s/3600),m=Math.floor((s%3600)/60),x=s%60;if(h)return h+"h "+m+"m";if(m)return m+"m "+x+"s";return x+"s"}function bytes(v){v=n(v);if(v<1024)return v+" B";if(v<1048576)return(v/1024).toFixed(1)+" KB";if(v<1073741824)return(v/1048576).toFixed(1)+" MB";return(v/1073741824).toFixed(2)+" GB"}function esc(v){return String(v).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}function req(path,method,data){return new Promise(function(resolve,reject){if(!vendo)return reject(new Error("No coin slot configured."));var x=new XMLHttpRequest,q=method==="GET"&&data?"?"+new URLSearchParams(data).toString():"";x.open(method||"GET",vendo.baseUrl+path+q,true);x.timeout=7000;x.onload=function(){var b=x.responseText;try{b=JSON.parse(b)}catch(_e){}resolve({ok:x.status>=200&&x.status<300,status:x.status,body:b})};x.onerror=function(){reject(new Error("Coin slot unavailable."))};x.ontimeout=function(){reject(new Error("Coin slot timed out."))};if(method==="POST"){x.setRequestHeader("Content-Type","application/x-www-form-urlencoded");x.send(new URLSearchParams(data||{}).toString())}else x.send()})}function data(r){if(r&&typeof r.body==="object")return r.body||{};try{return JSON.parse(r.body||"{}")}catch(_e){return{}}}function yes(v){return v===true||v===1||v==="1"||v==="true"}function logout(goLogin,button){if(!d.logoutUrl)return;if(button){button.disabled=true;button.textContent=goLogin?"Ending session…":"Disconnecting…"}var done=function(){if(goLogin)location.replace(d.loginUrl||"/");else location.replace(d.logoutUrl||d.loginUrl||"/")},x=new XMLHttpRequest;x.open("GET",d.logoutUrl,true);x.timeout=5000;x.onload=x.onerror=x.ontimeout=done;try{x.send()}catch(_e){done()}}var uptime=n(d.uptime),left=n(d.sessionTimeLeft);document.body.className="";root.outerHTML='<main class="portal"><section class="card"><div class="brand"><div class="logo">P</div><div><strong>PixiePoint Wi-Fi</strong><div class="muted">MikroTik hotspot access</div></div></div><h1>You\'re connected</h1><p class="muted">Live Wi-Fi session for '+esc(d.mac||"this device")+'.</p><div class="context"><div><small>Connected</small><span id="pp-uptime">'+dur(uptime)+'</span></div><div><small>Time left</small><span id="pp-left">'+(left?dur(left):"Unlimited")+'</span></div><div><small>Downloaded</small>'+bytes(d.bytesOut)+'</div><div><small>Uploaded</small>'+bytes(d.bytesIn)+'</div></div><button class="button secondary full" id="pp-extend" type="button"'+(vendo&&d.username?'':' hidden')+'>Extend time</button><div id="pp-extend-box" class="compat-transaction" hidden><p id="pp-extend-status" class="muted">Insert coins to add time to your current voucher.</p><div class="context"><div><small>Coin total</small><span id="pp-extend-amount">₱0</span></div><div><small>Added time</small><span id="pp-extend-time">—</span></div></div><div class="actions"><button class="button" id="pp-extend-finish" type="button">Save extension</button><button class="button secondary" id="pp-extend-cancel" type="button">Cancel</button></div></div><div class="actions"><button class="button secondary" id="pp-disconnect" type="button">Disconnect</button><button class="button" id="pp-end-session" type="button">End session</button></div><p class="muted">Disconnect ends Wi-Fi access. End session also returns this device to the login portal.</p></section></main>';var timer=null;function poll(){clearTimeout(timer);req("/checkCoin","POST",{voucher:d.username}).then(function(r){var b=data(r);if(r.ok&&(yes(b.status)||yes(b.success))){document.getElementById("pp-extend-amount").textContent="₱"+(b.totalCoin||b.amount||b.coin||0);var sec=n(b.timeAdded),t=b.time||b.minutes||b.duration||(sec?dur(sec):"—");document.getElementById("pp-extend-time").textContent=t;document.getElementById("pp-extend-status").textContent="Coins detected. You can keep adding or save the extension."}timer=setTimeout(poll,1000)}).catch(function(){document.getElementById("pp-extend-status").textContent="Waiting for the coin slot…";timer=setTimeout(poll,2500)})}var ex=document.getElementById("pp-extend");if(ex)ex.onclick=function(){var box=document.getElementById("pp-extend-box");box.hidden=false;ex.disabled=true;document.getElementById("pp-extend-status").textContent="Starting extension…";req("/topUp","POST",{voucher:d.username,mac:d.mac||"",ipAddress:d.ip||"",extendTime:1}).then(function(r){var b=data(r);if(!r.ok||(!yes(b.status)&&!yes(b.success)))throw new Error(b.message||b.errorCode||"Extension failed.");document.getElementById("pp-extend-status").textContent="Insert coins to add time.";poll()}).catch(function(e){document.getElementById("pp-extend-status").textContent=e.message;ex.disabled=false})};var fin=document.getElementById("pp-extend-finish");if(fin)fin.onclick=function(){clearTimeout(timer);fin.disabled=true;req("/useVoucher","POST",{voucher:d.username}).then(function(r){var b=data(r);if(!r.ok||(!yes(b.status)&&!yes(b.success)))throw new Error(b.message||b.errorCode||"Could not save extension.");document.getElementById("pp-extend-status").textContent="Time extended. Refreshing status…";setTimeout(function(){location.href=d.refreshUrl||location.href},700)}).catch(function(e){document.getElementById("pp-extend-status").textContent=e.message;fin.disabled=false})};var can=document.getElementById("pp-extend-cancel");if(can)can.onclick=function(){clearTimeout(timer);req("/cancelTopUp","POST",{voucher:d.username,mac:d.mac||""}).catch(function(){}).then(function(){document.getElementById("pp-extend-box").hidden=true;ex.disabled=false})};var dis=document.getElementById("pp-disconnect");if(dis)dis.onclick=function(){logout(false,dis)};var end=document.getElementById("pp-end-session");if(end)end.onclick=function(){logout(true,end)};setInterval(function(){uptime++;var u=document.getElementById("pp-uptime");if(u)u.textContent=dur(uptime);if(left>0){left--;var l=document.getElementById("pp-left");if(l)l.textContent=dur(left)}},1000)})();
+(function () {
+  "use strict";
+
+  const session = window.PIXIEPOINT_SESSION || {};
+  const root = document.getElementById("pixiepoint-root");
+  const vendos = window.PIXIEPOINT_VENDOS || [];
+  const vendo = vendos[0] || null;
+
+  if (!root) return;
+
+  function number(value) {
+    value = Number(value);
+    return Number.isFinite(value) && value > 0 ? Math.floor(value) : 0;
+  }
+
+  function duration(seconds) {
+    seconds = number(seconds);
+
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const remaining = seconds % 60;
+
+    if (hours) return `${hours}h ${minutes}m`;
+    if (minutes) return `${minutes}m ${remaining}s`;
+    return `${remaining}s`;
+  }
+
+  function bytes(value) {
+    value = number(value);
+
+    if (value < 1024) return `${value} B`;
+    if (value < 1048576) return `${(value / 1024).toFixed(1)} KB`;
+    if (value < 1073741824) return `${(value / 1048576).toFixed(1)} MB`;
+    return `${(value / 1073741824).toFixed(2)} GB`;
+  }
+
+  function escapeHtml(value) {
+    return String(value).replace(/[&<>"']/g, function (char) {
+      return {
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+      }[char];
+    });
+  }
+
+  function request(path, method, data) {
+    return new Promise(function (resolve, reject) {
+      if (!vendo) {
+        reject(new Error("No coin slot configured."));
+        return;
+      }
+
+      const xhr = new XMLHttpRequest();
+      const query = method === "GET" && data
+        ? `?${new URLSearchParams(data).toString()}`
+        : "";
+
+      xhr.open(method || "GET", vendo.baseUrl + path + query, true);
+      xhr.timeout = 7000;
+
+      xhr.onload = function () {
+        let body = xhr.responseText;
+
+        try {
+          body = JSON.parse(body);
+        } catch (_) {}
+
+        resolve({
+          ok: xhr.status >= 200 && xhr.status < 300,
+          status: xhr.status,
+          body: body
+        });
+      };
+
+      xhr.onerror = function () {
+        reject(new Error("Coin slot unavailable."));
+      };
+
+      xhr.ontimeout = function () {
+        reject(new Error("Coin slot timed out."));
+      };
+
+      if (method === "POST") {
+        xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+        xhr.send(new URLSearchParams(data || {}).toString());
+        return;
+      }
+
+      xhr.send();
+    });
+  }
+
+  function responseData(result) {
+    if (result && typeof result.body === "object") {
+      return result.body || {};
+    }
+
+    try {
+      return JSON.parse(result.body || "{}");
+    } catch (_) {
+      return {};
+    }
+  }
+
+  function isTrue(value) {
+    return value === true || value === 1 || value === "1" || value === "true";
+  }
+
+  function logout(returnToLogin, button) {
+    if (!session.logoutUrl) return;
+
+    if (button) {
+      button.disabled = true;
+      button.textContent = returnToLogin ? "Ending session…" : "Disconnecting…";
+    }
+
+    const done = function () {
+      if (returnToLogin) {
+        location.replace(session.loginUrl || "/");
+        return;
+      }
+
+      location.replace(session.logoutUrl || session.loginUrl || "/");
+    };
+
+    const xhr = new XMLHttpRequest();
+    xhr.open("GET", session.logoutUrl, true);
+    xhr.timeout = 5000;
+    xhr.onload = done;
+    xhr.onerror = done;
+    xhr.ontimeout = done;
+
+    try {
+      xhr.send();
+    } catch (_) {
+      done();
+    }
+  }
+
+  let uptime = number(session.uptime);
+  let timeLeft = number(session.sessionTimeLeft);
+  let pollTimer = null;
+
+  document.body.className = "";
+
+  root.outerHTML = `
+    <main class="portal">
+      <section class="card">
+        <div class="brand">
+          <div class="logo">P</div>
+          <div>
+            <strong>PixiePoint Wi-Fi</strong>
+            <div class="muted">MikroTik hotspot access</div>
+          </div>
+        </div>
+
+        <h1>You're connected</h1>
+        <p class="muted">Live Wi-Fi session for ${escapeHtml(session.mac || "this device")}.</p>
+
+        <div class="context">
+          <div>
+            <small>Connected</small>
+            <span id="pp-uptime">${duration(uptime)}</span>
+          </div>
+          <div>
+            <small>Time left</small>
+            <span id="pp-left">${timeLeft ? duration(timeLeft) : "Unlimited"}</span>
+          </div>
+          <div>
+            <small>Downloaded</small>
+            ${bytes(session.bytesOut)}
+          </div>
+          <div>
+            <small>Uploaded</small>
+            ${bytes(session.bytesIn)}
+          </div>
+        </div>
+
+        <button
+          class="button secondary full"
+          id="pp-extend"
+          type="button"
+          ${vendo && session.username ? "" : "hidden"}
+        >
+          Extend time
+        </button>
+
+        <div id="pp-extend-box" class="compat-transaction" hidden>
+          <p id="pp-extend-status" class="muted">
+            Insert coins to add time to your current voucher.
+          </p>
+
+          <div class="context">
+            <div>
+              <small>Coin total</small>
+              <span id="pp-extend-amount">₱0</span>
+            </div>
+            <div>
+              <small>Added time</small>
+              <span id="pp-extend-time">—</span>
+            </div>
+          </div>
+
+          <div class="actions">
+            <button class="button" id="pp-extend-finish" type="button">Save extension</button>
+            <button class="button secondary" id="pp-extend-cancel" type="button">Cancel</button>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="button secondary" id="pp-disconnect" type="button">Disconnect</button>
+          <button class="button" id="pp-end-session" type="button">End session</button>
+        </div>
+
+        <p class="muted">
+          Disconnect ends Wi-Fi access. End session also returns this device to the login portal.
+        </p>
+      </section>
+    </main>
+  `;
+
+  function pollExtension() {
+    clearTimeout(pollTimer);
+
+    request("/checkCoin", "POST", { voucher: session.username })
+      .then(function (result) {
+        const data = responseData(result);
+
+        if (result.ok && (isTrue(data.status) || isTrue(data.success))) {
+          document.getElementById("pp-extend-amount").textContent =
+            `₱${data.totalCoin || data.amount || data.coin || 0}`;
+
+          const seconds = number(data.timeAdded);
+          const addedTime = data.time || data.minutes || data.duration ||
+            (seconds ? duration(seconds) : "—");
+
+          document.getElementById("pp-extend-time").textContent = addedTime;
+          document.getElementById("pp-extend-status").textContent =
+            "Coins detected. You can keep adding or save the extension.";
+        }
+
+        pollTimer = setTimeout(pollExtension, 1000);
+      })
+      .catch(function () {
+        document.getElementById("pp-extend-status").textContent =
+          "Waiting for the coin slot…";
+
+        pollTimer = setTimeout(pollExtension, 2500);
+      });
+  }
+
+  const extendButton = document.getElementById("pp-extend");
+  const finishButton = document.getElementById("pp-extend-finish");
+  const cancelButton = document.getElementById("pp-extend-cancel");
+  const disconnectButton = document.getElementById("pp-disconnect");
+  const endSessionButton = document.getElementById("pp-end-session");
+
+  if (extendButton) {
+    extendButton.onclick = function () {
+      const box = document.getElementById("pp-extend-box");
+      const status = document.getElementById("pp-extend-status");
+
+      box.hidden = false;
+      extendButton.disabled = true;
+      status.textContent = "Starting extension…";
+
+      request("/topUp", "POST", {
+        voucher: session.username,
+        mac: session.mac || "",
+        ipAddress: session.ip || "",
+        extendTime: 1
+      })
+        .then(function (result) {
+          const data = responseData(result);
+
+          if (!result.ok || (!isTrue(data.status) && !isTrue(data.success))) {
+            throw new Error(data.message || data.errorCode || "Extension failed.");
+          }
+
+          status.textContent = "Insert coins to add time.";
+          pollExtension();
+        })
+        .catch(function (error) {
+          status.textContent = error.message;
+          extendButton.disabled = false;
+        });
+    };
+  }
+
+  if (finishButton) {
+    finishButton.onclick = function () {
+      clearTimeout(pollTimer);
+      finishButton.disabled = true;
+
+      request("/useVoucher", "POST", { voucher: session.username })
+        .then(function (result) {
+          const data = responseData(result);
+
+          if (!result.ok || (!isTrue(data.status) && !isTrue(data.success))) {
+            throw new Error(data.message || data.errorCode || "Could not save extension.");
+          }
+
+          document.getElementById("pp-extend-status").textContent =
+            "Time extended. Refreshing status…";
+
+          setTimeout(function () {
+            location.href = session.refreshUrl || location.href;
+          }, 700);
+        })
+        .catch(function (error) {
+          document.getElementById("pp-extend-status").textContent = error.message;
+          finishButton.disabled = false;
+        });
+    };
+  }
+
+  if (cancelButton) {
+    cancelButton.onclick = function () {
+      clearTimeout(pollTimer);
+
+      request("/cancelTopUp", "POST", {
+        voucher: session.username,
+        mac: session.mac || ""
+      })
+        .catch(function () {})
+        .then(function () {
+          document.getElementById("pp-extend-box").hidden = true;
+          extendButton.disabled = false;
+        });
+    };
+  }
+
+  if (disconnectButton) {
+    disconnectButton.onclick = function () {
+      logout(false, disconnectButton);
+    };
+  }
+
+  if (endSessionButton) {
+    endSessionButton.onclick = function () {
+      logout(true, endSessionButton);
+    };
+  }
+
+  setInterval(function () {
+    uptime++;
+
+    const uptimeElement = document.getElementById("pp-uptime");
+    if (uptimeElement) uptimeElement.textContent = duration(uptime);
+
+    if (timeLeft > 0) {
+      timeLeft--;
+
+      const timeLeftElement = document.getElementById("pp-left");
+      if (timeLeftElement) timeLeftElement.textContent = duration(timeLeft);
+    }
+  }, 1000);
+}());
