@@ -8,6 +8,7 @@ use PixiePoint\App\Api\AccountingController;
 use PixiePoint\App\Controllers\AdminController;
 use PixiePoint\App\Controllers\AuthController;
 use PixiePoint\App\Controllers\DashboardController;
+use PixiePoint\App\Controllers\DeviceInfoController;
 use PixiePoint\App\Controllers\HotspotController;
 use PixiePoint\App\Models\Router as RouterModel;
 use PixiePoint\App\Services\AuthContext;
@@ -42,6 +43,7 @@ final class Application
             'auth' => new AuthController($prefab['users'], $auth, $google, $view),
             'dashboard' => new DashboardController($app->db, $auth, $view, $devices, $points),
             'hotspot' => new HotspotController($app->db, new RouterModel($app->db), $auth, $view, $devices),
+            'device_info' => new DeviceInfoController($app->db, $networkDevices, $points),
             'admin' => new AdminController($app->db, $auth, $view, $logs),
             'api' => new AccountingController($app->db, $app->config, $networkDevices),
         ];
