@@ -21,7 +21,9 @@ final class DeviceIdentity
         $macDevice = $mac !== '' ? $this->deviceByMac($mac, $scopeKey) : null;
 
         $device = null;
+        $identityConflict = false;
         if ($cookieDevice && $macDevice && (int)$cookieDevice['id'] !== (int)$macDevice['id']) {
+            $identityConflict = true;
             $_SESSION['device_identity_conflict'] = [
                 'cookie_device_id' => (int)$cookieDevice['id'],
                 'mac_device_id' => (int)$macDevice['id'],
@@ -29,6 +31,9 @@ final class DeviceIdentity
                 'scope_key' => $scopeKey,
                 'seen_at' => now(),
             ];
+            // Keep the browser's established device, but never steal the MAC
+            // identity from the other record. A signed-in user can resolve the
+            // ambiguity explicitly from the dashboard.
             $device = $cookieDevice;
         } elseif ($cookieDevice) {
             $device = $cookieDevice;
@@ -43,7 +48,7 @@ final class DeviceIdentity
             $this->touchDevice((int)$device['id'], $ip, $userAgent);
         }
 
-        if ($mac !== '') {
+        if ($mac !== '' && !$identityConflict) {
             $this->attachIdentity((int)$device['id'], 'mac', $mac, $scopeKey, 100);
         }
 
@@ -160,7 +165,7 @@ final class DeviceIdentity
 
     private function attachIdentity(int $deviceId, string $type, string $value, string $scope, int $confidence): void
     {
-        $stmt = $this->db->prepare('INSERT INTO device_identities(device_id,identity_type,identity_value,scope_key,confidence,first_seen_at,last_seen_at) VALUES(?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE device_id=VALUES(device_id),confidence=GREATEST(confidence,VALUES(confidence)),last_seen_at=VALUES(last_seen_at)');
+        $stmt = $this->db->prepare('INSERT INTO device_identities(device_id,identity_type,identity_value,scope_key,confidence,first_seen_at,last_seen_at) VALUES(?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE confidence=GREATEST(confidence,VALUES(confidence)),last_seen_at=VALUES(last_seen_at)');
         $stmt->execute([$deviceId, $type, $value, $scope, $confidence, now(), now()]);
     }
 
