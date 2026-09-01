@@ -109,16 +109,16 @@
     return value === true || value === 1 || value === "1" || value === "true";
   }
 
-  function logout(returnToLogin, button) {
+  function hotspotLogout(endSession, button) {
     if (!session.logoutUrl) return;
 
     if (button) {
       button.disabled = true;
-      button.textContent = returnToLogin ? "Ending session…" : "Disconnecting…";
+      button.textContent = endSession ? "Ending session…" : "Disconnecting…";
     }
 
-    const done = function () {
-      if (returnToLogin) {
+    const finish = function () {
+      if (endSession) {
         location.replace(session.loginUrl || "/");
         return;
       }
@@ -127,16 +127,17 @@
     };
 
     const xhr = new XMLHttpRequest();
-    xhr.open("GET", session.logoutUrl, true);
+    xhr.open("POST", session.logoutUrl, true);
     xhr.timeout = 5000;
-    xhr.onload = done;
-    xhr.onerror = done;
-    xhr.ontimeout = done;
+    xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+    xhr.onload = finish;
+    xhr.onerror = finish;
+    xhr.ontimeout = finish;
 
     try {
-      xhr.send();
+      xhr.send(endSession ? "erase-cookie=on" : "erase-cookie=off");
     } catch (_) {
-      done();
+      finish();
     }
   }
 
@@ -216,7 +217,7 @@
         </div>
 
         <p class="muted">
-          Disconnect ends Wi-Fi access. End session also returns this device to the login portal.
+          Disconnect ends Wi-Fi access. End session clears automatic hotspot login and returns this device to the login portal.
         </p>
       </section>
     </main>
@@ -335,13 +336,13 @@
 
   if (disconnectButton) {
     disconnectButton.onclick = function () {
-      logout(false, disconnectButton);
+      hotspotLogout(false, disconnectButton);
     };
   }
 
   if (endSessionButton) {
     endSessionButton.onclick = function () {
-      logout(true, endSessionButton);
+      hotspotLogout(true, endSessionButton);
     };
   }
 
