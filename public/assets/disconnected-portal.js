@@ -45,6 +45,7 @@
   }
 
   const totalTransfer = number(session.bytesIn) + number(session.bytesOut);
+  const timeLeft = number(session.sessionTimeLeft);
 
   document.body.className = "";
 
@@ -59,23 +60,32 @@
           </div>
         </div>
 
-        <h1>You're offline</h1>
-        <p class="muted">The Wi-Fi session has ended.</p>
+        <h1>Session paused</h1>
+        <p class="muted">Your Wi-Fi access is disconnected, but your remaining time is preserved.</p>
 
         <div class="context">
+          ${timeLeft > 0 ? `
+            <div>
+              <small>Time left</small>
+              <strong>${duration(timeLeft)}</strong>
+            </div>
+          ` : ""}
           <div>
-            <small>Session time</small>
-            ${duration(session.uptime)}
+            <small>Used this session</small>
+            <strong>${duration(session.uptime)}</strong>
           </div>
           <div>
             <small>Total transfer</small>
-            ${bytes(totalTransfer)}
+            <strong>${bytes(totalTransfer)}</strong>
           </div>
         </div>
 
-        <a class="button full" href="${escapeHtml(session.loginUrl || "#")}">
-          End session &amp; return to login
-        </a>
+        <div class="actions">
+          <a class="button" href="${escapeHtml(session.loginUrl || "#")}">Resume</a>
+          <a class="button secondary" href="${escapeHtml(session.loginUrl || "#")}">End session</a>
+        </div>
+
+        <p class="muted">Resume reconnects using the remaining time. End session will return to the login flow.</p>
       </section>
     </main>
   `;
