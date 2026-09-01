@@ -1,1 +1,82 @@
-(function(){"use strict";var d=window.PIXIEPOINT_DISCONNECTED||{},root=document.getElementById("pixiepoint-root");if(!root)return;function n(v){v=Number(v);return isFinite(v)&&v>0?Math.floor(v):0}function dur(s){s=n(s);var h=Math.floor(s/3600),m=Math.floor((s%3600)/60),x=s%60;if(h)return h+"h "+m+"m";if(m)return m+"m "+x+"s";return x+"s"}function bytes(v){v=n(v);if(v<1024)return v+" B";if(v<1048576)return(v/1024).toFixed(1)+" KB";if(v<1073741824)return(v/1048576).toFixed(1)+" MB";return(v/1073741824).toFixed(2)+" GB"}function esc(v){return String(v).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}function attr(v){return esc(v)}var total=n(d.bytesIn)+n(d.bytesOut);document.body.className="";root.outerHTML='<main class="portal"><section class="card"><div class="brand"><div class="logo">P</div><div><strong>PixiePoint Wi-Fi</strong><div class="muted">MikroTik hotspot access</div></div></div><h1>You\'re offline</h1><p class="muted">The Wi-Fi session has ended.</p><div class="context"><div><small>Session time</small>'+dur(d.uptime)+'</div><div><small>Total transfer</small>'+bytes(total)+'</div></div><a class="button full" href="'+attr(d.loginUrl||'#')+'">End session &amp; return to login</a></section></main>'})();
+(function () {
+  "use strict";
+
+  const session = window.PIXIEPOINT_DISCONNECTED || {};
+  const root = document.getElementById("pixiepoint-root");
+
+  if (!root) return;
+
+  function number(value) {
+    value = Number(value);
+    return Number.isFinite(value) && value > 0 ? Math.floor(value) : 0;
+  }
+
+  function duration(seconds) {
+    seconds = number(seconds);
+
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const remaining = seconds % 60;
+
+    if (hours) return `${hours}h ${minutes}m`;
+    if (minutes) return `${minutes}m ${remaining}s`;
+    return `${remaining}s`;
+  }
+
+  function bytes(value) {
+    value = number(value);
+
+    if (value < 1024) return `${value} B`;
+    if (value < 1048576) return `${(value / 1024).toFixed(1)} KB`;
+    if (value < 1073741824) return `${(value / 1048576).toFixed(1)} MB`;
+    return `${(value / 1073741824).toFixed(2)} GB`;
+  }
+
+  function escapeHtml(value) {
+    return String(value).replace(/[&<>"']/g, function (char) {
+      return {
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+      }[char];
+    });
+  }
+
+  const totalTransfer = number(session.bytesIn) + number(session.bytesOut);
+
+  document.body.className = "";
+
+  root.outerHTML = `
+    <main class="portal">
+      <section class="card">
+        <div class="brand">
+          <div class="logo">P</div>
+          <div>
+            <strong>PixiePoint Wi-Fi</strong>
+            <div class="muted">MikroTik hotspot access</div>
+          </div>
+        </div>
+
+        <h1>You're offline</h1>
+        <p class="muted">The Wi-Fi session has ended.</p>
+
+        <div class="context">
+          <div>
+            <small>Session time</small>
+            ${duration(session.uptime)}
+          </div>
+          <div>
+            <small>Total transfer</small>
+            ${bytes(totalTransfer)}
+          </div>
+        </div>
+
+        <a class="button full" href="${escapeHtml(session.loginUrl || "#")}">
+          End session &amp; return to login
+        </a>
+      </section>
+    </main>
+  `;
+}());
