@@ -3,142 +3,24 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="theme-color" content="#07111f">
   <title>PixiePoint Wi-Fi</title>
-  <style>
-    * { box-sizing: border-box; }
-
-    html,
-    body {
-      min-height: 100%;
-      margin: 0;
-    }
-
-    body {
-      display: grid;
-      place-items: center;
-      padding: 24px;
-      color: #eef4ff;
-      background: #07111f;
-      font: 16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
-    }
-
-    main {
-      width: min(420px, 100%);
-      text-align: center;
-    }
-
-    h1 {
-      margin: 0 0 8px;
-      font-size: 26px;
-    }
-
-    p {
-      margin: 0;
-      color: #9fb0c7;
-    }
-
-    .stats {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 10px;
-      margin: 22px 0;
-      text-align: left;
-    }
-
-    .stats div {
-      padding: 12px 0;
-      border-bottom: 1px solid rgba(255,255,255,.12);
-    }
-
-    small {
-      display: block;
-      margin-bottom: 3px;
-      color: #9fb0c7;
-    }
-
-    strong {
-      font-size: 17px;
-    }
-
-    .button {
-      display: block;
-      width: 100%;
-      padding: 12px 16px;
-      border-radius: 10px;
-      color: #07111f;
-      background: #eef4ff;
-      font-weight: 700;
-      text-decoration: none;
-    }
-
-    .hint {
-      margin-top: 12px;
-      font-size: 13px;
-    }
-  </style>
 </head>
 <body>
-  <main>
-    <h1>Session paused</h1>
-    <p>Your Wi-Fi is disconnected. Your remaining time is preserved.</p>
+  <main id="pixiepoint-root">PixiePoint Wi-Fi</main>
 
-    <div class="stats">
-      <div>
-        <small>Time left</small>
-        <strong id="time-left">$(session-time-left-secs)</strong>
-      </div>
-      <div>
-        <small>Used</small>
-        <strong id="uptime">$(uptime-secs)</strong>
-      </div>
-      <div>
-        <small>Downloaded</small>
-        <strong id="downloaded">$(bytes-out)</strong>
-      </div>
-      <div>
-        <small>Uploaded</small>
-        <strong id="uploaded">$(bytes-in)</strong>
-      </div>
-    </div>
-
-    <a class="button" href="$(link-login)">Resume</a>
-    <p class="hint">Stay on this page to keep the session paused.</p>
-  </main>
-
+  <script src="vendo-config.js"></script>
   <script>
-    (function () {
-      "use strict";
-
-      function number(value) {
-        value = Number(value);
-        return Number.isFinite(value) && value > 0 ? Math.floor(value) : 0;
-      }
-
-      function duration(seconds) {
-        seconds = number(seconds);
-        var hours = Math.floor(seconds / 3600);
-        var minutes = Math.floor((seconds % 3600) / 60);
-        var remaining = seconds % 60;
-
-        if (hours) return hours + "h " + minutes + "m";
-        if (minutes) return minutes + "m " + remaining + "s";
-        return remaining + "s";
-      }
-
-      function bytes(value) {
-        value = number(value);
-        if (value < 1024) return value + " B";
-        if (value < 1048576) return (value / 1024).toFixed(1) + " KB";
-        if (value < 1073741824) return (value / 1048576).toFixed(1) + " MB";
-        return (value / 1073741824).toFixed(2) + " GB";
-      }
-
-      document.getElementById("time-left").textContent = duration("$(session-time-left-secs)");
-      document.getElementById("uptime").textContent = duration("$(uptime-secs)");
-      document.getElementById("downloaded").textContent = bytes("$(bytes-out)");
-      document.getElementById("uploaded").textContent = bytes("$(bytes-in)");
-    }());
+    window.PIXIEPOINT_DISCONNECTED = {
+      username: "$(username)",
+      mac: "$(mac)",
+      ip: "$(ip)",
+      uptime: "$(uptime-secs)",
+      sessionTimeLeft: "$(session-time-left-secs)",
+      bytesIn: "$(bytes-in)",
+      bytesOut: "$(bytes-out)",
+      loginUrl: "$(link-login)"
+    };
   </script>
+  <script src="https://hs.portalx.win/assets/hotspot-loader.js" data-pixiepoint-page="disconnected"></script>
 </body>
 </html>
