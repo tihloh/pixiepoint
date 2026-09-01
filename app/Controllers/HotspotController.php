@@ -7,6 +7,7 @@ namespace PixiePoint\App\Controllers;
 use PDO;
 use PixiePoint\App\Models\Router;
 use PixiePoint\App\Services\AuthContext;
+use PixiePoint\App\Services\DeviceIdentity;
 use PixiePoint\App\Services\View;
 use Tihloh\Prefab\Input\Input;
 
@@ -17,6 +18,7 @@ final class HotspotController
         private Router $routers,
         private AuthContext $auth,
         private View $view,
+        private DeviceIdentity $devices,
     ) {}
 
     public function portal(): never
@@ -31,6 +33,7 @@ final class HotspotController
             'username' => 'trim|null_if_empty|nullable|string|max:128',
             'router_identity' => 'trim|required|string|max:160',
             'interface' => 'trim|null_if_empty|nullable|string|max:128',
+            'ssid' => 'trim|null_if_empty|nullable|string|max:160',
             'server_address' => 'trim|null_if_empty|nullable|string|max:255',
             'login_url' => 'trim|required|string|max:1000',
             'original_url' => 'trim|null_if_empty|nullable|string|max:1000',
@@ -49,6 +52,7 @@ final class HotspotController
             'username' => (string)($data['username'] ?? ''),
             'router_identity' => (string)$data['router_identity'],
             'interface' => (string)($data['interface'] ?? ''),
+            'ssid' => (string)($data['ssid'] ?? ''),
             'server_address' => (string)($data['server_address'] ?? ''),
             'login_url' => (string)$data['login_url'],
             'original_url' => (string)($data['original_url'] ?? ''),
@@ -56,21 +60,29 @@ final class HotspotController
             'chap_challenge' => (string)($data['chap_challenge'] ?? ''),
         ];
 
+        $scope = implode('|', array_filter([
+            $context['router_identity'],
+            $context['ssid'],
+            $context['interface'],
+        ], static fn ($value) => $value !== '')) ?: 'global';
+        $device = $this->devices->observe(
+            $context['mac'],
+            $scope,
+            $this->auth->auth()->id(),
+            $context['ip'],
+            (string)($_SERVER['HTTP_USER_AGENT'] ?? ''),
+        );
+        $context['device_id'] = (int)$device['id'];
+        $context['device_uuid'] = (string)($device['uuid'] ?? '');
         $_SESSION['hotspot'] = $context;
-        $userId = $this->auth->auth()->id();
-
-        if ($context['mac'] !== '') {
-            $stmt = $this->db->prepare('INSERT INTO devices(user_id,mac,last_ip,user_agent,last_seen_at) VALUES(?,?,?,?,?) ON DUPLICATE KEY UPDATE user_id=IF(user_id IS NULL,VALUES(user_id),user_id),last_ip=VALUES(last_ip),user_agent=VALUES(user_agent),last_seen_at=VALUES(last_seen_at)');
-            $stmt->execute([$userId, $context['mac'], $context['ip'], substr((string)($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 500), now()]);
-        }
 
         $router = $this->routers->enabledByIdentity($context['router_identity']);
         $notice = $router ? '' : '<div class="alert">This hotspot router is not registered or is disabled. Ask the operator to add identity <span class="code">' . e($context['router_identity']) . '</span>.</div>';
         $form = $router ? '<form method="post" action="/hotspot/authenticate"><input type="hidden" name="_csrf" value="' . e(csrf_token()) . '"><div class="field"><label for="voucher">Access code</label><input id="voucher" name="voucher" autocomplete="one-time-code" autocapitalize="characters" required autofocus></div><button class="button full" type="submit">Connect this device</button></form>' : '';
         $account = $this->auth->auth()->check()
             ? '<p class="muted">This session can be linked to your PixiePoint account for history, points and support.</p>'
-            : '<p class="muted">Guest access works normally. <a href="/">Log in</a> or <a href="/register">register</a> to build points and keep your history.</p>';
-        $this->view->page('Sign in', $this->view->portalCard('<h1>Connect to Wi-Fi</h1><p class="muted">Enter your access code to start this device’s MikroTik Hotspot session.</p>' . $notice . '<div class="context"><div><small>Device</small>' . e($context['mac'] ?: 'Unknown') . '</div><div><small>Router</small>' . e($context['router_identity'] ?: 'Unknown') . '</div></div>' . $form . $account));
+            : '<p class="muted">Guest access works normally. PixiePoint remembers this device using both its browser and observed network identities. <a href="/">Log in</a> or <a href="/register">register</a> to protect points and remaining time if those identities change.</p>';
+        $this->view->page('Sign in', $this->view->portalCard('<h1>Connect to Wi-Fi</h1><p class="muted">Enter your access code to start this device’s MikroTik Hotspot session.</p>' . $notice . '<div class="context"><div><small>Device</small>' . e($context['mac'] ?: 'Private/randomized identity') . '</div><div><small>Router</small>' . e($context['router_identity'] ?: 'Unknown') . '</div></div>' . $form . $account));
     }
 
     /** Hosted UI for the local MikroTik/legacy JuanFi browser bridge. */
@@ -129,10 +141,9 @@ final class HotspotController
             $this->view->page('Invalid code', $this->view->portalCard('<h1>Code not accepted</h1><div class="alert">That access code is invalid, expired, or has already been used.</div><a class="button full" href="javascript:history.back()">Try another code</a>'));
         }
 
-        $deviceStmt = $this->db->prepare('SELECT id,user_id FROM devices WHERE mac=?');
-        $deviceStmt->execute([$context['mac']]);
-        $device = $deviceStmt->fetch() ?: [];
-        $deviceId = $device['id'] ?? null;
+        $deviceId = (int)($context['device_id'] ?? 0) ?: null;
+        $device = $deviceId ? $this->devices->findDevice($deviceId) : null;
+        $deviceId = $device ? (int)$device['id'] : null;
         $userId = $this->auth->auth()->id() ?? ($device['user_id'] ?? null);
 
         $this->db->beginTransaction();
@@ -165,7 +176,7 @@ final class HotspotController
         $uptime = max(0, (int)($data['uptime'] ?? 0));
         $account = $this->auth->auth()->check()
             ? '<a class="button full" href="/dashboard">My PixiePoint account</a>'
-            : '<p class="muted">Create a PixiePoint account later to earn points and get easier support.</p>';
+            : '<p class="muted">Create a PixiePoint account later to protect points and remaining time even if your private MAC or browser changes.</p>';
         $body = '<h1>You’re connected</h1><p class="muted">Live Wi-Fi session for ' . e($mac ?: 'this device') . '.</p><div class="context"><div><small>Connected</small>' . e(duration_nice($uptime)) . '</div><div><small>IP address</small>' . e($data['ip'] ?? '') . '</div><div><small>Downloaded</small>' . e(bytes_nice($out)) . '</div><div><small>Uploaded</small>' . e(bytes_nice($in)) . '</div></div><form method="post" action="' . e($data['logout_url'] ?? '#') . '"><button class="button full" type="submit">Disconnect</button></form>' . $account;
         $this->view->page('Session', $this->view->portalCard($body));
     }
