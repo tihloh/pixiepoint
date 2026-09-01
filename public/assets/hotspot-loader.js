@@ -14,6 +14,23 @@
     if (element) element.textContent = message;
   }
 
+  function voucherKey(mac) {
+    return `pixiepoint:last-voucher:${String(mac || "").toUpperCase()}`;
+  }
+
+  function prefillLastVoucher() {
+    if (!isLogin) return;
+
+    const input = document.getElementById("compat-voucher");
+    if (!input || input.value) return;
+
+    try {
+      const mac = window.PIXIEPOINT_CONTEXT && window.PIXIEPOINT_CONTEXT.mac;
+      const voucher = localStorage.getItem(voucherKey(mac)) || localStorage.getItem("pixiepoint:last-voucher") || "";
+      if (voucher) input.value = voucher;
+    } catch (_) {}
+  }
+
   function loadStyle(href, id) {
     return new Promise(function (resolve, reject) {
       if (id && document.getElementById(id)) {
@@ -70,6 +87,7 @@
         await loadScript(`${hostedOrigin}/assets/session-portal.js?v=${version}`, "pixiepoint-session");
       } else if (isLogin) {
         await loadScript(`${hostedOrigin}/assets/juanfi-compat.js?v=${version}`, "pixiepoint-app");
+        prefillLastVoucher();
       }
 
       await loadScript(`${hostedOrigin}/assets/device-info.js?v=${version}`, "pixiepoint-device-info");
