@@ -27,6 +27,7 @@ return static function (RouteManager $routes, array $c): void {
     $routes->post('/', [$c['hotspot'], 'portal'])->name('hotspot.portal');
     $routes->get('/hotspot/compat', [$c['hotspot'], 'compatibilityPortal'])->name('hotspot.compat');
     $routes->get('/hotspot/device-info', [$c['device_info'], 'show'])->name('hotspot.device_info');
+    $routes->post('/hotspot/device-voucher', [$c['device_info'], 'saveVoucher'])->name('hotspot.device_voucher');
 
     $routes->post('/hotspot/authenticate', [$c['hotspot'], 'authenticate'])->name('hotspot.authenticate');
 
