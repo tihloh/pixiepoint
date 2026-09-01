@@ -9,7 +9,10 @@ use RuntimeException;
 
 final class PointWallet
 {
-    public function __construct(private PDO $db) {}
+    public function __construct(private PDO $db)
+    {
+        $this->migrate();
+    }
 
     public function walletForDevice(int $deviceId, ?int $userId = null): array
     {
@@ -71,8 +74,8 @@ final class PointWallet
                 $imported += $points;
                 $this->db->prepare('UPDATE point_wallets SET balance=balance+?,updated_at=? WHERE id=?')->execute([$points, now(), $wallet['id']]);
             }
-            $this->db->prepare('UPDATE router_login_events SET points_awarded=points_earned,point_wallet_id=? WHERE id=?')
-                ->execute([$wallet['id'], $event['id']]);
+            $this->db->prepare('UPDATE router_login_events SET points_awarded=points_earned WHERE id=?')
+                ->execute([$event['id']]);
         }
 
         return $imported;
@@ -111,6 +114,41 @@ final class PointWallet
     {
         if ($userId) return (int)$this->walletForUser($userId)['balance'];
         return (int)$this->walletForDevice($deviceId, null)['balance'];
+    }
+
+    private function migrate(): void
+    {
+        $this->db->exec(<<<'SQL'
+CREATE TABLE IF NOT EXISTS point_wallets (
+    id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    user_id BIGINT UNSIGNED NULL,
+    device_id BIGINT UNSIGNED NULL,
+    balance BIGINT NOT NULL DEFAULT 0,
+    status VARCHAR(24) NOT NULL DEFAULT 'active',
+    claimed_by_wallet_id BIGINT UNSIGNED NULL,
+    claimed_at DATETIME NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_point_wallet_user (user_id),
+    INDEX idx_point_wallet_device (device_id,status),
+    FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY(device_id) REFERENCES devices(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS point_ledger (
+    id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    wallet_id BIGINT UNSIGNED NOT NULL,
+    points BIGINT NOT NULL,
+    entry_type VARCHAR(24) NOT NULL,
+    source_type VARCHAR(48) NULL,
+    source_key VARCHAR(191) NULL,
+    description VARCHAR(255) NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_point_ledger_source (source_type,source_key),
+    INDEX idx_point_ledger_wallet (wallet_id,created_at),
+    FOREIGN KEY(wallet_id) REFERENCES point_wallets(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+SQL);
     }
 
     private function find(int $walletId): array
