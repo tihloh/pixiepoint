@@ -109,21 +109,31 @@
     return value === true || value === 1 || value === "1" || value === "true";
   }
 
-  function hotspotLogout(endSession, button) {
+  function disconnectToPause(button) {
     if (!session.logoutUrl) return;
 
     if (button) {
       button.disabled = true;
-      button.textContent = endSession ? "Ending session…" : "Disconnecting…";
+      button.textContent = "Disconnecting…";
+    }
+
+    // Important: navigate to MikroTik's logout URL exactly once. RouterOS then
+    // terminates the active connection and serves logout.html as the native
+    // paused-session vessel. Doing an XHR logout first consumes the logout
+    // transition, so a second visit to link-logout can bounce to login/status.
+    location.href = session.logoutUrl;
+  }
+
+  function endSession(button) {
+    if (!session.logoutUrl) return;
+
+    if (button) {
+      button.disabled = true;
+      button.textContent = "Ending session…";
     }
 
     const finish = function () {
-      if (endSession) {
-        location.replace(session.loginUrl || "/");
-        return;
-      }
-
-      location.replace(session.logoutUrl || session.loginUrl || "/");
+      location.replace(session.loginUrl || "/");
     };
 
     const xhr = new XMLHttpRequest();
@@ -135,7 +145,7 @@
     xhr.ontimeout = finish;
 
     try {
-      xhr.send(endSession ? "erase-cookie=on" : "erase-cookie=off");
+      xhr.send("erase-cookie=on");
     } catch (_) {
       finish();
     }
@@ -217,7 +227,7 @@
         </div>
 
         <p class="muted">
-          Disconnect ends Wi-Fi access. End session clears automatic hotspot login and returns this device to the login portal.
+          Disconnect pauses Wi-Fi and opens the pause page. End session clears automatic hotspot login and returns this device to the login portal.
         </p>
       </section>
     </main>
@@ -336,13 +346,13 @@
 
   if (disconnectButton) {
     disconnectButton.onclick = function () {
-      hotspotLogout(false, disconnectButton);
+      disconnectToPause(disconnectButton);
     };
   }
 
   if (endSessionButton) {
     endSessionButton.onclick = function () {
-      hotspotLogout(true, endSessionButton);
+      endSession(endSessionButton);
     };
   }
 
