@@ -81,14 +81,32 @@ CREATE TABLE IF NOT EXISTS vouchers (
 
 CREATE TABLE IF NOT EXISTS devices (
     id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    uuid CHAR(36) NULL UNIQUE,
     user_id BIGINT UNSIGNED NULL,
-    mac CHAR(17) NOT NULL UNIQUE,
+    mac CHAR(17) NULL UNIQUE,
     last_ip VARCHAR(45),
     user_agent VARCHAR(500),
+    merged_into_device_id BIGINT UNSIGNED NULL,
     first_seen_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     last_seen_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_devices_user (user_id),
+    INDEX idx_devices_merged (merged_into_device_id),
     FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS device_identities (
+    id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    device_id BIGINT UNSIGNED NOT NULL,
+    identity_type VARCHAR(32) NOT NULL,
+    identity_value VARCHAR(255) NOT NULL,
+    scope_key VARCHAR(255) NOT NULL DEFAULT 'global',
+    confidence TINYINT UNSIGNED NOT NULL DEFAULT 100,
+    first_seen_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    last_seen_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_device_identity (identity_type,identity_value,scope_key),
+    INDEX idx_device_identities_device (device_id),
+    INDEX idx_device_identities_lookup (identity_type,identity_value),
+    FOREIGN KEY(device_id) REFERENCES devices(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS sessions (
@@ -148,11 +166,26 @@ SQL);
         $this->db->exec("ALTER TABLE users MODIFY COLUMN password_hash VARCHAR(255) NULL");
         $this->db->exec("ALTER TABLE users ADD COLUMN IF NOT EXISTS google_sub VARCHAR(255) NULL AFTER password_hash");
         $this->db->exec("ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url VARCHAR(1000) NULL AFTER google_sub");
-        $this->db->exec("ALTER TABLE devices ADD COLUMN IF NOT EXISTS user_id BIGINT UNSIGNED NULL AFTER id");
+        $this->db->exec("ALTER TABLE devices ADD COLUMN IF NOT EXISTS uuid CHAR(36) NULL AFTER id");
+        $this->db->exec("ALTER TABLE devices ADD COLUMN IF NOT EXISTS user_id BIGINT UNSIGNED NULL AFTER uuid");
+        $this->db->exec("ALTER TABLE devices ADD COLUMN IF NOT EXISTS merged_into_device_id BIGINT UNSIGNED NULL AFTER user_agent");
+        $this->db->exec("ALTER TABLE devices MODIFY COLUMN mac CHAR(17) NULL");
         $this->db->exec("ALTER TABLE sessions ADD COLUMN IF NOT EXISTS user_id BIGINT UNSIGNED NULL AFTER id");
+        $this->db->exec("UPDATE devices SET uuid=UUID() WHERE uuid IS NULL OR uuid=''");
+        $this->db->exec("INSERT IGNORE INTO device_identities(device_id,identity_type,identity_value,scope_key,confidence,first_seen_at,last_seen_at) SELECT id,'mac',mac,'legacy',100,first_seen_at,last_seen_at FROM devices WHERE mac IS NOT NULL AND mac<>''");
 
         try {
             $this->db->exec("CREATE UNIQUE INDEX idx_users_google_sub ON users (google_sub)");
+        } catch (PDOException) {
+            // Index already exists on upgraded installations.
+        }
+        try {
+            $this->db->exec("CREATE UNIQUE INDEX idx_devices_uuid ON devices (uuid)");
+        } catch (PDOException) {
+            // Index already exists on upgraded installations.
+        }
+        try {
+            $this->db->exec("CREATE INDEX idx_devices_merged ON devices (merged_into_device_id)");
         } catch (PDOException) {
             // Index already exists on upgraded installations.
         }
