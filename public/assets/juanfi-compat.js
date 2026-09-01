@@ -9,20 +9,33 @@
     if ($("compat-app")) return;
     var root = $("pixiepoint-root");
     if (!root) return;
+
     document.body.className = "";
-    root.outerHTML = '<main class="portal"><section class="card"><div class="brand"><div class="logo">P</div><div><strong>PixiePoint Wi-Fi</strong><div class="muted">MikroTik hotspot access</div></div></div><div class="compat" id="compat-app"><h1>Connect to Wi-Fi</h1><p class="muted">Insert coins or enter an existing voucher.</p><div id="compat-alert" class="alert" hidden></div><div class="field"><label for="compat-vendo">Coin slot</label><select id="compat-vendo"></select><small id="compat-health" class="compat-status">Connecting to the local vendo…</small></div><button class="button full" id="compat-topup" type="button" disabled>Insert coin</button><button class="button secondary full" id="compat-rates" type="button" disabled>View rates</button><div class="compat-tools"><button class="button secondary" id="compat-extend-toggle" type="button" disabled>Extend voucher</button><button class="button secondary" id="compat-charging" type="button" hidden>Phone charging</button><button class="button secondary" id="compat-eload" type="button" hidden>Buy e-load</button></div><form id="compat-extend-form" class="compat-inline" hidden><div class="field"><label for="compat-extend-code">Voucher to extend</label><input id="compat-extend-code" required></div><button class="button full" type="submit">Insert coins to extend</button></form><div id="compat-transaction" class="compat-transaction" hidden><small>Your voucher</small><strong id="compat-code">—</strong><div class="context"><div><small>Coin total</small><span id="compat-amount">₱0</span></div><div><small>Time</small><span id="compat-time">—</span></div></div><p id="compat-progress" class="muted">Waiting for coins…</p><div class="actions"><button class="button" id="compat-finish" type="button">Done &amp; connect</button><button class="button secondary" id="compat-cancel" type="button">Cancel</button></div></div><form id="compat-convert-form" class="compat-inline" hidden><div class="field"><label for="compat-convert-code">Convert time into another voucher</label><input id="compat-convert-code" required></div><button class="button full" type="submit">Convert voucher</button></form><form id="compat-voucher-form" class="compat-voucher"><div class="field"><label for="compat-voucher">Have a voucher?</label><input id="compat-voucher" required></div><button class="button full" type="submit">Connect</button></form><div id="compat-rate-list" class="compat-rate-list" hidden></div><div id="compat-charger-list" class="compat-rate-list" hidden></div><div id="compat-eload-panel" class="compat-rate-list" hidden><div id="compat-eload-products">Loading products…</div></div></div></section></main>';
+    root.outerHTML = '<main class="portal"><section class="card"><div class="brand"><div class="logo">P</div><div><strong>PixiePoint Wi-Fi</strong><div class="muted">MikroTik hotspot access</div></div></div><div class="compat" id="compat-app"><h1>Connect to Wi-Fi</h1><p class="muted">Insert coins or use the voucher below.</p><div id="compat-alert" class="alert" hidden></div><form id="compat-voucher-form"><div class="field"><label for="compat-voucher">Voucher</label><input id="compat-voucher" autocomplete="off" required></div><div class="field"><label for="compat-vendo">Coin slot</label><select id="compat-vendo"></select><small id="compat-health" class="compat-status">Connecting to the local vendo…</small></div><button class="button full" id="compat-topup" type="button" disabled>Insert coin</button><button class="button secondary full" id="compat-rates" type="button" disabled>View rates</button><div class="compat-tools"><button class="button secondary" id="compat-charging" type="button" hidden>Phone charging</button><button class="button secondary" id="compat-eload" type="button" hidden>Buy e-load</button></div><div id="compat-transaction" class="compat-transaction" hidden><small>Your voucher</small><strong id="compat-code">—</strong><div class="context"><div><small>Coin total</small><span id="compat-amount">₱0</span></div><div><small>Time</small><span id="compat-time">—</span></div></div><p id="compat-progress" class="muted">Waiting for coins…</p><div class="actions"><button class="button" id="compat-finish" type="button">Done &amp; connect</button><button class="button secondary" id="compat-cancel" type="button">Cancel</button></div></div><form id="compat-convert-form" class="compat-inline" hidden><div class="field"><label for="compat-convert-code">Convert time into another voucher</label><input id="compat-convert-code" required></div><button class="button full" type="submit">Convert voucher</button></form><button class="button full" type="submit">Connect</button></form><div id="compat-rate-list" class="compat-rate-list" hidden></div><div id="compat-charger-list" class="compat-rate-list" hidden></div><div id="compat-eload-panel" class="compat-rate-list" hidden><div id="compat-eload-products">Loading products…</div></div></div></section></main>';
   }
 
   function localRequest(path, method, data) {
     return new Promise(function (resolve, reject) {
-      var xhr = new XMLHttpRequest(), query = method === "GET" && data && Object.keys(data).length ? "?" + new URLSearchParams(data).toString() : "";
+      var xhr = new XMLHttpRequest();
+      var query = method === "GET" && data && Object.keys(data).length ? "?" + new URLSearchParams(data).toString() : "";
       if (!selected) return reject(new Error("No local vendo is selected."));
+
       xhr.open(method || "GET", selected.baseUrl + path + query, true);
       xhr.timeout = 7000;
-      xhr.onload = function () { var body = xhr.responseText; try { body = JSON.parse(body); } catch (_) {} resolve({ ok: xhr.status >= 200 && xhr.status < 300, status: xhr.status, body: body }); };
+      xhr.onload = function () {
+        var body = xhr.responseText;
+        try { body = JSON.parse(body); } catch (_) {}
+        resolve({ ok: xhr.status >= 200 && xhr.status < 300, status: xhr.status, body: body });
+      };
       xhr.onerror = function () { reject(new Error("The local vendo is unreachable.")); };
       xhr.ontimeout = function () { reject(new Error("The local vendo timed out.")); };
-      if (method === "POST") { xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded"); xhr.send(new URLSearchParams(data || {}).toString()); } else xhr.send();
+
+      if (method === "POST") {
+        xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+        xhr.send(new URLSearchParams(data || {}).toString());
+      } else {
+        xhr.send();
+      }
     });
   }
 
@@ -34,14 +47,23 @@
 
   function rpc(path, method, data) {
     if (window.PIXIEPOINT_BOOTSTRAP) return localRequest(path, method || "GET", data || {});
+
     return new Promise(function (resolve, reject) {
       var id = "rpc-" + (++sequence) + "-" + Date.now();
       var timeout = setTimeout(function () {
         delete pending[id];
         reject(new Error("The local vendo did not respond."));
       }, 9000);
+
       pending[id] = { resolve: resolve, reject: reject, timeout: timeout };
-      window.parent.postMessage({ type: "pixiepoint:request", id: id, vendoId: selected && selected.id, path: path, method: method || "GET", data: data || {} }, parentOrigin);
+      window.parent.postMessage({
+        type: "pixiepoint:request",
+        id: id,
+        vendoId: selected && selected.id,
+        path: path,
+        method: method || "GET",
+        data: data || {}
+      }, parentOrigin);
     });
   }
 
@@ -52,12 +74,25 @@
     try { return JSON.parse(body); } catch (_) { return { raw: body }; }
   }
 
-  function isTrue(value) { return value === true || value === "true" || value === 1 || value === "1"; }
+  function isTrue(value) {
+    return value === true || value === "true" || value === 1 || value === "1";
+  }
+
+  function currentVoucher() {
+    var input = $("compat-voucher");
+    return input ? input.value.trim().toUpperCase() : "";
+  }
+
+  function setCurrentVoucher(voucher) {
+    voucher = String(voucher || "").trim().toUpperCase();
+    var input = $("compat-voucher");
+    if (input && voucher) input.value = voucher;
+    return voucher;
+  }
 
   function setReady(ready, message) {
     $("compat-topup").disabled = !ready;
     $("compat-rates").disabled = !ready;
-    $("compat-extend-toggle").disabled = !ready;
     $("compat-health").textContent = message;
     $("compat-health").className = "compat-status " + (ready ? "online" : "offline");
   }
@@ -83,6 +118,7 @@
   function init(data) {
     context = data.context || {};
     vendos = data.vendos || [];
+
     var select = $("compat-vendo");
     select.textContent = "";
     vendos.forEach(function (vendo) {
@@ -92,25 +128,30 @@
       if (vendo.interfaceName && vendo.interfaceName === context.interfaceName) option.selected = true;
       select.appendChild(option);
     });
+
     if (!vendos.length) {
       setReady(false, "No local vendo configured");
       alertMessage("The operator has not configured a coin slot for this hotspot.");
       return;
     }
+
     $("compat-charging").hidden = !vendos.some(function (v) { return v.chargingEnabled; });
     $("compat-eload").hidden = !vendos.some(function (v) { return v.eloadEnabled; });
     selectVendo();
   }
 
   function generatedVoucher(data) {
-    return String(data.voucher || data.voucherCode || data.code || "").trim();
+    return String(data.voucher || data.voucherCode || data.code || "").trim().toUpperCase();
   }
 
   function displayTransaction(data) {
     activeVoucher = generatedVoucher(data) || activeVoucher;
+    if (transactionMode === "internet") setCurrentVoucher(activeVoucher);
     $("compat-code").textContent = activeVoucher || "Preparing…";
     $("compat-amount").textContent = "₱" + (data.totalCoin || data.amount || data.coin || 0);
-    var seconds = Number(data.timeAdded || 0), time = data.time || data.minutes || data.duration;
+
+    var seconds = Number(data.timeAdded || 0);
+    var time = data.time || data.minutes || data.duration;
     if (!time && seconds) time = Math.floor(seconds / 3600) + "h " + Math.floor((seconds % 3600) / 60) + "m";
     $("compat-time").textContent = time || "—";
     $("compat-transaction").hidden = false;
@@ -119,10 +160,12 @@
   function pollCoin() {
     clearTimeout(pollTimer);
     if (!activeVoucher) return;
+
     rpc("/checkCoin", "POST", { voucher: activeVoucher }).then(function (result) {
       var data = responseData(result);
-      if (result.ok && (isTrue(data.status) || isTrue(data.success))) displayTransaction(data);
-      else if (data.errorCode !== "coin.not.inserted" && data.errorCode !== "coin.is.reading") {
+      if (result.ok && (isTrue(data.status) || isTrue(data.success))) {
+        displayTransaction(data);
+      } else if (data.errorCode !== "coin.not.inserted" && data.errorCode !== "coin.is.reading") {
         throw new Error(data.message || "The coin slot reported an error.");
       }
       pollTimer = setTimeout(pollCoin, 1000);
@@ -134,21 +177,42 @@
 
   function beginTopup(options) {
     options = options || {};
+    transactionMode = options.mode || "internet";
     alertMessage("");
     $("compat-topup").disabled = true;
-    var payload = { voucher: options.voucher || "", mac: context.mac || "", ipAddress: context.ip || "", extendTime: options.extendTime ? 1 : 0 };
+
+    var voucher = options.voucher || (transactionMode === "internet" ? currentVoucher() : "");
+    activeVoucher = String(voucher || "").trim().toUpperCase();
+
+    if (!activeVoucher) {
+      alertMessage("A voucher code is required before inserting coins.");
+      $("compat-topup").disabled = false;
+      return;
+    }
+
+    if (transactionMode === "internet") setCurrentVoucher(activeVoucher);
+
+    var payload = {
+      voucher: activeVoucher,
+      mac: context.mac || "",
+      ipAddress: context.ip || "",
+      extendTime: 0
+    };
+
     if (options.chargerPort !== undefined) {
       payload.topupType = "CHARGER";
       payload.chargerPort = options.chargerPort;
     }
-    transactionMode = options.mode || "internet";
+
     rpc("/topUp", "POST", payload).then(function (result) {
       var data = responseData(result);
-      if (!result.ok || (!isTrue(data.status) && !isTrue(data.success))) throw new Error(data.message || data.errorCode || "The coin slot rejected the request.");
+      if (!result.ok || (!isTrue(data.status) && !isTrue(data.success))) {
+        throw new Error(data.message || data.errorCode || "The coin slot rejected the request.");
+      }
+
       displayTransaction(data);
-      $("compat-finish").textContent = transactionMode === "charger" ? "Finish charging purchase" : (transactionMode === "extend" ? "Save extension" : "Done & connect");
+      $("compat-finish").textContent = transactionMode === "charger" ? "Finish charging purchase" : "Done & connect";
       $("compat-convert-form").hidden = transactionMode !== "internet";
-      if (!activeVoucher) throw new Error("The coin slot did not return a voucher code.");
       pollCoin();
     }).catch(function (error) {
       alertMessage(error.message);
@@ -157,13 +221,27 @@
   }
 
   function login(voucher) {
+    voucher = String(voucher || "").trim().toUpperCase();
+    if (!voucher) return;
+
     if (window.PIXIEPOINT_BOOTSTRAP) {
-      var password = selected && selected.passwordMode === "voucher" ? voucher : "", chap = window.PIXIEPOINT_CHAP || {}, form;
-      if (chap.id && $("chap-login")) { form = $("chap-login"); form.username.value = voucher; form.password.value = hexMD5(chap.id + password + chap.challenge); }
-      else { form = $("pap-login"); form.username.value = voucher; form.password.value = password; }
+      var password = selected && selected.passwordMode === "voucher" ? voucher : "";
+      var chap = window.PIXIEPOINT_CHAP || {};
+      var form;
+
+      if (chap.id && $("chap-login")) {
+        form = $("chap-login");
+        form.username.value = voucher;
+        form.password.value = hexMD5(chap.id + password + chap.challenge);
+      } else {
+        form = $("pap-login");
+        form.username.value = voucher;
+        form.password.value = password;
+      }
       form.submit();
       return;
     }
+
     window.parent.postMessage({ type: "pixiepoint:login", voucher: voucher, vendoId: selected && selected.id }, parentOrigin);
   }
 
@@ -171,16 +249,23 @@
     clearTimeout(pollTimer);
     rpc("/useVoucher", "POST", { voucher: activeVoucher }).then(function (result) {
       var data = responseData(result);
-      if (!result.ok || (!isTrue(data.status) && !isTrue(data.success))) throw new Error(data.message || data.errorCode || "The voucher could not be activated.");
-      if (transactionMode === "internet") login(activeVoucher);
-      else {
-        alertMessage(transactionMode === "charger" ? "Charging time was added successfully." : "Voucher time was extended successfully.");
+      if (!result.ok || (!isTrue(data.status) && !isTrue(data.success))) {
+        throw new Error(data.message || data.errorCode || "The voucher could not be activated.");
+      }
+
+      if (transactionMode === "internet") {
+        setCurrentVoucher(activeVoucher);
+        login(activeVoucher);
+      } else {
+        alertMessage("Charging time was added successfully.");
         activeVoucher = "";
         $("compat-transaction").hidden = true;
         $("compat-convert-form").hidden = true;
         $("compat-topup").disabled = false;
       }
-    }).catch(function (error) { alertMessage(error.message); });
+    }).catch(function (error) {
+      alertMessage(error.message);
+    });
   }
 
   function cancelTopup() {
@@ -196,11 +281,16 @@
   function showRates() {
     rpc("/getRates?rateType=1&date=" + encodeURIComponent(new Date().toISOString()), "GET").then(function (result) {
       if (!result.ok) throw new Error("Rates are unavailable.");
-      var data = responseData(result), rates = Array.isArray(data) ? data : (data.rates || []);
-      if (!rates.length && typeof data.raw === "string") rates = data.raw.split("|").filter(Boolean).map(function (row) {
-        var column = row.split("#");
-        return { amount: column[0], minutes: column[3], data: column[4] };
-      });
+      var data = responseData(result);
+      var rates = Array.isArray(data) ? data : (data.rates || []);
+
+      if (!rates.length && typeof data.raw === "string") {
+        rates = data.raw.split("|").filter(Boolean).map(function (row) {
+          var column = row.split("#");
+          return { amount: column[0], minutes: column[3], data: column[4] };
+        });
+      }
+
       var list = $("compat-rate-list");
       list.textContent = "";
       rates.forEach(function (rate) {
@@ -209,33 +299,46 @@
         row.textContent = "₱" + (rate.amount || rate.price || rate.coin || "—") + " · " + (rate.time || rate.minutes || rate.duration || "—") + (rate.data ? " · " + rate.data + " MB" : "");
         list.appendChild(row);
       });
+
       if (!rates.length) list.textContent = typeof data.raw === "string" ? data.raw : "No rates were returned.";
       list.hidden = false;
-    }).catch(function (error) { alertMessage(error.message); });
+    }).catch(function (error) {
+      alertMessage(error.message);
+    });
   }
 
   function showCharging() {
     rpc("/getChargingStation", "GET", { date: Date.now() }).then(function (result) {
       if (!result.ok) throw new Error("Charging stations are unavailable.");
-      var data = responseData(result), raw = typeof data.raw === "string" ? data.raw : "", list = $("compat-charger-list");
+      var data = responseData(result);
+      var raw = typeof data.raw === "string" ? data.raw : "";
+      var list = $("compat-charger-list");
       list.textContent = "";
+
       raw.split("|").filter(Boolean).forEach(function (value, index) {
         var column = value.split("#");
         if (column[1] === "-1") return;
-        var row = document.createElement("div"), button = document.createElement("button");
+
+        var row = document.createElement("div");
+        var button = document.createElement("button");
         row.className = "compat-rate";
         row.appendChild(document.createTextNode((column[0] || "Charging port " + (index + 1)) + (Number(column[3]) * 1000 > Date.now() ? " · In use" : " · Available")));
         button.className = "button secondary";
         button.type = "button";
         button.textContent = "Add charging time";
         button.disabled = Number(column[3]) * 1000 > Date.now();
-        button.addEventListener("click", function () { beginTopup({ voucher: column[0], chargerPort: index, mode: "charger" }); });
+        button.addEventListener("click", function () {
+          beginTopup({ voucher: column[0], chargerPort: index, mode: "charger" });
+        });
         row.appendChild(button);
         list.appendChild(row);
       });
+
       if (!list.childNodes.length) list.textContent = "No charging ports are configured.";
       list.hidden = false;
-    }).catch(function (error) { alertMessage(error.message); });
+    }).catch(function (error) {
+      alertMessage(error.message);
+    });
   }
 
   function convertVoucher(event) {
@@ -245,23 +348,32 @@
       var data = responseData(result);
       if (!result.ok || !isTrue(data.status)) throw new Error(data.errorCode || "Voucher conversion failed.");
       alertMessage("The purchased time was converted into voucher " + target + ".");
+      setCurrentVoucher(target);
+      activeVoucher = target;
       $("compat-convert-form").hidden = true;
-    }).catch(function (error) { alertMessage(error.message); });
+    }).catch(function (error) {
+      alertMessage(error.message);
+    });
   }
 
   function showEload() {
-    var panel = $("compat-eload-panel"), products = $("compat-eload-products");
+    var panel = $("compat-eload-panel");
+    var products = $("compat-eload-products");
     panel.hidden = false;
     products.textContent = "Contacting the JuanFi e-load service…";
+
     rpc("/eload/rates", "GET", { date: Date.now() }).then(function (result) {
       if (!result.ok) throw new Error("E-load rates are unavailable.");
       var data = responseData(result);
       if (data.raw === "disabled") throw new Error("E-load is disabled on this vendo.");
       products.textContent = "The vendo returned its compressed product catalog. Full product checkout requires binary catalog decoding and will remain unavailable until it passes a physical-device test.";
-    }).catch(function (error) { products.textContent = error.message; });
+    }).catch(function (error) {
+      products.textContent = error.message;
+    });
   }
 
   renderPortal();
+
   window.addEventListener("message", function (event) {
     var data = event.data || {};
     if (data.type === "pixiepoint:init") {
@@ -276,19 +388,23 @@
   });
 
   $("compat-vendo").addEventListener("change", selectVendo);
-  $("compat-topup").addEventListener("click", function () { beginTopup(); });
+  $("compat-topup").addEventListener("click", function () {
+    beginTopup({ voucher: currentVoucher(), mode: "internet" });
+  });
   $("compat-finish").addEventListener("click", finishTopup);
   $("compat-cancel").addEventListener("click", cancelTopup);
   $("compat-rates").addEventListener("click", showRates);
-  $("compat-extend-toggle").addEventListener("click", function () { $("compat-extend-form").hidden = !$("compat-extend-form").hidden; });
-  $("compat-extend-form").addEventListener("submit", function (event) { event.preventDefault(); beginTopup({ voucher: $("compat-extend-code").value.trim().toUpperCase(), extendTime: true, mode: "extend" }); });
   $("compat-convert-form").addEventListener("submit", convertVoucher);
   $("compat-charging").addEventListener("click", showCharging);
   $("compat-eload").addEventListener("click", showEload);
   $("compat-voucher-form").addEventListener("submit", function (event) {
     event.preventDefault();
-    login($("compat-voucher").value.trim().toUpperCase());
+    login(currentVoucher());
   });
-  if (window.PIXIEPOINT_BOOTSTRAP) init({ context: window.PIXIEPOINT_CONTEXT || {}, vendos: window.PIXIEPOINT_VENDOS || [] });
-  else window.parent.postMessage({ type: "pixiepoint:ready" }, "*");
+
+  if (window.PIXIEPOINT_BOOTSTRAP) {
+    init({ context: window.PIXIEPOINT_CONTEXT || {}, vendos: window.PIXIEPOINT_VENDOS || [] });
+  } else {
+    window.parent.postMessage({ type: "pixiepoint:ready" }, "*");
+  }
 }());
