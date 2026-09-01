@@ -109,28 +109,21 @@
     return value === true || value === 1 || value === "1" || value === "true";
   }
 
-  function endSession(button) {
-    if (!session.logoutUrl) return;
+  // Preserve MikroTik's stock status-page logout behavior. If status.html is
+  // itself running in the hotspot_status popup, RouterOS logout is opened in
+  // its own hotspot_logout window and the status window closes. Otherwise the
+  // form submits normally in the current browser window.
+  window.openLogout = function () {
+    if (window.name !== "hotspot_status") return true;
 
-    if (button) {
-      button.disabled = true;
-      button.textContent = "Ending session…";
-    }
-
-    const form = document.createElement("form");
-    form.method = "post";
-    form.action = session.logoutUrl;
-    form.style.display = "none";
-
-    const eraseCookie = document.createElement("input");
-    eraseCookie.type = "hidden";
-    eraseCookie.name = "erase-cookie";
-    eraseCookie.value = "on";
-    form.appendChild(eraseCookie);
-
-    document.body.appendChild(form);
-    form.submit();
-  }
+    window.open(
+      session.logoutUrl,
+      "hotspot_logout",
+      "toolbar=0,location=0,directories=0,status=0,menubars=0,resizable=1,width=280,height=250"
+    );
+    window.close();
+    return false;
+  };
 
   let uptime = number(session.uptime);
   let timeLeft = number(session.sessionTimeLeft);
@@ -203,12 +196,13 @@
         </div>
 
         <div class="actions">
-          <a class="button secondary" id="pp-disconnect" href="${escapeHtml(session.logoutUrl || "#")}">Disconnect</a>
-          <button class="button" id="pp-end-session" type="button">End session</button>
+          <form action="${escapeHtml(session.logoutUrl || "#")}" name="logout" onsubmit="return openLogout()">
+            <button class="button secondary" type="submit">Disconnect</button>
+          </form>
         </div>
 
         <p class="muted">
-          Disconnect uses MikroTik's native logout link and opens the pause page. End session also clears automatic hotspot login.
+          Disconnect uses MikroTik's native status-page logout behavior.
         </p>
       </section>
     </main>
@@ -247,7 +241,6 @@
   const extendButton = document.getElementById("pp-extend");
   const finishButton = document.getElementById("pp-extend-finish");
   const cancelButton = document.getElementById("pp-extend-cancel");
-  const endSessionButton = document.getElementById("pp-end-session");
 
   if (extendButton) {
     extendButton.onclick = function () {
@@ -321,12 +314,6 @@
           document.getElementById("pp-extend-box").hidden = true;
           extendButton.disabled = false;
         });
-    };
-  }
-
-  if (endSessionButton) {
-    endSessionButton.onclick = function () {
-      endSession(endSessionButton);
     };
   }
 
