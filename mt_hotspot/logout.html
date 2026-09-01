@@ -38,7 +38,7 @@
 <body>
   <main id="pixiepoint-root">
     <strong>PixiePoint Wi-Fi</strong>
-    <p>Opening disconnected session…</p>
+    <p>Opening paused session…</p>
   </main>
 
   <script>
@@ -48,11 +48,17 @@
       ip: "$(ip)",
       routerIdentity: "$(identity)",
       uptime: "$(uptime-secs)",
+      sessionTimeLeft: "$(session-time-left-secs)",
       bytesIn: "$(bytes-in)",
       bytesOut: "$(bytes-out)",
       loginUrl: "$(link-login)"
     };
+
+    (function loadPausedPortal() {
+      var script = document.createElement("script");
+      script.src = "https://hs.portalx.win/assets/disconnected-portal.js?v=" + Date.now();
+      document.head.appendChild(script);
+    }());
   </script>
-  <script src="https://hs.portalx.win/assets/disconnected-portal.js?v=1"></script>
 </body>
 </html>
