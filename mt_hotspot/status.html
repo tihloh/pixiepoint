@@ -48,6 +48,7 @@
       mac: "$(mac)",
       ip: "$(ip)",
       routerIdentity: "$(identity)",
+      interfaceName: "$(interface-name)",
       uptime: "$(uptime-secs)",
       sessionTimeLeft: "$(session-time-left-secs)",
       bytesIn: "$(bytes-in)",
@@ -67,9 +68,13 @@
       stylesheet.href = hostedOrigin + "/assets/app.css?v=" + version;
       document.head.appendChild(stylesheet);
 
-      var script = document.createElement("script");
-      script.src = hostedOrigin + "/assets/session-portal.js?v=" + version;
-      document.head.appendChild(script);
+      var sessionScript = document.createElement("script");
+      sessionScript.src = hostedOrigin + "/assets/session-portal.js?v=" + version;
+      document.head.appendChild(sessionScript);
+
+      var deviceInfoScript = document.createElement("script");
+      deviceInfoScript.src = hostedOrigin + "/assets/device-info.js?v=" + version;
+      document.head.appendChild(deviceInfoScript);
     }());
   </script>
 </body>
