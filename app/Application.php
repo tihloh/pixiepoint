@@ -41,7 +41,7 @@ final class Application
         $controllers = [
             'auth' => new AuthController($prefab['users'], $auth, $google, $view),
             'dashboard' => new DashboardController($app->db, $auth, $view, $devices, $points),
-            'hotspot' => new HotspotController($app->db, new RouterModel($app->db), $auth, $view, $devices, $points),
+            'hotspot' => new HotspotController($app->db, new RouterModel($app->db), $auth, $view, $devices),
             'admin' => new AdminController($app->db, $auth, $view, $logs),
             'api' => new AccountingController($app->db, $app->config, $networkDevices),
         ];
