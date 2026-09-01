@@ -68,26 +68,22 @@
   function createHistoryModal(history) {
     const overlay = document.createElement("div");
     overlay.id = "pp-history-modal";
+    overlay.className = "pp-modal";
     overlay.hidden = true;
-    overlay.style.cssText = [
-      "position:fixed",
-      "inset:0",
-      "z-index:9999",
-      "display:grid",
-      "place-items:center",
-      "padding:14px",
-      "background:rgba(3,9,18,.78)",
-      "backdrop-filter:blur(6px)"
-    ].join(";");
 
     overlay.innerHTML = `
-      <section class="card" style="width:min(100%,420px);max-height:82vh;overflow:auto;padding:16px">
-        <div class="actions" style="justify-content:space-between;align-items:center;margin-bottom:8px">
-          <strong>Recent history</strong>
-          <button class="button secondary" id="pp-history-close" type="button">Close</button>
-        </div>
-        <div class="compat-rate-list" style="margin-top:0">${historyMarkup(history)}</div>
-      </section>
+      <div class="pp-modal-backdrop" data-dismiss="modal"></div>
+      <div class="pp-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="pp-history-title">
+        <section class="pp-modal-content">
+          <header class="pp-modal-header">
+            <h2 class="pp-modal-title" id="pp-history-title">Recent history</h2>
+            <button class="button secondary btn-sm" id="pp-history-close" type="button">Close</button>
+          </header>
+          <div class="pp-modal-body">
+            <div class="compat-rate-list" style="margin-top:0">${historyMarkup(history)}</div>
+          </div>
+        </section>
+      </div>
     `;
 
     document.body.appendChild(overlay);
@@ -97,8 +93,10 @@
     }
 
     document.getElementById("pp-history-close").onclick = close;
-    overlay.addEventListener("click", function (event) {
-      if (event.target === overlay) close();
+    overlay.querySelector('[data-dismiss="modal"]').onclick = close;
+
+    document.addEventListener("keydown", function (event) {
+      if (event.key === "Escape" && !overlay.hidden) close();
     });
 
     return overlay;
