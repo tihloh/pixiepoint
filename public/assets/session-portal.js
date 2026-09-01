@@ -8,20 +8,6 @@
 
   if (!root) return;
 
-  function voucherKey(mac) {
-    return `pixiepoint:last-voucher:${String(mac || "").toUpperCase()}`;
-  }
-
-  function rememberSuccessfulVoucher() {
-    const voucher = String(session.username || "").trim();
-    if (!voucher) return;
-
-    try {
-      localStorage.setItem(voucherKey(session.mac), voucher);
-      localStorage.setItem("pixiepoint:last-voucher", voucher);
-    } catch (_) {}
-  }
-
   function number(value) {
     value = Number(value);
     return Number.isFinite(value) && value > 0 ? Math.floor(value) : 0;
@@ -143,8 +129,6 @@
     xhr.ontimeout = returnToLogin;
     xhr.send();
   }
-
-  rememberSuccessfulVoucher();
 
   let timeLeft = number(session.sessionTimeLeft);
   let pollTimer = null;
