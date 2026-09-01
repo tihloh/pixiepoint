@@ -103,6 +103,33 @@
     return false;
   };
 
+  function endSession() {
+    const logoutUrl = session.logoutUrl || "";
+    const loginUrl = session.loginUrl || "/login";
+
+    if (!logoutUrl) {
+      location.href = loginUrl;
+      return;
+    }
+
+    const separator = logoutUrl.includes("?") ? "&" : "?";
+    const xhr = new XMLHttpRequest();
+    let finished = false;
+
+    function returnToLogin() {
+      if (finished) return;
+      finished = true;
+      location.href = loginUrl;
+    }
+
+    xhr.open("GET", `${logoutUrl}${separator}erase-cookie=on`, true);
+    xhr.timeout = 4000;
+    xhr.onload = returnToLogin;
+    xhr.onerror = returnToLogin;
+    xhr.ontimeout = returnToLogin;
+    xhr.send();
+  }
+
   let timeLeft = number(session.sessionTimeLeft);
   let pollTimer = null;
 
@@ -163,6 +190,7 @@
           <form action="${escapeHtml(session.logoutUrl || "#")}" name="logout" onsubmit="return openLogout()">
             <button class="button secondary" type="submit">Disconnect</button>
           </form>
+          <button class="button secondary" id="pp-end-session" type="button">End session</button>
         </div>
       </section>
     </main>
@@ -199,6 +227,15 @@
   const extendButton = document.getElementById("pp-extend");
   const finishButton = document.getElementById("pp-extend-finish");
   const cancelButton = document.getElementById("pp-extend-cancel");
+  const endSessionButton = document.getElementById("pp-end-session");
+
+  if (endSessionButton) {
+    endSessionButton.onclick = function () {
+      endSessionButton.disabled = true;
+      endSessionButton.textContent = "Ending…";
+      endSession();
+    };
+  }
 
   if (extendButton) {
     extendButton.onclick = function () {
