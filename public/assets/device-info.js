@@ -22,19 +22,6 @@
     });
   }
 
-  function formatDate(value) {
-    if (!value) return "—";
-    const parsed = new Date(String(value).replace(" ", "T"));
-    if (Number.isNaN(parsed.getTime())) return value;
-    return parsed.toLocaleString([], {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-      hour: "numeric",
-      minute: "2-digit"
-    });
-  }
-
   function storedUuid() {
     try {
       return String(localStorage.getItem(uuidKey) || "").trim().toLowerCase();
@@ -71,6 +58,7 @@
       ? data.account.name || "Linked account"
       : "Guest device";
     const voucher = String(data.saved_voucher || "").trim();
+    const points = number(data.points);
 
     const panel = document.createElement("details");
     panel.id = "pp-device-info";
@@ -79,14 +67,14 @@
     panel.innerHTML = `
       <summary class="fw-bold py-1">Device details</summary>
       <div class="pt-2">
+        <div class="border rounded-3 p-3 mb-2 text-center bg-body-tertiary">
+          <span class="text-body-secondary small d-block">Points</span>
+          <strong class="d-block fs-2 lh-1 mt-1">${points}</strong>
+          <span class="small text-body-secondary">reward points</span>
+        </div>
         ${row("Device / Account", account)}
         ${row("IP Address", device.ip || context.ip || "—")}
         ${row("MAC Address", device.mac || context.mac || "—")}
-        ${row("Connected", formatDate(device.first_seen_at))}
-        ${row("Last seen", formatDate(device.last_seen_at))}
-        ${row("Total spent", `₱${number(data.stats && data.stats.spent).toFixed(2)}`)}
-        ${row("Points", `${number(data.points)} pts`)}
-        ${row("Purchases", String(number(data.stats && data.stats.purchases)))}
         <div class="py-2 border-bottom border-secondary-subtle small">
           <span class="text-body-secondary d-block mb-1">Last voucher</span>
           <span class="badge text-bg-primary">${escapeHtml(voucher || "None")}</span>
