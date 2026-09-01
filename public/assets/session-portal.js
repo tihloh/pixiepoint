@@ -109,21 +109,6 @@
     return value === true || value === 1 || value === "1" || value === "true";
   }
 
-  function disconnectToPause(button) {
-    if (!session.logoutUrl) return;
-
-    if (button) {
-      button.disabled = true;
-      button.textContent = "Disconnecting…";
-    }
-
-    // Important: navigate to MikroTik's logout URL exactly once. RouterOS then
-    // terminates the active connection and serves logout.html as the native
-    // paused-session vessel. Doing an XHR logout first consumes the logout
-    // transition, so a second visit to link-logout can bounce to login/status.
-    location.href = session.logoutUrl;
-  }
-
   function endSession(button) {
     if (!session.logoutUrl) return;
 
@@ -132,23 +117,19 @@
       button.textContent = "Ending session…";
     }
 
-    const finish = function () {
-      location.replace(session.loginUrl || "/");
-    };
+    const form = document.createElement("form");
+    form.method = "post";
+    form.action = session.logoutUrl;
+    form.style.display = "none";
 
-    const xhr = new XMLHttpRequest();
-    xhr.open("POST", session.logoutUrl, true);
-    xhr.timeout = 5000;
-    xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-    xhr.onload = finish;
-    xhr.onerror = finish;
-    xhr.ontimeout = finish;
+    const eraseCookie = document.createElement("input");
+    eraseCookie.type = "hidden";
+    eraseCookie.name = "erase-cookie";
+    eraseCookie.value = "on";
+    form.appendChild(eraseCookie);
 
-    try {
-      xhr.send("erase-cookie=on");
-    } catch (_) {
-      finish();
-    }
+    document.body.appendChild(form);
+    form.submit();
   }
 
   let uptime = number(session.uptime);
@@ -222,12 +203,12 @@
         </div>
 
         <div class="actions">
-          <button class="button secondary" id="pp-disconnect" type="button">Disconnect</button>
+          <a class="button secondary" id="pp-disconnect" href="${escapeHtml(session.logoutUrl || "#")}">Disconnect</a>
           <button class="button" id="pp-end-session" type="button">End session</button>
         </div>
 
         <p class="muted">
-          Disconnect pauses Wi-Fi and opens the pause page. End session clears automatic hotspot login and returns this device to the login portal.
+          Disconnect uses MikroTik's native logout link and opens the pause page. End session also clears automatic hotspot login.
         </p>
       </section>
     </main>
@@ -266,7 +247,6 @@
   const extendButton = document.getElementById("pp-extend");
   const finishButton = document.getElementById("pp-extend-finish");
   const cancelButton = document.getElementById("pp-extend-cancel");
-  const disconnectButton = document.getElementById("pp-disconnect");
   const endSessionButton = document.getElementById("pp-end-session");
 
   if (extendButton) {
@@ -341,12 +321,6 @@
           document.getElementById("pp-extend-box").hidden = true;
           extendButton.disabled = false;
         });
-    };
-  }
-
-  if (disconnectButton) {
-    disconnectButton.onclick = function () {
-      disconnectToPause(disconnectButton);
     };
   }
 
