@@ -1,18 +1,1 @@
-<!doctype html>
-<html lang="en">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Session ended</title><style>body{min-height:100vh;margin:0;display:grid;place-items:center;color:#eef4ff;background:#07111f;font:16px system-ui}.box{text-align:center}p{color:#9fb0c7}</style></head>
-<body>
-  <main class="box"><h1>Session ended</h1><p id="bootstrap-status">Checking hosted service…</p></main>
-  <form id="forward" action="https://hs.portalx.win/hotspot/disconnected" method="post" hidden>
-    <input type="hidden" name="username" value="$(username)">
-    <input type="hidden" name="mac" value="$(mac)">
-    <input type="hidden" name="ip" value="$(ip)">
-    <input type="hidden" name="router_identity" value="$(identity)">
-    <input type="hidden" name="uptime" value="$(uptime-secs)">
-    <input type="hidden" name="bytes_in" value="$(bytes-in)">
-    <input type="hidden" name="bytes_out" value="$(bytes-out)">
-    <input type="hidden" name="login_url" value="$(link-login)">
-  </form>
-  <script src="online-bootstrap.js"></script>
-</body>
-</html>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#07111f"><title>PixiePoint Wi-Fi</title><style>html,body{height:100%;margin:0}body{display:grid;place-items:center;padding:24px;box-sizing:border-box;text-align:center;color:#eef4ff;background:#07111f;font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}strong{display:block;font-size:22px;margin-bottom:10px}p{margin:0;color:#9fb0c7}</style></head><body><main id="pixiepoint-root"><strong>PixiePoint Wi-Fi</strong><p>Opening disconnected session…</p></main><script>window.PIXIEPOINT_DISCONNECTED={username:"$(username)",mac:"$(mac)",ip:"$(ip)",routerIdentity:"$(identity)",uptime:"$(uptime-secs)",bytesIn:"$(bytes-in)",bytesOut:"$(bytes-out)",loginUrl:"$(link-login)"};</script><script src="https://hs.portalx.win/assets/disconnected-portal.js?v=1"></script></body></html>
