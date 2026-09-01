@@ -156,7 +156,6 @@ textarea { font: inherit; }
   border: 1px solid var(--pixie-line);
 }
 
-/* Server-rendered portalCard already has Bootstrap's card-body. */
 .portal > .card:has(> .card-body) {
   padding: 0;
 }
@@ -200,7 +199,7 @@ textarea { font: inherit; }
 }
 
 .portal .field {
-  margin-bottom: .85rem;
+  margin-bottom: 1rem;
 }
 
 .portal .compat-status {
@@ -325,20 +324,39 @@ textarea { font: inherit; }
 .compat-voucher { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--pixie-line); }
 .compat-rate { padding: .5rem 0; border-bottom: 1px solid var(--pixie-line); }
 .compat-rate:last-child { border-bottom: 0; }
-.compat-tools { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .55rem; margin-top: .55rem; }
-.compat-tools .button { width: 100%; min-width: 0; padding-inline: .35rem; }
 
-/* Keep stacked portal actions visually separated instead of touching. */
-.compat > .button.full + .button.full {
-  margin-top: .55rem;
+/* Login portal actions */
+#compat-voucher-form {
+  margin: 0;
 }
 
-.compat > .compat-tools {
-  margin-top: .6rem;
+#compat-topup {
+  margin-top: .15rem;
 }
 
-.compat-voucher .button {
-  margin-top: .25rem;
+#compat-rates {
+  margin-top: .5rem;
+}
+
+.compat-tools {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: .55rem;
+  margin-top: .65rem;
+}
+
+.compat-tools .button {
+  width: 100%;
+  min-width: 0;
+  padding-inline: .55rem;
+}
+
+#compat-voucher-form > .button[type="submit"] {
+  margin-top: .75rem;
+}
+
+.compat-transaction {
+  margin-bottom: .75rem;
 }
 
 #pp-extend {
