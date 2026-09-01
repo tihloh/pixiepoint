@@ -38,47 +38,50 @@
               <label for="compat-voucher">Voucher</label>
               <div class="voucher-inline">
                 <input id="compat-voucher" autocomplete="off" required>
-                <button class="button" type="submit">Connect</button>
+                <button class="button" id="compat-connect" type="submit">Connect</button>
               </div>
             </form>
 
-            <button class="button full" id="compat-topup" type="button" disabled>Insert coin</button>
+            <div id="compat-topup-slot">
+              <button class="button full" id="compat-topup" type="button" disabled>Insert coin</button>
+
+              <div id="compat-transaction" class="compat-transaction" hidden>
+                <div class="d-flex justify-content-between gap-3 align-items-start">
+                  <div>
+                    <small>Your voucher</small>
+                    <strong id="compat-code" class="d-block">—</strong>
+                  </div>
+                  <small id="compat-countdown" class="compat-countdown">Waiting…</small>
+                </div>
+
+                <div class="compat-coin-progress" aria-label="Coin slot timeout">
+                  <div id="compat-progress-bar" class="compat-coin-progress-bar"></div>
+                </div>
+
+                <div class="context">
+                  <div>
+                    <small>Coin total</small>
+                    <span id="compat-amount">₱0</span>
+                  </div>
+                  <div>
+                    <small>Time</small>
+                    <span id="compat-time">—</span>
+                  </div>
+                </div>
+
+                <p id="compat-progress" class="muted mb-2">Insert a coin now.</p>
+                <div class="actions">
+                  <button class="button" id="compat-finish" type="button" disabled>Done</button>
+                  <button class="button secondary" id="compat-cancel" type="button">Cancel</button>
+                </div>
+              </div>
+            </div>
+
             <button class="button secondary full" id="compat-rates" type="button" disabled>View rates</button>
 
             <div class="compat-tools" id="compat-services">
               <button class="button secondary" id="compat-charging" type="button" hidden>Phone charging</button>
               <button class="button secondary" id="compat-eload" type="button" hidden>Buy e-load</button>
-            </div>
-
-            <div id="compat-transaction" class="compat-transaction" hidden>
-              <div class="d-flex justify-content-between gap-3 align-items-start">
-                <div>
-                  <small>Your voucher</small>
-                  <strong id="compat-code" class="d-block">—</strong>
-                </div>
-                <small id="compat-countdown" class="compat-countdown">Waiting…</small>
-              </div>
-
-              <div class="compat-coin-progress" aria-label="Coin slot timeout">
-                <div id="compat-progress-bar" class="compat-coin-progress-bar"></div>
-              </div>
-
-              <div class="context">
-                <div>
-                  <small>Coin total</small>
-                  <span id="compat-amount">₱0</span>
-                </div>
-                <div>
-                  <small>Time</small>
-                  <span id="compat-time">—</span>
-                </div>
-              </div>
-
-              <p id="compat-progress" class="muted mb-2">Insert a coin now.</p>
-              <div class="actions">
-                <button class="button" id="compat-finish" type="button" disabled>Done</button>
-                <button class="button secondary" id="compat-cancel" type="button">Cancel</button>
-              </div>
             </div>
 
             <div id="compat-rate-list" class="compat-rate-list" hidden></div>
@@ -173,6 +176,12 @@
     return voucher;
   }
 
+  function setTopupActive(active) {
+    $("compat-topup").hidden = active;
+    $("compat-connect").hidden = active;
+    $("compat-transaction").hidden = !active;
+  }
+
   function setReady(ready, message) {
     $("compat-topup").disabled = !ready;
     $("compat-rates").disabled = !ready;
@@ -243,7 +252,7 @@
     var time = data.time || data.minutes || data.duration;
     if (!time && seconds) time = Math.floor(seconds / 3600) + "h " + Math.floor((seconds % 3600) / 60) + "m";
     $("compat-time").textContent = time || "—";
-    $("compat-transaction").hidden = false;
+    setTopupActive(true);
 
     $("compat-finish").disabled = totalCoinReceived <= 0;
     $("compat-cancel").disabled = totalCoinReceived > 0;
@@ -266,7 +275,7 @@
     activeVoucher = "";
     totalCoinReceived = 0;
     finalizingTopup = false;
-    $("compat-transaction").hidden = true;
+    setTopupActive(false);
     $("compat-progress-bar").style.width = "100%";
     $("compat-countdown").textContent = "Waiting…";
     $("compat-finish").disabled = true;
@@ -323,8 +332,6 @@
         resetTransaction("Charging time was added successfully.");
       }
     }).catch(function (error) {
-      // JuanFi finalizes a credited transaction when the vendo wait timer expires.
-      // If that has already happened, /useVoucher can reject even though the voucher is usable.
       if (autoLogin && transactionMode === "internet" && totalCoinReceived > 0) {
         setCurrentVoucher(activeVoucher);
         login(activeVoucher);
@@ -460,7 +467,7 @@
     $("compat-progress").textContent = "Activating coin slot…";
     $("compat-progress-bar").style.width = "100%";
     $("compat-countdown").textContent = "Starting…";
-    $("compat-transaction").hidden = false;
+    setTopupActive(true);
 
     var payload = {
       voucher: activeVoucher,
