@@ -35,7 +35,7 @@
     @keyframes pulse { 50% { opacity: .3; } }
   </style>
 </head>
-<body class="booting">
+<body class="booting" data-bs-theme="dark">
   <div hidden>
     $(if chap-id)
     <form id="chap-login" action="$(link-login-only)" method="post">
@@ -97,9 +97,13 @@
       }
 
       function clearHostedAssets() {
+        var bootstrapCss = document.getElementById("pixiepoint-bootstrap-css");
+        var bootstrapJs = document.getElementById("pixiepoint-bootstrap-js");
         var stylesheet = document.getElementById("pixiepoint-css");
         var application = document.getElementById("pixiepoint-app");
         var deviceInfo = document.getElementById("pixiepoint-device-info");
+        if (bootstrapCss) bootstrapCss.remove();
+        if (bootstrapJs) bootstrapJs.remove();
         if (stylesheet) stylesheet.remove();
         if (application) application.remove();
         if (deviceInfo) deviceInfo.remove();
@@ -120,6 +124,12 @@
         loadingAssets = true;
         showStatus("Hosted portal found · loading…");
 
+        var bootstrapCss = document.createElement("link");
+        bootstrapCss.id = "pixiepoint-bootstrap-css";
+        bootstrapCss.rel = "stylesheet";
+        bootstrapCss.href = "https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css";
+        document.head.appendChild(bootstrapCss);
+
         var stylesheet = document.createElement("link");
         stylesheet.id = "pixiepoint-css";
         stylesheet.rel = "stylesheet";
@@ -130,25 +140,34 @@
         };
 
         stylesheet.onload = function () {
-          if (portalStarted || document.getElementById("pixiepoint-app")) return;
+          if (portalStarted || document.getElementById("pixiepoint-bootstrap-js")) return;
 
-          var application = document.createElement("script");
-          application.id = "pixiepoint-app";
-          application.src = hostedOrigin + "/assets/juanfi-compat.js?v=" + version;
-          application.onerror = function () {
-            if (!portalStarted) scheduleRetry("Hosted portal assets unavailable · checking again…");
+          var bootstrapJs = document.createElement("script");
+          bootstrapJs.id = "pixiepoint-bootstrap-js";
+          bootstrapJs.src = "https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js";
+          bootstrapJs.onerror = function () {
+            if (!portalStarted) scheduleRetry("Bootstrap unavailable · checking again…");
           };
-          application.onload = function () {
-            var deviceInfo = document.createElement("script");
-            deviceInfo.id = "pixiepoint-device-info";
-            deviceInfo.src = hostedOrigin + "/assets/device-info.js?v=" + version;
-            document.head.appendChild(deviceInfo);
+          bootstrapJs.onload = function () {
+            var application = document.createElement("script");
+            application.id = "pixiepoint-app";
+            application.src = hostedOrigin + "/assets/juanfi-compat.js?v=" + version;
+            application.onerror = function () {
+              if (!portalStarted) scheduleRetry("Hosted portal assets unavailable · checking again…");
+            };
+            application.onload = function () {
+              var deviceInfo = document.createElement("script");
+              deviceInfo.id = "pixiepoint-device-info";
+              deviceInfo.src = hostedOrigin + "/assets/device-info.js?v=" + version;
+              document.head.appendChild(deviceInfo);
 
-            portalStarted = true;
-            loadingAssets = false;
-            clearTimeout(retryTimer);
+              portalStarted = true;
+              loadingAssets = false;
+              clearTimeout(retryTimer);
+            };
+            document.head.appendChild(application);
           };
-          document.head.appendChild(application);
+          document.head.appendChild(bootstrapJs);
         };
 
         document.head.appendChild(stylesheet);
