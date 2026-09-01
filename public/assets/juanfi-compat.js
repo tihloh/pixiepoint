@@ -11,7 +11,7 @@
     if (!root) return;
 
     document.body.className = "";
-    root.outerHTML = '<main class="portal"><section class="card"><div class="brand"><div class="logo">P</div><div><strong>PixiePoint Wi-Fi</strong><div class="muted">MikroTik hotspot access</div></div></div><div class="compat" id="compat-app"><h1>Connect to Wi-Fi</h1><p class="muted">Insert coins or use the voucher below.</p><div id="compat-alert" class="alert" hidden></div><form id="compat-voucher-form"><div class="field"><label for="compat-voucher">Voucher</label><input id="compat-voucher" autocomplete="off" required></div><div class="field"><label for="compat-vendo">Coin slot</label><select id="compat-vendo"></select><small id="compat-health" class="compat-status">Connecting to the local vendo…</small></div><button class="button full" id="compat-topup" type="button" disabled>Insert coin</button><button class="button secondary full" id="compat-rates" type="button" disabled>View rates</button><div class="compat-tools"><button class="button secondary" id="compat-charging" type="button" hidden>Phone charging</button><button class="button secondary" id="compat-eload" type="button" hidden>Buy e-load</button></div><div id="compat-transaction" class="compat-transaction" hidden><small>Your voucher</small><strong id="compat-code">—</strong><div class="context"><div><small>Coin total</small><span id="compat-amount">₱0</span></div><div><small>Time</small><span id="compat-time">—</span></div></div><p id="compat-progress" class="muted">Waiting for coins…</p><div class="actions"><button class="button" id="compat-finish" type="button">Done &amp; connect</button><button class="button secondary" id="compat-cancel" type="button">Cancel</button></div></div><form id="compat-convert-form" class="compat-inline" hidden><div class="field"><label for="compat-convert-code">Convert time into another voucher</label><input id="compat-convert-code" required></div><button class="button full" type="submit">Convert voucher</button></form><button class="button full" type="submit">Connect</button></form><div id="compat-rate-list" class="compat-rate-list" hidden></div><div id="compat-charger-list" class="compat-rate-list" hidden></div><div id="compat-eload-panel" class="compat-rate-list" hidden><div id="compat-eload-products">Loading products…</div></div></div></section></main>';
+    root.outerHTML = '<main class="portal"><section class="card"><div class="brand"><div class="logo">P</div><div><strong>PixiePoint Wi-Fi</strong><div class="muted">MikroTik hotspot access</div></div></div><div class="compat" id="compat-app"><h1>Connect to Wi-Fi</h1><p class="muted">Insert coins or use the voucher below.</p><div id="compat-alert" class="alert" hidden></div><form id="compat-voucher-form"><div class="field"><label for="compat-voucher">Voucher</label><input id="compat-voucher" autocomplete="off" required></div><div class="field"><label for="compat-vendo">Coin slot</label><select id="compat-vendo"></select><small id="compat-health" class="compat-status">Connecting to the local vendo…</small></div><button class="button full" id="compat-topup" type="button" disabled>Insert coin</button><button class="button secondary full" id="compat-rates" type="button" disabled>View rates</button><div class="compat-tools"><button class="button secondary" id="compat-charging" type="button" hidden>Phone charging</button><button class="button secondary" id="compat-eload" type="button" hidden>Buy e-load</button></div><div id="compat-transaction" class="compat-transaction" hidden><small>Your voucher</small><strong id="compat-code">—</strong><div class="context"><div><small>Coin total</small><span id="compat-amount">₱0</span></div><div><small>Time</small><span id="compat-time">—</span></div></div><p id="compat-progress" class="muted">Waiting for coins…</p><div class="actions"><button class="button" id="compat-finish" type="button">Done &amp; connect</button><button class="button secondary" id="compat-cancel" type="button">Cancel</button></div></div><button class="button full" type="submit">Connect</button></form><div id="compat-rate-list" class="compat-rate-list" hidden></div><div id="compat-charger-list" class="compat-rate-list" hidden></div><div id="compat-eload-panel" class="compat-rate-list" hidden><div id="compat-eload-products">Loading products…</div></div></div></section></main>';
   }
 
   function localRequest(path, method, data) {
@@ -212,7 +212,6 @@
 
       displayTransaction(data);
       $("compat-finish").textContent = transactionMode === "charger" ? "Finish charging purchase" : "Done & connect";
-      $("compat-convert-form").hidden = transactionMode !== "internet";
       pollCoin();
     }).catch(function (error) {
       alertMessage(error.message);
@@ -260,7 +259,6 @@
         alertMessage("Charging time was added successfully.");
         activeVoucher = "";
         $("compat-transaction").hidden = true;
-        $("compat-convert-form").hidden = true;
         $("compat-topup").disabled = false;
       }
     }).catch(function (error) {
@@ -273,7 +271,6 @@
     rpc("/cancelTopUp", "POST", { voucher: activeVoucher, mac: context.mac || "" }).catch(function () {}).then(function () {
       activeVoucher = "";
       $("compat-transaction").hidden = true;
-      $("compat-convert-form").hidden = true;
       $("compat-topup").disabled = false;
     });
   }
@@ -341,21 +338,6 @@
     });
   }
 
-  function convertVoucher(event) {
-    event.preventDefault();
-    var target = $("compat-convert-code").value.trim().toUpperCase();
-    rpc("/convertVoucher", "POST", { voucher: activeVoucher, convertVoucher: target }).then(function (result) {
-      var data = responseData(result);
-      if (!result.ok || !isTrue(data.status)) throw new Error(data.errorCode || "Voucher conversion failed.");
-      alertMessage("The purchased time was converted into voucher " + target + ".");
-      setCurrentVoucher(target);
-      activeVoucher = target;
-      $("compat-convert-form").hidden = true;
-    }).catch(function (error) {
-      alertMessage(error.message);
-    });
-  }
-
   function showEload() {
     var panel = $("compat-eload-panel");
     var products = $("compat-eload-products");
@@ -394,7 +376,6 @@
   $("compat-finish").addEventListener("click", finishTopup);
   $("compat-cancel").addEventListener("click", cancelTopup);
   $("compat-rates").addEventListener("click", showRates);
-  $("compat-convert-form").addEventListener("submit", convertVoucher);
   $("compat-charging").addEventListener("click", showCharging);
   $("compat-eload").addEventListener("click", showEload);
   $("compat-voucher-form").addEventListener("submit", function (event) {
