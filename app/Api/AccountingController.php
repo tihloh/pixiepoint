@@ -65,7 +65,7 @@ final class AccountingController
         $status = (string)$payload['status'];
         $mapped = $status === 'stop' ? 'stopped' : 'active';
         $sessionId = (string)$payload['session_id'];
-        $username = (string)($payload['username'] ?? '');
+        $username = trim((string)($payload['username'] ?? ''));
         $clientIp = (string)($payload['client_ip'] ?? '');
         $mac = client_mac((string)($payload['mac'] ?? ''));
         $routerIdentity = (string)($payload['router_identity'] ?? '');
@@ -78,6 +78,9 @@ final class AccountingController
                 $device = $this->devices->resolve($mac, $scope, $clientIp) ?: [];
                 $deviceId = $device['id'] ?? null;
                 $userId = $device['user_id'] ?? null;
+                if ($deviceId && $username !== '') {
+                    $this->db->prepare('UPDATE devices SET last_voucher=?,last_seen_at=? WHERE id=?')->execute([$username, now(), $deviceId]);
+                }
             }
 
             if ($routerIdentity !== '') {
@@ -156,6 +159,7 @@ final class AccountingController
 
         $mac = client_mac((string)($payload['mac'] ?? ''));
         $clientIp = (string)($payload['client_ip'] ?? '');
+        $username = trim((string)$payload['username']);
         $deviceId = $userId = $voucherId = null;
         $amount = (int)$payload['amount_pesos'];
         $divisor = max(1, (int)($this->config['points_pesos_per_point'] ?? 5));
@@ -169,14 +173,17 @@ final class AccountingController
                 $device = $this->devices->resolve($mac, $scope, $clientIp) ?: [];
                 $deviceId = $device['id'] ?? null;
                 $userId = $device['user_id'] ?? null;
+                if ($deviceId && $username !== '') {
+                    $this->db->prepare('UPDATE devices SET last_voucher=?,last_seen_at=? WHERE id=?')->execute([$username, now(), $deviceId]);
+                }
             }
             $voucherStmt = $this->db->prepare('SELECT id FROM vouchers WHERE code=? LIMIT 1');
-            $voucherStmt->execute([(string)$payload['username']]);
+            $voucherStmt->execute([$username]);
             $voucherId = $voucherStmt->fetchColumn() ?: null;
 
             $awardedPoints = $userId ? $earnedPoints : 0;
             $stmt = $this->db->prepare('INSERT INTO router_login_events(event_key,router_id,device_id,user_id,voucher_id,username,mac,client_ip,interface_name,device_name,vendo_name,amount_pesos,duration_seconds,is_extension,points_earned,points_awarded) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)');
-            $stmt->execute([$eventKey,$router['id'],$deviceId,$userId,$voucherId,(string)$payload['username'],$mac?:null,$clientIp?:null,$payload['interface_name']??null,$payload['device_name']??null,$payload['vendo_name']??null,$amount,(int)$payload['duration_seconds'],(int)$payload['is_extension'],$earnedPoints,$awardedPoints]);
+            $stmt->execute([$eventKey,$router['id'],$deviceId,$userId,$voucherId,$username,$mac?:null,$clientIp?:null,$payload['interface_name']??null,$payload['device_name']??null,$payload['vendo_name']??null,$amount,(int)$payload['duration_seconds'],(int)$payload['is_extension'],$earnedPoints,$awardedPoints]);
             $eventId = (int)$this->db->lastInsertId();
             if ($userId && $awardedPoints > 0) {
                 $this->db->prepare('UPDATE users SET points=points+? WHERE id=?')->execute([$awardedPoints, $userId]);
