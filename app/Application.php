@@ -11,6 +11,7 @@ use PixiePoint\App\Controllers\DashboardController;
 use PixiePoint\App\Controllers\HotspotController;
 use PixiePoint\App\Models\Router as RouterModel;
 use PixiePoint\App\Services\AuthContext;
+use PixiePoint\App\Services\DeviceIdentity;
 use PixiePoint\App\Services\GoogleOAuth;
 use PixiePoint\App\Services\PrefabKernel;
 use PixiePoint\App\Services\View;
@@ -29,13 +30,14 @@ final class Application
         $auth = new AuthContext($prefab['users'], $prefab['auth'], $prefab['permissions']);
         $view = new View($app->config);
         $google = new GoogleOAuth($app->db, $app->config, $prefab['users']);
+        $devices = new DeviceIdentity($app->db);
         $logs = $prefab['logs'];
         $routes = $prefab['routes'];
 
         $controllers = [
             'auth' => new AuthController($prefab['users'], $auth, $google, $view),
-            'dashboard' => new DashboardController($app->db, $auth, $view),
-            'hotspot' => new HotspotController($app->db, new RouterModel($app->db), $auth, $view),
+            'dashboard' => new DashboardController($app->db, $auth, $view, $devices),
+            'hotspot' => new HotspotController($app->db, new RouterModel($app->db), $auth, $view, $devices),
             'admin' => new AdminController($app->db, $auth, $view, $logs),
             'api' => new AccountingController($app->db, $app->config),
         ];
