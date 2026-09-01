@@ -48,30 +48,70 @@
     return document.querySelector(".portal .card") || document.querySelector(".portal");
   }
 
+  function historyMarkup(history) {
+    if (!history.length) return '<p class="muted">No purchase history yet.</p>';
+
+    return history.map(function (item) {
+      const description = item.extension ? "Time extension" : "Wi-Fi purchase";
+      return `
+        <div class="compat-rate">
+          <div>
+            <strong>${description}</strong>
+            <small>${escapeHtml(formatDate(item.created_at))}</small>
+          </div>
+          <span>₱${number(item.amount)} · ${duration(item.duration_seconds)}</span>
+        </div>
+      `;
+    }).join("");
+  }
+
+  function createHistoryModal(history) {
+    const overlay = document.createElement("div");
+    overlay.id = "pp-history-modal";
+    overlay.hidden = true;
+    overlay.style.cssText = [
+      "position:fixed",
+      "inset:0",
+      "z-index:9999",
+      "display:grid",
+      "place-items:center",
+      "padding:14px",
+      "background:rgba(3,9,18,.78)",
+      "backdrop-filter:blur(6px)"
+    ].join(";");
+
+    overlay.innerHTML = `
+      <section class="card" style="width:min(100%,420px);max-height:82vh;overflow:auto;padding:16px">
+        <div class="actions" style="justify-content:space-between;align-items:center;margin-bottom:8px">
+          <strong>Recent history</strong>
+          <button class="button secondary" id="pp-history-close" type="button">Close</button>
+        </div>
+        <div class="compat-rate-list" style="margin-top:0">${historyMarkup(history)}</div>
+      </section>
+    `;
+
+    document.body.appendChild(overlay);
+
+    function close() {
+      overlay.hidden = true;
+    }
+
+    document.getElementById("pp-history-close").onclick = close;
+    overlay.addEventListener("click", function (event) {
+      if (event.target === overlay) close();
+    });
+
+    return overlay;
+  }
+
   function render(data) {
     const card = findCard();
     if (!card || document.getElementById("pp-device-info")) return;
 
-    const timeLeft = number(context.sessionTimeLeft);
     const account = data.account && data.account.linked
       ? escapeHtml(data.account.name || "Linked account")
       : "Guest device";
-
     const history = Array.isArray(data.history) ? data.history : [];
-    const historyHtml = history.length
-      ? history.map(function (item) {
-          const description = item.extension ? "Time extension" : "Wi-Fi purchase";
-          return `
-            <div class="compat-rate">
-              <div>
-                <strong>${description}</strong>
-                <small>${escapeHtml(formatDate(item.created_at))}</small>
-              </div>
-              <span>₱${number(item.amount)} · ${duration(item.duration_seconds)}</span>
-            </div>
-          `;
-        }).join("")
-      : '<p class="muted">No purchase history yet.</p>';
 
     const panel = document.createElement("section");
     panel.id = "pp-device-info";
@@ -89,12 +129,6 @@
           <small>Points</small>
           <strong>${number(data.points)} pts</strong>
         </div>
-        ${timeLeft > 0 ? `
-          <div>
-            <small>Time left</small>
-            <strong>${duration(timeLeft)}</strong>
-          </div>
-        ` : ""}
         <div>
           <small>Purchases</small>
           <strong>${number(data.stats && data.stats.purchases)}</strong>
@@ -103,16 +137,17 @@
           <small>Total purchased</small>
           <strong>${duration(data.stats && data.stats.purchased_seconds)}</strong>
         </div>
+        <div>
+          <small>Spent</small>
+          <strong>₱${number(data.stats && data.stats.total_spent)}</strong>
+        </div>
       </div>
 
-      <details>
-        <summary>Recent history</summary>
-        <div class="compat-rate-list">${historyHtml}</div>
-      </details>
+      <button class="button secondary full" id="pp-history-open" type="button">Recent history</button>
 
       ${data.registered
-        ? '<p class="muted">This device is linked to your PixiePoint account. Sensitive account actions still require sign-in.</p>'
-        : '<p class="muted">Register or sign in to protect points and reconnect this device if its private MAC changes.</p>'}
+        ? '<p class="muted">Linked to your PixiePoint account. Sensitive account actions still require sign-in.</p>'
+        : '<p class="muted">Register or sign in to protect points and recover this device if its private MAC changes.</p>'}
     `;
 
     const brand = card.querySelector(".brand");
@@ -121,6 +156,11 @@
     } else {
       card.prepend(panel);
     }
+
+    const modal = createHistoryModal(history);
+    document.getElementById("pp-history-open").onclick = function () {
+      modal.hidden = false;
+    };
   }
 
   function load() {
