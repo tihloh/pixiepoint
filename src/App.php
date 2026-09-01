@@ -151,6 +151,7 @@ CREATE TABLE IF NOT EXISTS router_login_events (
     amount_pesos INT UNSIGNED NOT NULL DEFAULT 0,
     duration_seconds BIGINT UNSIGNED NOT NULL DEFAULT 0,
     is_extension TINYINT(1) NOT NULL DEFAULT 0,
+    points_earned BIGINT UNSIGNED NOT NULL DEFAULT 0,
     points_awarded BIGINT UNSIGNED NOT NULL DEFAULT 0,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_login_events_created (created_at),
@@ -171,8 +172,11 @@ SQL);
         $this->db->exec("ALTER TABLE devices ADD COLUMN IF NOT EXISTS merged_into_device_id BIGINT UNSIGNED NULL AFTER user_agent");
         $this->db->exec("ALTER TABLE devices MODIFY COLUMN mac CHAR(17) NULL");
         $this->db->exec("ALTER TABLE sessions ADD COLUMN IF NOT EXISTS user_id BIGINT UNSIGNED NULL AFTER id");
+        $this->db->exec("ALTER TABLE router_login_events ADD COLUMN IF NOT EXISTS points_earned BIGINT UNSIGNED NOT NULL DEFAULT 0 BEFORE points_awarded");
         $this->db->exec("UPDATE devices SET uuid=UUID() WHERE uuid IS NULL OR uuid=''");
         $this->db->exec("INSERT IGNORE INTO device_identities(device_id,identity_type,identity_value,scope_key,confidence,first_seen_at,last_seen_at) SELECT id,'mac',mac,'legacy',100,first_seen_at,last_seen_at FROM devices WHERE mac IS NOT NULL AND mac<>''");
+        $this->db->exec("UPDATE router_login_events SET points_earned=points_awarded WHERE points_earned=0 AND points_awarded>0");
+        $this->db->exec("UPDATE router_login_events SET points_awarded=0 WHERE user_id IS NULL AND points_awarded>0");
 
         try {
             $this->db->exec("CREATE UNIQUE INDEX idx_users_google_sub ON users (google_sub)");
