@@ -77,15 +77,6 @@ final class DeviceInfoController
                 'created_at' => (string)$row['created_at'],
             ], $rawHistory);
 
-            $savedVoucher = '';
-            foreach ($rawHistory as $row) {
-                $candidate = trim((string)($row['username'] ?? ''));
-                if ($candidate !== '') {
-                    $savedVoucher = $candidate;
-                    break;
-                }
-            }
-
             $statsStmt = $this->db->prepare(
                 'SELECT COUNT(*) purchases,COALESCE(SUM(amount_pesos),0) spent,COALESCE(SUM(duration_seconds),0) purchased_seconds '
                 . 'FROM router_login_events WHERE device_id=?'
@@ -97,7 +88,7 @@ final class DeviceInfoController
                 'ok' => true,
                 'registered' => $account !== null,
                 'account' => $account,
-                'saved_voucher' => $savedVoucher,
+                'saved_voucher' => trim((string)($device['last_voucher'] ?? '')),
                 'points' => $this->points->balanceForDevice($deviceId, $userId),
                 'device' => [
                     'uuid' => (string)($device['uuid'] ?? ''),
