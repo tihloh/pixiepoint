@@ -35,7 +35,7 @@
     }
   </style>
 </head>
-<body>
+<body data-bs-theme="dark">
   <main id="pixiepoint-root">
     <strong>PixiePoint Wi-Fi</strong>
     <p>Opening your active session…</p>
@@ -63,18 +63,29 @@
       var hostedOrigin = window.PIXIEPOINT_HOSTED_ORIGIN || "https://hs.portalx.win";
       var version = Date.now();
 
+      var bootstrapCss = document.createElement("link");
+      bootstrapCss.rel = "stylesheet";
+      bootstrapCss.href = "https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css";
+      document.head.appendChild(bootstrapCss);
+
       var stylesheet = document.createElement("link");
       stylesheet.rel = "stylesheet";
       stylesheet.href = hostedOrigin + "/assets/app.css?v=" + version;
       document.head.appendChild(stylesheet);
 
-      var sessionScript = document.createElement("script");
-      sessionScript.src = hostedOrigin + "/assets/session-portal.js?v=" + version;
-      document.head.appendChild(sessionScript);
-
-      var deviceInfoScript = document.createElement("script");
-      deviceInfoScript.src = hostedOrigin + "/assets/device-info.js?v=" + version;
-      document.head.appendChild(deviceInfoScript);
+      var bootstrapJs = document.createElement("script");
+      bootstrapJs.src = "https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js";
+      bootstrapJs.onload = function () {
+        var sessionScript = document.createElement("script");
+        sessionScript.src = hostedOrigin + "/assets/session-portal.js?v=" + version;
+        sessionScript.onload = function () {
+          var deviceInfoScript = document.createElement("script");
+          deviceInfoScript.src = hostedOrigin + "/assets/device-info.js?v=" + version;
+          document.head.appendChild(deviceInfoScript);
+        };
+        document.head.appendChild(sessionScript);
+      };
+      document.head.appendChild(bootstrapJs);
     }());
   </script>
 </body>
