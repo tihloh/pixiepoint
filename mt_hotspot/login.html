@@ -71,6 +71,7 @@
       routerIdentity: "$(identity)",
       interfaceName: "$(interface-name)",
       serverAddress: "$(server-address)",
+      sessionTimeLeft: "$(session-time-left-secs)",
       error: "$(error)"
     };
 
@@ -98,8 +99,10 @@
       function clearHostedAssets() {
         var stylesheet = document.getElementById("pixiepoint-css");
         var application = document.getElementById("pixiepoint-app");
+        var deviceInfo = document.getElementById("pixiepoint-device-info");
         if (stylesheet) stylesheet.remove();
         if (application) application.remove();
+        if (deviceInfo) deviceInfo.remove();
         loadingAssets = false;
       }
 
@@ -136,6 +139,11 @@
             if (!portalStarted) scheduleRetry("Hosted portal assets unavailable · checking again…");
           };
           application.onload = function () {
+            var deviceInfo = document.createElement("script");
+            deviceInfo.id = "pixiepoint-device-info";
+            deviceInfo.src = hostedOrigin + "/assets/device-info.js?v=" + version;
+            document.head.appendChild(deviceInfo);
+
             portalStarted = true;
             loadingAssets = false;
             clearTimeout(retryTimer);
