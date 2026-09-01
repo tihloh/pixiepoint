@@ -81,9 +81,15 @@ final class View
     private function bootstrapMarkup(string $html): string
     {
         $replacements = [
+            'class="heading"' => 'class="d-flex flex-column flex-md-row align-items-md-end justify-content-between gap-3 mb-4"',
+            'class="grid"' => 'class="dashboard-grid mb-4"',
+            'class="metric"' => 'class="card card-body h-100 metric"',
+            'class="panel"' => 'class="card card-body mt-4"',
+            'class="form-grid"' => 'class="form-grid"',
+            'class="actions"' => 'class="d-flex flex-wrap gap-2"',
             'class="muted"' => 'class="text-body-secondary"',
-            'class="button full"' => 'class="btn btn-primary w-100"',
             'class="button secondary full"' => 'class="btn btn-outline-secondary w-100"',
+            'class="button full"' => 'class="btn btn-primary w-100"',
             'class="button secondary"' => 'class="btn btn-outline-secondary"',
             'class="button ghost"' => 'class="btn btn-outline-secondary"',
             'class="button"' => 'class="btn btn-primary"',
