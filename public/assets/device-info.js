@@ -49,57 +49,44 @@
   }
 
   function historyMarkup(history) {
-    if (!history.length) return '<p class="muted">No purchase history yet.</p>';
+    if (!history.length) return '<p class="text-body-secondary mb-0">No purchase history yet.</p>';
 
     return history.map(function (item) {
       const description = item.extension ? "Time extension" : "Wi-Fi purchase";
       return `
-        <div class="compat-rate">
+        <div class="d-flex justify-content-between gap-3 py-2 border-bottom">
           <div>
-            <strong>${description}</strong>
-            <small>${escapeHtml(formatDate(item.created_at))}</small>
+            <strong class="d-block">${description}</strong>
+            <small class="text-body-secondary">${escapeHtml(formatDate(item.created_at))}</small>
           </div>
-          <span>₱${number(item.amount)} · ${duration(item.duration_seconds)}</span>
+          <span class="text-nowrap">₱${number(item.amount)} · ${duration(item.duration_seconds)}</span>
         </div>
       `;
     }).join("");
   }
 
   function createHistoryModal(history) {
-    const overlay = document.createElement("div");
-    overlay.id = "pp-history-modal";
-    overlay.className = "pp-modal";
-    overlay.hidden = true;
+    const modalElement = document.createElement("div");
+    modalElement.className = "modal fade";
+    modalElement.id = "pp-history-modal";
+    modalElement.tabIndex = -1;
+    modalElement.setAttribute("aria-labelledby", "pp-history-title");
+    modalElement.setAttribute("aria-hidden", "true");
 
-    overlay.innerHTML = `
-      <div class="pp-modal-backdrop" data-dismiss="modal"></div>
-      <div class="pp-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="pp-history-title">
-        <section class="pp-modal-content">
-          <header class="pp-modal-header">
-            <h2 class="pp-modal-title" id="pp-history-title">Recent history</h2>
-            <button class="button secondary btn-sm" id="pp-history-close" type="button">Close</button>
-          </header>
-          <div class="pp-modal-body">
-            <div class="compat-rate-list" style="margin-top:0">${historyMarkup(history)}</div>
+    modalElement.innerHTML = `
+      <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h2 class="modal-title fs-5" id="pp-history-title">Recent history</h2>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
-        </section>
+          <div class="modal-body">${historyMarkup(history)}</div>
+        </div>
       </div>
     `;
 
-    document.body.appendChild(overlay);
-
-    function close() {
-      overlay.hidden = true;
-    }
-
-    document.getElementById("pp-history-close").onclick = close;
-    overlay.querySelector('[data-dismiss="modal"]').onclick = close;
-
-    document.addEventListener("keydown", function (event) {
-      if (event.key === "Escape" && !overlay.hidden) close();
-    });
-
-    return overlay;
+    document.body.appendChild(modalElement);
+    return new bootstrap.Modal(modalElement);
   }
 
   function render(data) {
@@ -113,39 +100,49 @@
 
     const panel = document.createElement("section");
     panel.id = "pp-device-info";
-    panel.className = "compat-transaction";
+    panel.className = "card bg-body-tertiary border-0 mt-3";
     panel.innerHTML = `
-      <div class="brand">
-        <div>
-          <strong>${data.registered ? "Registered device" : "Device details"}</strong>
-          <div class="muted">${account}</div>
+      <div class="card-body p-3">
+        <div class="mb-2">
+          <strong class="d-block">${data.registered ? "Registered device" : "Device details"}</strong>
+          <small class="text-body-secondary">${account}</small>
         </div>
+
+        <div class="row g-2 mb-3">
+          <div class="col-6">
+            <div class="border rounded-3 p-2 h-100">
+              <small class="text-body-secondary d-block">Points</small>
+              <strong>${number(data.points)} pts</strong>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="border rounded-3 p-2 h-100">
+              <small class="text-body-secondary d-block">Purchases</small>
+              <strong>${number(data.stats && data.stats.purchases)}</strong>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="border rounded-3 p-2 h-100">
+              <small class="text-body-secondary d-block">Total purchased</small>
+              <strong>${duration(data.stats && data.stats.purchased_seconds)}</strong>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="border rounded-3 p-2 h-100">
+              <small class="text-body-secondary d-block">Spent</small>
+              <strong>₱${number(data.stats && data.stats.total_spent)}</strong>
+            </div>
+          </div>
+        </div>
+
+        <button class="btn btn-outline-secondary btn-sm w-100" id="pp-history-open" type="button">Recent history</button>
+
+        <p class="text-body-secondary small mt-2 mb-0">
+          ${data.registered
+            ? "Linked to your PixiePoint account. Sensitive account actions still require sign-in."
+            : "Register or sign in to protect points and recover this device if its private MAC changes."}
+        </p>
       </div>
-
-      <div class="context">
-        <div>
-          <small>Points</small>
-          <strong>${number(data.points)} pts</strong>
-        </div>
-        <div>
-          <small>Purchases</small>
-          <strong>${number(data.stats && data.stats.purchases)}</strong>
-        </div>
-        <div>
-          <small>Total purchased</small>
-          <strong>${duration(data.stats && data.stats.purchased_seconds)}</strong>
-        </div>
-        <div>
-          <small>Spent</small>
-          <strong>₱${number(data.stats && data.stats.total_spent)}</strong>
-        </div>
-      </div>
-
-      <button class="button secondary full" id="pp-history-open" type="button">Recent history</button>
-
-      ${data.registered
-        ? '<p class="muted">Linked to your PixiePoint account. Sensitive account actions still require sign-in.</p>'
-        : '<p class="muted">Register or sign in to protect points and recover this device if its private MAC changes.</p>'}
     `;
 
     const brand = card.querySelector(".brand");
@@ -157,7 +154,7 @@
 
     const modal = createHistoryModal(history);
     document.getElementById("pp-history-open").onclick = function () {
-      modal.hidden = false;
+      modal.show();
     };
   }
 
@@ -191,7 +188,7 @@
   let attempts = 0;
   const waitForPortal = setInterval(function () {
     attempts++;
-    if (findCard()) {
+    if (findCard() && window.bootstrap && bootstrap.Modal) {
       clearInterval(waitForPortal);
       load();
       return;
