@@ -28,7 +28,7 @@ final class View
             $nav = '<nav class="navbar navbar-expand-lg border-bottom sticky-top shadow-sm">'
                 . '<div class="container-xl py-1">'
                 . '<a class="navbar-brand fw-bold d-flex align-items-center gap-2" href="/dashboard">'
-                . '<span class="logo logo-sm">P</span><span>' . $name . '</span></a>'
+                . '<span class="logo">P</span><span>' . $name . '</span></a>'
                 . '<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#pixiepoint-nav" aria-controls="pixiepoint-nav" aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>'
                 . '<div class="collapse navbar-collapse" id="pixiepoint-nav">'
                 . '<div class="navbar-nav ms-auto align-items-lg-center gap-lg-1 py-2 py-lg-0">'
@@ -82,10 +82,9 @@ final class View
     {
         $replacements = [
             'class="heading"' => 'class="d-flex flex-column flex-md-row align-items-md-end justify-content-between gap-3 mb-4"',
-            'class="grid"' => 'class="dashboard-grid mb-4"',
+            'class="grid"' => 'class="d-grid gap-3 mb-4" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr))"',
             'class="metric"' => 'class="card card-body h-100 metric"',
             'class="panel"' => 'class="card card-body mt-4"',
-            'class="form-grid"' => 'class="form-grid"',
             'class="actions"' => 'class="d-flex flex-wrap gap-2"',
             'class="muted"' => 'class="text-body-secondary"',
             'class="button secondary full"' => 'class="btn btn-outline-secondary w-100"',
