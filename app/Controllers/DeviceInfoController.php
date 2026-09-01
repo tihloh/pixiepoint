@@ -33,17 +33,15 @@ final class DeviceInfoController
             $this->json(['ok' => false, 'error' => 'device.identity_required'], 422);
         }
 
-        if ($uuid !== '' && !preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/', $uuid)) {
+        if ($uuid !== '' && !$this->validUuid($uuid)) {
             $this->json(['ok' => false, 'error' => 'device.invalid_uuid'], 422);
         }
 
-        $scope = implode('|', array_filter([
-            $routerIdentity,
-            $interface,
-        ], static fn (string $value): bool => $value !== '')) ?: 'global';
-
         try {
-            $device = $uuid !== '' ? $this->deviceByUuid($uuid) : $this->devices->resolve($mac, $scope, $ip);
+            $device = $uuid !== ''
+                ? $this->deviceByUuid($uuid)
+                : $this->devices->resolve($mac, $this->scope($routerIdentity, $interface), $ip);
+
             if (!$device) {
                 $this->json(['ok' => false, 'error' => 'device.not_found'], 404);
             }
@@ -105,11 +103,66 @@ final class DeviceInfoController
                 'history' => $history,
             ]);
         } catch (Throwable) {
-            $this->json([
-                'ok' => false,
-                'error' => 'device.lookup_failed',
-            ], 500);
+            $this->json(['ok' => false, 'error' => 'device.lookup_failed'], 500);
         }
+    }
+
+    public function saveVoucher(): never
+    {
+        header('Content-Type: application/json; charset=utf-8');
+        header('Access-Control-Allow-Origin: *');
+        header('Cache-Control: no-store, no-cache, must-revalidate');
+
+        $uuid = strtolower(trim((string)($_POST['uuid'] ?? '')));
+        $voucher = strtoupper(trim((string)($_POST['voucher'] ?? '')));
+        $mac = client_mac((string)($_POST['mac'] ?? ''));
+        $routerIdentity = trim((string)($_POST['router_identity'] ?? ''));
+        $interface = trim((string)($_POST['interface'] ?? ''));
+        $ip = substr(trim((string)($_POST['ip'] ?? '')), 0, 45);
+
+        if ($voucher === '' || mb_strlen($voucher) > 128) {
+            $this->json(['ok' => false, 'error' => 'voucher.invalid'], 422);
+        }
+        if ($uuid === '' && $mac === '') {
+            $this->json(['ok' => false, 'error' => 'device.identity_required'], 422);
+        }
+        if ($uuid !== '' && !$this->validUuid($uuid)) {
+            $this->json(['ok' => false, 'error' => 'device.invalid_uuid'], 422);
+        }
+
+        try {
+            $device = $uuid !== ''
+                ? $this->deviceByUuid($uuid)
+                : $this->devices->resolve($mac, $this->scope($routerIdentity, $interface), $ip);
+
+            if (!$device) {
+                $this->json(['ok' => false, 'error' => 'device.not_found'], 404);
+            }
+
+            $stmt = $this->db->prepare("UPDATE devices SET last_voucher=?,last_seen_at=?,last_ip=COALESCE(NULLIF(?,''),last_ip) WHERE id=?");
+            $stmt->execute([$voucher, now(), $ip, (int)$device['id']]);
+
+            $this->json([
+                'ok' => true,
+                'saved_voucher' => $voucher,
+                'device' => ['uuid' => (string)($device['uuid'] ?? $uuid)],
+            ]);
+        } catch (Throwable) {
+            $this->json(['ok' => false, 'error' => 'voucher.save_failed'], 500);
+        }
+    }
+
+    private function scope(string $routerIdentity, string $interface): string
+    {
+        return implode('|', array_filter([
+            $routerIdentity,
+            $interface,
+        ], static fn (string $value): bool => $value !== '')) ?: 'global';
+    }
+
+    private function validUuid(string $uuid): bool
+    {
+        return (bool)preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/', $uuid);
     }
 
     private function deviceByUuid(string $uuid): ?array
