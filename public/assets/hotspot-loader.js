@@ -18,17 +18,36 @@
     return `pixiepoint:last-voucher:${String(mac || "").toUpperCase()}`;
   }
 
+  function randomVoucher() {
+    const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    const bytes = new Uint8Array(6);
+
+    if (window.crypto && crypto.getRandomValues) {
+      crypto.getRandomValues(bytes);
+    } else {
+      for (let i = 0; i < bytes.length; i++) bytes[i] = Math.floor(Math.random() * 256);
+    }
+
+    let voucher = "PP";
+    for (let i = 0; i < bytes.length; i++) {
+      voucher += alphabet[bytes[i] % alphabet.length];
+    }
+    return voucher;
+  }
+
   function prefillLastVoucher() {
     if (!isLogin) return;
 
     const input = document.getElementById("compat-voucher");
     if (!input || input.value) return;
 
+    let voucher = "";
     try {
       const mac = window.PIXIEPOINT_CONTEXT && window.PIXIEPOINT_CONTEXT.mac;
-      const voucher = localStorage.getItem(voucherKey(mac)) || localStorage.getItem("pixiepoint:last-voucher") || "";
-      if (voucher) input.value = voucher;
+      voucher = localStorage.getItem(voucherKey(mac)) || localStorage.getItem("pixiepoint:last-voucher") || "";
     } catch (_) {}
+
+    input.value = voucher || randomVoucher();
   }
 
   function loadStyle(href, id) {
