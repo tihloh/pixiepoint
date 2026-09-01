@@ -9,41 +9,20 @@
   <meta http-equiv="Expires" content="0">
   <title>PixiePoint Wi-Fi</title>
   <style>
-    * {
-      box-sizing: border-box;
-    }
-
-    html,
-    body {
-      min-height: 100%;
-      margin: 0;
-    }
-
+    * { box-sizing: border-box; }
+    html, body { min-height: 100%; margin: 0; }
     body.booting {
       display: grid;
       place-items: center;
-      padding: 20px;
+      padding: 24px;
       color: #eef4ff;
       background: #07111f;
       font: 16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+      text-align: center;
     }
-
-    .boot {
-      width: min(100%, 430px);
-      padding: 30px;
-      border: 1px solid #ffffff18;
-      border-radius: 24px;
-      background: #0e1d31;
-    }
-
-    .boot strong {
-      font-size: 22px;
-    }
-
-    .boot p {
-      color: #9fb0c7;
-    }
-
+    .boot { max-width: 420px; }
+    .boot strong { display: block; font-size: 22px; margin-bottom: 10px; }
+    .boot p { margin: 0; color: #9fb0c7; }
     .dot {
       display: inline-block;
       width: 9px;
@@ -53,12 +32,7 @@
       background: #20d6b5;
       animation: pulse 1.5s infinite;
     }
-
-    @keyframes pulse {
-      50% {
-        opacity: 0.3;
-      }
-    }
+    @keyframes pulse { 50% { opacity: .3; } }
   </style>
 </head>
 <body class="booting">
@@ -81,13 +55,10 @@
   </form>
 
   <main id="pixiepoint-root">
-    <section class="boot">
+    <div class="boot">
       <strong>PixiePoint Wi-Fi</strong>
-      <p>
-        <span class="dot"></span>
-        <span id="boot-status">Checking the hosted portal…</span>
-      </p>
-    </section>
+      <p><span class="dot"></span><span id="boot-status">Checking the hosted portal…</span></p>
+    </div>
   </main>
 
   <script src="vendo-config.js"></script>
@@ -121,9 +92,7 @@
 
       function showStatus(message) {
         var statusElement = document.getElementById("boot-status");
-        if (statusElement) {
-          statusElement.textContent = message;
-        }
+        if (statusElement) statusElement.textContent = message;
       }
 
       function clearHostedAssets() {
@@ -143,9 +112,7 @@
       }
 
       function startHostedPortal(version) {
-        if (portalStarted || loadingAssets) {
-          return;
-        }
+        if (portalStarted || loadingAssets) return;
 
         loadingAssets = true;
         showStatus("Hosted portal found · loading…");
@@ -155,33 +122,24 @@
         stylesheet.rel = "stylesheet";
         stylesheet.href = hostedOrigin + "/assets/app.css?v=" + version;
 
-        stylesheet.onerror = function handleStylesheetError() {
-          if (!portalStarted) {
-            scheduleRetry("Hosted portal assets unavailable · checking again…");
-          }
+        stylesheet.onerror = function () {
+          if (!portalStarted) scheduleRetry("Hosted portal assets unavailable · checking again…");
         };
 
-        stylesheet.onload = function handleStylesheetReady() {
-          if (portalStarted || document.getElementById("pixiepoint-app")) {
-            return;
-          }
+        stylesheet.onload = function () {
+          if (portalStarted || document.getElementById("pixiepoint-app")) return;
 
           var application = document.createElement("script");
           application.id = "pixiepoint-app";
           application.src = hostedOrigin + "/assets/juanfi-compat.js?v=" + version;
-
-          application.onerror = function handleApplicationError() {
-            if (!portalStarted) {
-              scheduleRetry("Hosted portal assets unavailable · checking again…");
-            }
+          application.onerror = function () {
+            if (!portalStarted) scheduleRetry("Hosted portal assets unavailable · checking again…");
           };
-
-          application.onload = function handleApplicationReady() {
+          application.onload = function () {
             portalStarted = true;
             loadingAssets = false;
             clearTimeout(retryTimer);
           };
-
           document.head.appendChild(application);
         };
 
@@ -189,56 +147,36 @@
       }
 
       function checkHostedPortal() {
-        if (checking || loadingAssets || portalStarted) {
-          return;
-        }
-
+        if (checking || loadingAssets || portalStarted) return;
         checking = true;
 
         var request = new XMLHttpRequest();
-        request.open(
-          "GET",
-          hostedOrigin + "/hotspot/health?t=" + Date.now(),
-          true
-        );
+        request.open("GET", hostedOrigin + "/hotspot/health?t=" + Date.now(), true);
         request.timeout = 5000;
         request.setRequestHeader("Accept", "application/json");
 
-        request.onload = function handleHealthResponse() {
+        request.onload = function () {
           checking = false;
-
           var health = null;
-          try {
-            health = JSON.parse(request.responseText);
-          } catch (error) {
-            health = null;
-          }
+          try { health = JSON.parse(request.responseText); } catch (_) {}
 
-          if (
-            request.status >= 200 &&
-            request.status < 300 &&
-            health &&
-            health.ready === true
-          ) {
+          if (request.status >= 200 && request.status < 300 && health && health.ready === true) {
             startHostedPortal(Date.now());
             return;
           }
-
           scheduleRetry("Hosted portal unavailable · checking again…");
         };
 
-        request.onerror = function handleNetworkError() {
-          var message = navigator.onLine === false
+        request.onerror = function () {
+          scheduleRetry(navigator.onLine === false
             ? "No network connection · checking again…"
-            : "Hosted portal unavailable · checking again…";
-          scheduleRetry(message);
+            : "Hosted portal unavailable · checking again…");
         };
-
         request.ontimeout = request.onerror;
         request.send();
       }
 
-      window.addEventListener("online", function handleOnline() {
+      window.addEventListener("online", function () {
         if (portalStarted) return;
         clearTimeout(retryTimer);
         checkHostedPortal();
