@@ -8,14 +8,11 @@
   const isStatus = !!window.PIXIEPOINT_SESSION;
   let started = false;
   let retryTimer = 0;
+  let voucherResolved = false;
 
   function status(message) {
     const element = document.getElementById("boot-status");
     if (element) element.textContent = message;
-  }
-
-  function voucherKey(mac) {
-    return `pixiepoint:last-voucher:${String(mac || "").toUpperCase()}`;
   }
 
   function randomVoucher() {
@@ -35,19 +32,35 @@
     return voucher;
   }
 
-  function prefillLastVoucher() {
+  function setVoucher(voucher, force) {
     if (!isLogin) return;
 
     const input = document.getElementById("compat-voucher");
-    if (!input || input.value) return;
+    if (!input) return;
 
-    let voucher = "";
-    try {
-      const mac = window.PIXIEPOINT_CONTEXT && window.PIXIEPOINT_CONTEXT.mac;
-      voucher = localStorage.getItem(voucherKey(mac)) || localStorage.getItem("pixiepoint:last-voucher") || "";
-    } catch (_) {}
+    voucher = String(voucher || "").trim().toUpperCase();
+    if (!voucher) return;
 
-    input.value = voucher || randomVoucher();
+    if (!force && input.value.trim() !== "") return;
+    input.value = voucher;
+    voucherResolved = true;
+  }
+
+  function applyDeviceProfile(profile) {
+    if (!isLogin || !profile || !profile.ok) return;
+
+    const savedVoucher = String(profile.saved_voucher || "").trim();
+    if (savedVoucher) {
+      setVoucher(savedVoucher, true);
+      return;
+    }
+
+    if (!voucherResolved) setVoucher(randomVoucher(), false);
+  }
+
+  function ensureVoucherFallback() {
+    if (!isLogin || voucherResolved) return;
+    setVoucher(randomVoucher(), false);
   }
 
   function loadStyle(href, id) {
@@ -106,10 +119,16 @@
         await loadScript(`${hostedOrigin}/assets/session-portal.js?v=${version}`, "pixiepoint-session");
       } else if (isLogin) {
         await loadScript(`${hostedOrigin}/assets/juanfi-compat.js?v=${version}`, "pixiepoint-app");
-        prefillLastVoucher();
       }
 
       await loadScript(`${hostedOrigin}/assets/device-info.js?v=${version}`, "pixiepoint-device-info");
+
+      if (isLogin) {
+        if (window.PIXIEPOINT_DEVICE_PROFILE) {
+          applyDeviceProfile(window.PIXIEPOINT_DEVICE_PROFILE);
+        }
+        setTimeout(ensureVoucherFallback, 1500);
+      }
     } catch (_) {
       started = false;
       status("Hosted portal assets unavailable · retrying…");
@@ -153,6 +172,9 @@
     request.send();
   }
 
+  window.addEventListener("pixiepoint:device-profile", function (event) {
+    applyDeviceProfile(event.detail || {});
+  });
   window.addEventListener("online", check);
   check();
 }());
