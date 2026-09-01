@@ -92,19 +92,45 @@ final class DashboardController
         }
 
         try {
+            $uid = (int)$user['id'];
             $targetId = (int)($data['target_device_id'] ?? 0);
             if ($targetId > 0) {
-                $this->devices->mergeInto($deviceId, $targetId, (int)$user['id']);
-                $_SESSION['device_claim_message'] = '<div class="notice">Device restored. This browser and its current MAC are now linked to your existing device record.</div>';
+                $this->devices->mergeInto($deviceId, $targetId, $uid);
+                $canonical = $this->devices->findDevice($targetId);
+                $recovered = $canonical ? $this->recoverPendingPoints($uid, (int)$canonical['id']) : 0;
+                $_SESSION['device_claim_message'] = '<div class="notice">Device restored. This browser and its current MAC are now linked to your existing device record.' . ($recovered > 0 ? ' ' . e($recovered) . ' pending points were restored.' : '') . '</div>';
             } else {
-                $this->devices->claimAsNew($deviceId, (int)$user['id']);
-                $_SESSION['device_claim_message'] = '<div class="notice">Device saved to your PixiePoint account.</div>';
+                $this->devices->claimAsNew($deviceId, $uid);
+                $canonical = $this->devices->findDevice($deviceId);
+                $recovered = $canonical ? $this->recoverPendingPoints($uid, (int)$canonical['id']) : 0;
+                $_SESSION['device_claim_message'] = '<div class="notice">Device saved to your PixiePoint account.' . ($recovered > 0 ? ' ' . e($recovered) . ' pending points were restored.' : '') . '</div>';
             }
         } catch (Throwable $e) {
             $_SESSION['device_claim_message'] = '<div class="alert">' . e($e->getMessage()) . '</div>';
         }
 
         redirect('/dashboard');
+    }
+
+    private function recoverPendingPoints(int $userId, int $deviceId): int
+    {
+        $this->db->beginTransaction();
+        try {
+            $stmt = $this->db->prepare('SELECT COALESCE(SUM(GREATEST(points_earned-points_awarded,0)),0) FROM router_login_events WHERE device_id=? AND user_id=? FOR UPDATE');
+            $stmt->execute([$deviceId, $userId]);
+            $points = max(0, (int)$stmt->fetchColumn());
+
+            if ($points > 0) {
+                $this->db->prepare('UPDATE users SET points=points+? WHERE id=?')->execute([$points, $userId]);
+                $this->db->prepare('UPDATE router_login_events SET points_awarded=points_earned WHERE device_id=? AND user_id=? AND points_awarded<points_earned')->execute([$deviceId, $userId]);
+            }
+
+            $this->db->commit();
+            return $points;
+        } catch (Throwable $e) {
+            if ($this->db->inTransaction()) $this->db->rollBack();
+            throw $e;
+        }
     }
 
     private function deviceRecoveryPanel(int $userId): string
@@ -131,7 +157,7 @@ final class DashboardController
 
         $newDevice = '<form method="post" action="/devices/claim"><input type="hidden" name="_csrf" value="' . e(csrf_token()) . '"><input type="hidden" name="device_id" value="' . e($current['id']) . '"><input type="hidden" name="target_device_id" value="0"><button class="button full" type="submit">Save as a new device</button></form>';
         $explanation = $known
-            ? '<p class="muted">PixiePoint could not confidently match this browser/MAC combination. If this is one of your existing devices, confirm it below to restore that device identity and keep its history together.</p>'
+            ? '<p class="muted">PixiePoint could not confidently match this browser/MAC combination. If this is one of your existing devices, confirm it below to restore that device identity, pending points and history together.</p>'
             : '<p class="muted">PixiePoint detected an anonymous device from before you signed in. Save it to your account so future MAC or browser changes are easier to recover.</p>';
 
         return $message . '<section class="panel"><h2>Confirm this device</h2>' . $explanation . '<div class="actions">' . $choices . $newDevice . '</div></section>';
