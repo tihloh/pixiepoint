@@ -3,6 +3,7 @@
 
   const context = window.PIXIEPOINT_SESSION || window.PIXIEPOINT_CONTEXT || {};
   const hostedOrigin = window.PIXIEPOINT_HOSTED_ORIGIN || "https://hs.portalx.win";
+  const deviceUuidKey = "pixiepoint:device-uuid";
 
   function number(value) {
     value = Number(value);
@@ -45,17 +46,19 @@
   }
 
   function findCard() {
-    return document.querySelector(".portal .card") || document.querySelector(".portal");
+    return document.querySelector(".portal > .card") || document.querySelector(".portal");
   }
 
   function historyMarkup(history) {
-    if (!history.length) return '<p class="text-body-secondary mb-0">No purchase history yet.</p>';
+    if (!history.length) {
+      return '<p class="text-body-secondary mb-0">No purchase history yet.</p>';
+    }
 
     return history.map(function (item) {
       const description = item.extension ? "Time extension" : "Wi-Fi purchase";
       return `
         <div class="d-flex justify-content-between gap-3 py-2 border-bottom">
-          <div>
+          <div class="min-w-0">
             <strong class="d-block">${description}</strong>
             <small class="text-body-secondary">${escapeHtml(formatDate(item.created_at))}</small>
           </div>
@@ -65,22 +68,64 @@
     }).join("");
   }
 
-  function createHistoryModal(history) {
+  function createDetailsModal(data, account, history) {
+    const existing = document.getElementById("pp-device-modal");
+    if (existing) existing.remove();
+
     const modalElement = document.createElement("div");
     modalElement.className = "modal fade";
-    modalElement.id = "pp-history-modal";
+    modalElement.id = "pp-device-modal";
     modalElement.tabIndex = -1;
-    modalElement.setAttribute("aria-labelledby", "pp-history-title");
+    modalElement.setAttribute("aria-labelledby", "pp-device-modal-title");
     modalElement.setAttribute("aria-hidden", "true");
 
     modalElement.innerHTML = `
       <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
           <div class="modal-header">
-            <h2 class="modal-title fs-5" id="pp-history-title">Recent history</h2>
+            <div>
+              <h2 class="modal-title fs-5 mb-0" id="pp-device-modal-title">Device details</h2>
+              <small class="text-body-secondary">${account}</small>
+            </div>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
-          <div class="modal-body">${historyMarkup(history)}</div>
+          <div class="modal-body">
+            <div class="row g-2 mb-3">
+              <div class="col-6">
+                <div class="border rounded-3 p-2 h-100">
+                  <small class="text-body-secondary d-block">Points</small>
+                  <strong>${number(data.points)} pts</strong>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="border rounded-3 p-2 h-100">
+                  <small class="text-body-secondary d-block">Purchases</small>
+                  <strong>${number(data.stats && data.stats.purchases)}</strong>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="border rounded-3 p-2 h-100">
+                  <small class="text-body-secondary d-block">Total purchased</small>
+                  <strong>${duration(data.stats && data.stats.purchased_seconds)}</strong>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="border rounded-3 p-2 h-100">
+                  <small class="text-body-secondary d-block">Spent</small>
+                  <strong>₱${number(data.stats && data.stats.spent)}</strong>
+                </div>
+              </div>
+            </div>
+
+            <h3 class="fs-6 mb-2">Recent history</h3>
+            ${historyMarkup(history)}
+
+            <p class="text-body-secondary small mt-3 mb-0">
+              ${data.registered
+                ? "Linked to your PixiePoint account. Sensitive account actions still require sign-in."
+                : "Register or sign in to protect points and recover this device if its private MAC changes."}
+            </p>
+          </div>
         </div>
       </div>
     `;
@@ -98,71 +143,48 @@
       : "Guest device";
     const history = Array.isArray(data.history) ? data.history : [];
 
-    const panel = document.createElement("section");
+    const panel = document.createElement("button");
     panel.id = "pp-device-info";
-    panel.className = "card bg-body-tertiary border-0 mt-3";
+    panel.type = "button";
+    panel.className = "btn btn-outline-secondary w-100 d-flex align-items-center justify-content-between gap-2 mt-2 text-start";
     panel.innerHTML = `
-      <div class="card-body p-3">
-        <div class="mb-2">
-          <strong class="d-block">${data.registered ? "Registered device" : "Device details"}</strong>
-          <small class="text-body-secondary">${account}</small>
-        </div>
-
-        <div class="row g-2 mb-3">
-          <div class="col-6">
-            <div class="border rounded-3 p-2 h-100">
-              <small class="text-body-secondary d-block">Points</small>
-              <strong>${number(data.points)} pts</strong>
-            </div>
-          </div>
-          <div class="col-6">
-            <div class="border rounded-3 p-2 h-100">
-              <small class="text-body-secondary d-block">Purchases</small>
-              <strong>${number(data.stats && data.stats.purchases)}</strong>
-            </div>
-          </div>
-          <div class="col-6">
-            <div class="border rounded-3 p-2 h-100">
-              <small class="text-body-secondary d-block">Total purchased</small>
-              <strong>${duration(data.stats && data.stats.purchased_seconds)}</strong>
-            </div>
-          </div>
-          <div class="col-6">
-            <div class="border rounded-3 p-2 h-100">
-              <small class="text-body-secondary d-block">Spent</small>
-              <strong>₱${number(data.stats && data.stats.total_spent)}</strong>
-            </div>
-          </div>
-        </div>
-
-        <button class="btn btn-outline-secondary btn-sm w-100" id="pp-history-open" type="button">Recent history</button>
-
-        <p class="text-body-secondary small mt-2 mb-0">
-          ${data.registered
-            ? "Linked to your PixiePoint account. Sensitive account actions still require sign-in."
-            : "Register or sign in to protect points and recover this device if its private MAC changes."}
-        </p>
-      </div>
+      <span class="min-w-0">
+        <strong class="d-block text-truncate">${account}</strong>
+        <small class="text-body-secondary d-block text-truncate">${number(data.points)} pts · ${number(data.stats && data.stats.purchases)} purchases</small>
+      </span>
+      <span aria-hidden="true">›</span>
     `;
 
-    const brand = card.querySelector(".brand");
-    if (brand && brand.nextSibling) {
-      card.insertBefore(panel, brand.nextSibling);
-    } else {
-      card.prepend(panel);
-    }
+    card.appendChild(panel);
 
-    const modal = createHistoryModal(history);
-    document.getElementById("pp-history-open").onclick = function () {
+    const modal = createDetailsModal(data, account, history);
+    panel.onclick = function () {
       modal.show();
     };
   }
 
+  function storedUuid() {
+    try {
+      return localStorage.getItem(deviceUuidKey) || "";
+    } catch (_) {
+      return "";
+    }
+  }
+
+  function rememberUuid(uuid) {
+    if (!uuid) return;
+    try {
+      localStorage.setItem(deviceUuidKey, uuid);
+    } catch (_) {}
+  }
+
   function load() {
-    if (!context.mac) return;
+    const uuid = storedUuid();
+    if (!uuid && !context.mac) return;
 
     const query = new URLSearchParams({
-      mac: context.mac || "",
+      uuid: uuid,
+      mac: uuid ? "" : (context.mac || ""),
       ip: context.ip || "",
       router_identity: context.routerIdentity || "",
       interface: context.interfaceName || ""
@@ -178,7 +200,12 @@
 
       try {
         const data = JSON.parse(xhr.responseText);
-        if (data && data.ok) render(data);
+        if (!data || !data.ok) return;
+
+        rememberUuid(data.device && data.device.uuid);
+        window.PIXIEPOINT_DEVICE_PROFILE = data;
+        window.dispatchEvent(new CustomEvent("pixiepoint:device-profile", { detail: data }));
+        render(data);
       } catch (_) {}
     };
 
