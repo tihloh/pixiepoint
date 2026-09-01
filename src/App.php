@@ -84,6 +84,7 @@ CREATE TABLE IF NOT EXISTS devices (
     uuid CHAR(36) NULL UNIQUE,
     user_id BIGINT UNSIGNED NULL,
     mac CHAR(17) NULL UNIQUE,
+    last_voucher VARCHAR(128) NULL,
     last_ip VARCHAR(45),
     user_agent VARCHAR(500),
     merged_into_device_id BIGINT UNSIGNED NULL,
@@ -169,6 +170,7 @@ SQL);
         $this->db->exec("ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url VARCHAR(1000) NULL AFTER google_sub");
         $this->db->exec("ALTER TABLE devices ADD COLUMN IF NOT EXISTS uuid CHAR(36) NULL AFTER id");
         $this->db->exec("ALTER TABLE devices ADD COLUMN IF NOT EXISTS user_id BIGINT UNSIGNED NULL AFTER uuid");
+        $this->db->exec("ALTER TABLE devices ADD COLUMN IF NOT EXISTS last_voucher VARCHAR(128) NULL AFTER mac");
         $this->db->exec("ALTER TABLE devices ADD COLUMN IF NOT EXISTS merged_into_device_id BIGINT UNSIGNED NULL AFTER user_agent");
         $this->db->exec("ALTER TABLE devices MODIFY COLUMN mac CHAR(17) NULL");
         $this->db->exec("ALTER TABLE sessions ADD COLUMN IF NOT EXISTS user_id BIGINT UNSIGNED NULL AFTER id");
@@ -177,6 +179,7 @@ SQL);
         $this->db->exec("INSERT IGNORE INTO device_identities(device_id,identity_type,identity_value,scope_key,confidence,first_seen_at,last_seen_at) SELECT id,'mac',mac,'legacy',100,first_seen_at,last_seen_at FROM devices WHERE mac IS NOT NULL AND mac<>''");
         $this->db->exec("UPDATE router_login_events SET points_earned=points_awarded WHERE points_earned=0 AND points_awarded>0");
         $this->db->exec("UPDATE router_login_events SET points_awarded=0 WHERE user_id IS NULL AND points_awarded>0");
+        $this->db->exec("UPDATE devices d SET last_voucher=(SELECT r.username FROM router_login_events r WHERE r.device_id=d.id AND r.username<>'' ORDER BY r.id DESC LIMIT 1) WHERE (d.last_voucher IS NULL OR d.last_voucher='') AND EXISTS (SELECT 1 FROM router_login_events r2 WHERE r2.device_id=d.id AND r2.username<>'')");
 
         try {
             $this->db->exec("CREATE UNIQUE INDEX idx_users_google_sub ON users (google_sub)");
