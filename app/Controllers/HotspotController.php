@@ -91,6 +91,14 @@ final class HotspotController
     /** Hosted UI for the local MikroTik/legacy JuanFi browser bridge. */
     public function compatibilityPortal(): never
     {
+        if (($_GET['fragment'] ?? '') === '1') {
+            header('Content-Type: text/html; charset=utf-8');
+            header('Access-Control-Allow-Origin: *');
+            header('Cache-Control: no-store');
+            echo $this->view->render('hotspot/compatibility');
+            exit;
+        }
+
         $this->portalView('Connect to Wi-Fi', 'hotspot/compatibility');
     }
 
