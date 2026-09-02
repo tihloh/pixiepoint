@@ -98,6 +98,28 @@ ROS;
         exit('ok');
     }
 
+    public function test(string|int $id): never
+    {
+        require_csrf();
+        $routerId = max(0, (int)$id);
+        $stmt = $this->db->prepare('SELECT id,name,enabled FROM routers WHERE id=? LIMIT 1');
+        $stmt->execute([$routerId]);
+        $router = $stmt->fetch();
+
+        if (!$router) {
+            $_SESSION['admin_flash'] = '<div class="alert">Router not found.</div>';
+            redirect('/admin/routers');
+        }
+        if (!(int)$router['enabled']) {
+            $_SESSION['admin_flash'] = '<div class="alert">Enable this router before sending a test command.</div>';
+            redirect('/admin/routers');
+        }
+
+        $commandId = $this->queue->enqueue($routerId, ':log info "PixiePoint command queue test"', 100);
+        $_SESSION['admin_flash'] = '<div class="alert ok">Test command #' . $commandId . ' queued for ' . htmlspecialchars((string)$router['name'], ENT_QUOTES, 'UTF-8') . '.</div>';
+        redirect('/admin/routers');
+    }
+
     private function router(string $token): array
     {
         if ($token === '') {
