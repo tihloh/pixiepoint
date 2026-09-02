@@ -75,6 +75,7 @@ final class Application
                 $auth,
                 $google,
                 $view,
+                $app->db,
             ),
             'dashboard' => new DashboardController(
                 $app->db,
