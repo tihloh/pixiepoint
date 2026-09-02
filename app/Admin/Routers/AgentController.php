@@ -13,6 +13,61 @@ final class AgentController
         private readonly CommandQueue $queue,
     ) {}
 
+    public function install(): never
+    {
+        $router = $this->router();
+        $token = trim((string)($_GET['token'] ?? ''));
+        $identity = str_replace(['\r','\n','"'], '', (string)$router['identity']);
+
+        $script = <<<'ROS'
+# PixiePoint Router Agent
+# Generated for RouterOS by PixiePoint.
+
+:local token "__TOKEN__"
+:local baseUrl "https://hs.portalx.win"
+:local scriptName "__pixiepoint_cmd"
+:local pollUrl ($baseUrl . "/api/router/poll?token=" . $token)
+
+:do {
+    :local fetchResult [/tool fetch url=$pollUrl mode=https output=user as-value]
+    :local data ($fetchResult->"data")
+
+    :if ([:len $data] > 0) do={
+        :local lineBreak [:find $data "\n"]
+        :if ($lineBreak != nil) do={
+            :local commandId [:pick $data 0 $lineBreak]
+            :local command [:pick $data ($lineBreak + 1) [:len $data]]
+            :local ackBase ($baseUrl . "/api/router/ack?token=" . $token . "&id=" . $commandId . "&status=")
+
+            /system script remove [find name=$scriptName]
+            /system script add name=$scriptName source=$command
+
+            :do {
+                /system script run $scriptName
+                /tool fetch url=($ackBase . "completed") mode=https output=none
+                :log info ("PixiePoint command " . $commandId . " completed")
+            } on-error={
+                /tool fetch url=($ackBase . "failed") mode=https output=none
+                :log warning ("PixiePoint command " . $commandId . " failed")
+            }
+
+            /system script remove [find name=$scriptName]
+        }
+    }
+} on-error={
+    :log warning "PixiePoint agent poll failed"
+}
+ROS;
+
+        $script = str_replace('__TOKEN__', $token, $script);
+        header('Content-Type: text/plain; charset=utf-8');
+        header('Content-Disposition: inline; filename="PixiePointAgent.rsc"');
+        header('Cache-Control: no-store');
+        header('X-PixiePoint-Router: ' . $identity);
+        echo $script, "\n";
+        exit;
+    }
+
     public function poll(): never
     {
         $router = $this->router();
