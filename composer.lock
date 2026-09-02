@@ -8,21 +8,21 @@
     "packages": [
         {
             "name": "tihloh/prefab-auth",
-            "version": "v0.5.0",
+            "version": "v0.5.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/tihloh/prefab-auth.git",
-                "reference": "d8480400e65d6c90cba114a0126288ded555e0ef"
+                "reference": "7e33e7123fef0b338bb69b0ab18f544a181890f9"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tihloh/prefab-auth/zipball/d8480400e65d6c90cba114a0126288ded555e0ef",
-                "reference": "d8480400e65d6c90cba114a0126288ded555e0ef",
+                "url": "https://api.github.com/repos/tihloh/prefab-auth/zipball/7e33e7123fef0b338bb69b0ab18f544a181890f9",
+                "reference": "7e33e7123fef0b338bb69b0ab18f544a181890f9",
                 "shasum": ""
             },
             "require": {
                 "php": ">=8.1",
-                "tihloh/prefab-core": "^0.4"
+                "tihloh/prefab-core": "^0.4 || ^0.5"
             },
             "suggest": {
                 "tihloh/prefab-logs": "Optional structured activity logging for authentication events.",
@@ -58,20 +58,20 @@
                 "issues": "https://github.com/tihloh/prefab-php/issues",
                 "source": "https://github.com/tihloh/prefab-php"
             },
-            "time": "2026-08-29T19:24:46+00:00"
+            "time": "2026-08-30T17:28:55+00:00"
         },
         {
             "name": "tihloh/prefab-core",
-            "version": "v0.4.2",
+            "version": "v0.5.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/tihloh/prefab-core.git",
-                "reference": "bfaae8ea40cc2f605339c1fa7ba98efbcf86de00"
+                "reference": "2458f7bf161d7fba9bbf8205b9b2ec35f9cfc5d2"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tihloh/prefab-core/zipball/bfaae8ea40cc2f605339c1fa7ba98efbcf86de00",
-                "reference": "bfaae8ea40cc2f605339c1fa7ba98efbcf86de00",
+                "url": "https://api.github.com/repos/tihloh/prefab-core/zipball/2458f7bf161d7fba9bbf8205b9b2ec35f9cfc5d2",
+                "reference": "2458f7bf161d7fba9bbf8205b9b2ec35f9cfc5d2",
                 "shasum": ""
             },
             "require": {
@@ -80,13 +80,20 @@
             "suggest": {
                 "ext-pdo": "Required when using Core database infrastructure."
             },
+            "bin": [
+                "bin/prefab"
+            ],
             "type": "library",
             "autoload": {
                 "files": [
+                    "src/env.php",
+                    "src/date.php",
+                    "src/value.php",
                     "src/prefab-debug-ui.php",
                     "src/prefab-diagnostics.php",
                     "src/prefab.php",
-                    "src/database.php"
+                    "src/database.php",
+                    "src/Console/helpers.php"
                 ],
                 "psr-4": {
                     "Tihloh\\Prefab\\Core\\": "src/"
@@ -101,43 +108,49 @@
                     "name": "Christian Bustamante"
                 }
             ],
-            "description": "Shared infrastructure for Prefab PHP modules: runtime, config, database, session, cache, contracts and diagnostics.",
+            "description": "Shared infrastructure for Prefab PHP modules: runtime, config, database, session, cache, contracts, diagnostics and CLI.",
             "homepage": "https://github.com/tihloh/prefab-php",
             "keywords": [
                 "cache",
+                "cli",
                 "core",
                 "database",
+                "date",
+                "dotenv",
                 "framework-independent",
                 "modular",
                 "php",
                 "prefab",
                 "runtime",
-                "session"
+                "session",
+                "time",
+                "utilities",
+                "value"
             ],
             "support": {
                 "issues": "https://github.com/tihloh/prefab-php/issues",
                 "source": "https://github.com/tihloh/prefab-php"
             },
-            "time": "2026-08-30T05:37:02+00:00"
+            "time": "2026-09-02T15:20:52+00:00"
         },
         {
             "name": "tihloh/prefab-input",
-            "version": "v0.5.0",
+            "version": "v0.5.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/tihloh/prefab-input.git",
-                "reference": "3e4d9527e831e034a11eac0d1096777e43b63928"
+                "reference": "24ff985216a3ec7f15be678ef7f393b5257301e5"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tihloh/prefab-input/zipball/3e4d9527e831e034a11eac0d1096777e43b63928",
-                "reference": "3e4d9527e831e034a11eac0d1096777e43b63928",
+                "url": "https://api.github.com/repos/tihloh/prefab-input/zipball/24ff985216a3ec7f15be678ef7f393b5257301e5",
+                "reference": "24ff985216a3ec7f15be678ef7f393b5257301e5",
                 "shasum": ""
             },
             "require": {
                 "ext-fileinfo": "*",
                 "php": ">=8.1",
-                "tihloh/prefab-core": "^0.4"
+                "tihloh/prefab-core": "^0.4 || ^0.5"
             },
             "suggest": {
                 "tihloh/prefab-routes": "Optional routing integration for request input processing."
@@ -177,25 +190,25 @@
                 "issues": "https://github.com/tihloh/prefab-php/issues",
                 "source": "https://github.com/tihloh/prefab-php"
             },
-            "time": "2026-08-29T19:24:46+00:00"
+            "time": "2026-08-30T17:29:50+00:00"
         },
         {
             "name": "tihloh/prefab-logs",
-            "version": "v0.5.0",
+            "version": "v0.5.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/tihloh/prefab-logs.git",
-                "reference": "9cc37920eb946ad5d3be3b3b68a6109d7f0e7c2d"
+                "reference": "1b1b8cb415603c9904c5fbf4aee0f8754fb20e6e"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tihloh/prefab-logs/zipball/9cc37920eb946ad5d3be3b3b68a6109d7f0e7c2d",
-                "reference": "9cc37920eb946ad5d3be3b3b68a6109d7f0e7c2d",
+                "url": "https://api.github.com/repos/tihloh/prefab-logs/zipball/1b1b8cb415603c9904c5fbf4aee0f8754fb20e6e",
+                "reference": "1b1b8cb415603c9904c5fbf4aee0f8754fb20e6e",
                 "shasum": ""
             },
             "require": {
                 "php": ">=8.1",
-                "tihloh/prefab-core": "^0.4"
+                "tihloh/prefab-core": "^0.4 || ^0.5"
             },
             "suggest": {
                 "ext-pdo": "Required only when using Prefab's built-in PDO/database-backed log repository.",
@@ -232,25 +245,25 @@
                 "issues": "https://github.com/tihloh/prefab-php/issues",
                 "source": "https://github.com/tihloh/prefab-php"
             },
-            "time": "2026-08-29T19:24:46+00:00"
+            "time": "2026-09-02T15:17:14+00:00"
         },
         {
             "name": "tihloh/prefab-permissions",
-            "version": "v0.5.0",
+            "version": "v0.5.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/tihloh/prefab-permissions.git",
-                "reference": "4be83c554fccaa4343576f0c18f154ebffbffb0a"
+                "reference": "e054ce61ceb0c214a73657602246ec3ce1488e52"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tihloh/prefab-permissions/zipball/4be83c554fccaa4343576f0c18f154ebffbffb0a",
-                "reference": "4be83c554fccaa4343576f0c18f154ebffbffb0a",
+                "url": "https://api.github.com/repos/tihloh/prefab-permissions/zipball/e054ce61ceb0c214a73657602246ec3ce1488e52",
+                "reference": "e054ce61ceb0c214a73657602246ec3ce1488e52",
                 "shasum": ""
             },
             "require": {
                 "php": ">=8.1",
-                "tihloh/prefab-core": "^0.4"
+                "tihloh/prefab-core": "^0.4 || ^0.5"
             },
             "suggest": {
                 "ext-pdo": "Required only when using Prefab's built-in PDO/database-backed permission store.",
@@ -288,25 +301,25 @@
                 "issues": "https://github.com/tihloh/prefab-php/issues",
                 "source": "https://github.com/tihloh/prefab-php"
             },
-            "time": "2026-08-29T19:24:46+00:00"
+            "time": "2026-08-30T17:29:18+00:00"
         },
         {
             "name": "tihloh/prefab-routes",
-            "version": "v0.5.0",
+            "version": "v0.5.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/tihloh/prefab-routes.git",
-                "reference": "7941a27e422ab54240118615408d39838b790ef9"
+                "reference": "e5b97eff9f16232f53bfd430e5432cf4832d8ed4"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tihloh/prefab-routes/zipball/7941a27e422ab54240118615408d39838b790ef9",
-                "reference": "7941a27e422ab54240118615408d39838b790ef9",
+                "url": "https://api.github.com/repos/tihloh/prefab-routes/zipball/e5b97eff9f16232f53bfd430e5432cf4832d8ed4",
+                "reference": "e5b97eff9f16232f53bfd430e5432cf4832d8ed4",
                 "shasum": ""
             },
             "require": {
                 "php": ">=8.1",
-                "tihloh/prefab-core": "^0.4"
+                "tihloh/prefab-core": "^0.4 || ^0.5"
             },
             "suggest": {
                 "tihloh/prefab-auth": "Optional authentication integration.",
@@ -344,25 +357,25 @@
                 "issues": "https://github.com/tihloh/prefab-php/issues",
                 "source": "https://github.com/tihloh/prefab-php"
             },
-            "time": "2026-08-29T19:24:46+00:00"
+            "time": "2026-08-30T17:29:42+00:00"
         },
         {
             "name": "tihloh/prefab-users",
-            "version": "v0.5.0",
+            "version": "v0.5.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/tihloh/prefab-users.git",
-                "reference": "23dc8791f8ebd8c219f4180a90cb416c5be7a631"
+                "reference": "1583f9adfd9944f8e7fcac2aeb13a172b7cb80a2"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tihloh/prefab-users/zipball/23dc8791f8ebd8c219f4180a90cb416c5be7a631",
-                "reference": "23dc8791f8ebd8c219f4180a90cb416c5be7a631",
+                "url": "https://api.github.com/repos/tihloh/prefab-users/zipball/1583f9adfd9944f8e7fcac2aeb13a172b7cb80a2",
+                "reference": "1583f9adfd9944f8e7fcac2aeb13a172b7cb80a2",
                 "shasum": ""
             },
             "require": {
                 "php": ">=8.1",
-                "tihloh/prefab-core": "^0.4"
+                "tihloh/prefab-core": "^0.4 || ^0.5"
             },
             "suggest": {
                 "ext-pdo": "Required only when using Prefab's built-in PDO/database-backed user provider.",
@@ -398,7 +411,7 @@
                 "issues": "https://github.com/tihloh/prefab-php/issues",
                 "source": "https://github.com/tihloh/prefab-php"
             },
-            "time": "2026-08-29T19:24:46+00:00"
+            "time": "2026-08-30T17:29:05+00:00"
         }
     ],
     "packages-dev": [],

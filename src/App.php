@@ -81,10 +81,6 @@ function e(mixed $value): string
 {
     return htmlspecialchars((string) $value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 }
-function now(): string
-{
-    return date('Y-m-d H:i:s');
-}
 function csrf_token(): string
 {
     if (empty($_SESSION['csrf'])) {
