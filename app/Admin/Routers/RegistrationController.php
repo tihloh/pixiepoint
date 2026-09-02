@@ -24,22 +24,14 @@ final class RegistrationController
     ) {
     }
 
-    public function register(): never
+    public function register(string $key): never
     {
         header('Content-Type: text/plain; charset=utf-8');
         header('Cache-Control: no-store');
 
-        $key = strtolower(trim((string) ($_GET['key'] ?? '')));
-        $identity = trim((string) (
-            $_SERVER['HTTP_X_PIXIEPOINT_IDENTITY']
-            ?? $_GET['identity']
-            ?? ''
-        ));
-        $hardwareId = trim((string) (
-            $_SERVER['HTTP_X_PIXIEPOINT_SERIAL']
-            ?? $_GET['serial']
-            ?? ''
-        ));
+        $key = strtolower(trim($key));
+        $identity = trim((string) ($_SERVER['HTTP_X_PIXIEPOINT_IDENTITY'] ?? ''));
+        $hardwareId = trim((string) ($_SERVER['HTTP_X_PIXIEPOINT_SERIAL'] ?? ''));
 
         if (!preg_match('/^[a-f0-9]{48}$/', $key)) {
             $this->fail('Invalid account API key.');
