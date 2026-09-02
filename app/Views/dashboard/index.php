@@ -9,7 +9,7 @@
 <div class="heading">
     <div>
         <h1>My dashboard</h1>
-        <p class="muted">Your account summary, points, devices and recent Wi-Fi activity.</p>
+        <p class="muted">Points, devices and recent Wi-Fi activity.</p>
     </div>
 </div>
 
@@ -18,28 +18,19 @@
         <div class="metric">
             <small><?= e($label) ?></small>
             <strong><?= e($value) ?></strong>
-            <div class="text-body-secondary small">Current value for this account.</div>
         </div>
     <?php endforeach; ?>
 </section>
 
 <?= $deviceRecovery ?>
 
-<?php if ($hasManagement): ?>
-<section class="panel">
-    <h2>Management access</h2>
-    <p class="muted mb-0">Use the navigation above to open the management pages enabled for your account.</p>
-</section>
-<?php endif; ?>
-
 <section class="panel">
     <h2>Recent Wi-Fi sessions</h2>
-    <p class="muted">Shows the latest hotspot sessions linked to this account so you can see where and when your access was used.</p>
     <table>
         <thead><tr><th>Access</th><th>Device</th><th>Router</th><th>Status</th><th>Updated</th></tr></thead>
         <tbody>
         <?php if (!$sessions): ?>
-            <tr><td colspan="5" class="empty">No account-linked sessions yet.</td></tr>
+            <tr><td colspan="5" class="empty">No recent sessions.</td></tr>
         <?php else: ?>
             <?php foreach ($sessions as $session): ?>
             <tr>
