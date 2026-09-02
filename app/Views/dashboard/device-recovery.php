@@ -13,7 +13,8 @@
 <?php if ($current['user_id'] !== null && (int)$current['user_id'] !== $userId): ?>
 <section class="panel">
     <h2>Device identity conflict</h2>
-    <div class="alert">This browser is linked to a device owned by another account. PixiePoint will not merge it automatically.</div>
+    <p class="muted">This browser currently points to a device already owned by another account.</p>
+    <div class="alert">PixiePoint will not merge it automatically. Use another device identity or resolve ownership before claiming it.</div>
 </section>
 <?php return; endif; ?>
 
@@ -21,15 +22,16 @@
 
 <section class="panel">
     <h2>Confirm this device</h2>
+    <p class="muted">Tell PixiePoint whether this browser belongs to one of your saved devices or should become a new device.</p>
 
     <?php if ($guestPoints > 0): ?>
-        <div class="notice"><strong><?= e($guestPoints) ?> guest points</strong> are waiting on this device. Confirm it to claim them into your account.</div>
+        <div class="notice"><strong><?= e($guestPoints) ?> guest points</strong> are waiting on this device. Confirming the device lets PixiePoint move those points into your account.</div>
     <?php endif; ?>
 
     <?php if ($known): ?>
-        <p class="muted">PixiePoint could not confidently match this browser/MAC combination. If this is one of your existing devices, confirm it below to restore that device identity, guest wallet and history together.</p>
+        <p class="muted">Choose an existing device below to restore its identity and history to this browser.</p>
     <?php else: ?>
-        <p class="muted">PixiePoint detected an anonymous device from before you signed in. Save it to your account so its guest wallet and identity become protected by your account.</p>
+        <p class="muted">No matching saved device was found. Save this browser as a new device to protect its identity and guest wallet with your account.</p>
     <?php endif; ?>
 
     <div class="actions">
@@ -40,7 +42,8 @@
                 <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
                 <input type="hidden" name="device_id" value="<?= e($current['id']) ?>">
                 <input type="hidden" name="target_device_id" value="<?= e($device['id']) ?>">
-                <button class="button secondary full" type="submit">This is <?= e($label) ?></button>
+                <button class="button secondary full" type="submit">Use <?= e($label) ?></button>
+                <small class="d-block text-body-secondary mt-2">Links this browser to the selected saved device.</small>
             </form>
         <?php endforeach; ?>
 
@@ -48,7 +51,8 @@
             <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
             <input type="hidden" name="device_id" value="<?= e($current['id']) ?>">
             <input type="hidden" name="target_device_id" value="0">
-            <button class="button full" type="submit">Save as a new device</button>
+            <button class="button full" type="submit">Save as new device</button>
+            <small class="d-block text-body-secondary mt-2">Creates a separate saved device for this browser.</small>
         </form>
     </div>
 </section>
