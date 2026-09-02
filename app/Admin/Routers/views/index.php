@@ -24,7 +24,7 @@
             <tbody>
             <?php if (!$routers): ?><tr><td colspan="<?= $canManageRouters ? 7 : 5 ?>" class="empty">No routers registered. Use Add router to register your first MikroTik.</td></tr><?php endif; ?>
             <?php foreach ($routers as $router):
-                $setupUrl = 'https://hs.portalx.win/api/router/install?token=' . rawurlencode((string)$router['api_key']);
+                $setupUrl = 'https://hs.portalx.win/api/router/install/' . rawurlencode((string)$router['api_key']);
                 $setupCommand = '/tool fetch url="' . $setupUrl . '" mode=https dst-path="PixiePointAgent.rsc"; /system scheduler remove [find name="pixiepoint-agent"]; /system script remove [find name="pixiepoint-agent"]; /system script add name="pixiepoint-agent" source=[/file get [find name="PixiePointAgent.rsc"] contents] policy=read,write,test; /system scheduler add name="pixiepoint-agent" interval=5s start-time=startup on-event="/system script run pixiepoint-agent" policy=read,write,test; /file remove [find name="PixiePointAgent.rsc"]';
             ?><tr>
                 <td><strong><?= e($router['name']) ?></strong><div class="small text-body-secondary"><?= e($router['location'] ?: 'No location set') ?></div></td>
