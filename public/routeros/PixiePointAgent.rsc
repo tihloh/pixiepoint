@@ -3,7 +3,7 @@
 # Keep this agent small; PixiePoint owns the business logic.
 
 :do {
-    /tool fetch url="https://hs.portalx.win/hotspot/health" mode=https output=none check-certificate=yes
+    /tool fetch url="https://hs.portalx.win/hotspot/health" mode=https output=none check-certificate=no
 } on-error={
     :log warning "PixiePoint agent fetch failed"
 }
