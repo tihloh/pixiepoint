@@ -4,11 +4,31 @@ declare(strict_types=1);
 
 namespace PixiePoint\App\Services;
 
+use RuntimeException;
+
 final class View
 {
     private const BOOTSTRAP_VERSION = '5.3.8';
 
     public function __construct(private array $config) {}
+
+    public function render(string $view, array $data = []): string
+    {
+        $view = trim(str_replace('\\', '/', $view), '/');
+        if ($view === '' || str_contains($view, '..')) {
+            throw new RuntimeException('Invalid view path.');
+        }
+
+        $file = dirname(__DIR__) . '/Views/' . $view . '.php';
+        if (!is_file($file)) {
+            throw new RuntimeException('View not found: ' . $view);
+        }
+
+        extract($data, EXTR_SKIP);
+        ob_start();
+        require $file;
+        return (string)ob_get_clean();
+    }
 
     /** @param array<string,bool> $access */
     public function page(string $title, string $content, bool $dashboard = false, array $access = []): never
