@@ -45,11 +45,11 @@ final class RegistrationController
             $this->fail('Invalid account API key.');
         }
 
-        if ($identity === '' || mb_strlen($identity) > 160) {
+        if ($identity === '' || strlen($identity) > 160) {
             $this->fail('RouterOS identity is missing or invalid.');
         }
 
-        if ($hardwareId === '' || mb_strlen($hardwareId) > 128) {
+        if ($hardwareId === '' || strlen($hardwareId) > 128) {
             $this->fail('Router hardware serial is unavailable.');
         }
 
