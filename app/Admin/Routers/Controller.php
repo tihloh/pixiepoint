@@ -12,7 +12,8 @@ final class Controller extends FeatureController
 {
     public function index(): never
     {
-        $message = '';
+        $message = (string)($_SESSION['admin_flash'] ?? '');
+        unset($_SESSION['admin_flash']);
         if ($this->isPost()) {
             require_csrf();
             $action = (string)($_POST['action'] ?? 'create');
@@ -47,6 +48,8 @@ final class Controller extends FeatureController
                     $message = '<div class="alert">That RouterOS identity is already registered or the router could not be saved.</div>';
                 }
             }
+            $_SESSION['admin_flash'] = $message;
+            redirect('/admin/routers');
         }
 
         $this->page('Routers', __DIR__ . '/views/index.php', [
