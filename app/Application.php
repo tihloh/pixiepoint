@@ -33,10 +33,8 @@ final class Application
     public static function run(string $root): never
     {
         require_once $root . '/src/App.php';
-
         $app = new \App($root);
         self::startSession($root, $app->config);
-
         $prefab = PrefabKernel::boot($app->db, $root);
         $auth = new AuthContext($prefab['users'], $prefab['auth'], $prefab['permissions']);
         $view = new View($app->config);
@@ -51,7 +49,7 @@ final class Application
         $controllers = [
             'auth' => new AuthController($prefab['users'], $auth, $google, $view),
             'dashboard' => new DashboardController($app->db, $auth, $view, $devices, $points),
-            'hotspot' => new HotspotController($app->db, new RouterModel($app->db), $auth, $view, $devices),
+            'hotspot' => new HotspotController($app->db, new RouterModel($app->db), $auth, $view, $devices, $vendoApi),
             'device_info' => new DeviceInfoController($app->db, $networkDevices, $points),
             'admin.routers' => new RoutersController($app->db, $auth, $view, $logs),
             'admin.vendos' => new VendosController($app->db, $auth, $view, $logs),
@@ -66,50 +64,23 @@ final class Application
 
         $routes->middleware('prefab.access', static function (callable $next, RouteMatch $match) use ($auth, $view, $logs) {
             $meta = $match->route()->metadata();
-
             if ($meta['auth'] ?? false) $auth->requireAccount();
             if (!empty($meta['permission'])) $auth->requirePermission((string)$meta['permission'], $view);
-            if (!empty($meta['log'])) {
-                $logs->record([
-                    'action' => (string)$meta['log'],
-                    'subject_type' => 'route',
-                    'subject_id' => $match->route()->routeName(),
-                    'actor_id' => $auth->auth()->id(),
-                    'metadata' => [
-                        'path' => $match->route()->path(),
-                        'method' => $_SERVER['REQUEST_METHOD'] ?? 'GET',
-                    ],
-                    'ip_address' => $_SERVER['REMOTE_ADDR'] ?? null,
-                    'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? null,
-                ]);
-            }
-
+            if (!empty($meta['log'])) $logs->record(['action'=>(string)$meta['log'],'subject_type'=>'route','subject_id'=>$match->route()->routeName(),'actor_id'=>$auth->auth()->id(),'metadata'=>['path'=>$match->route()->path(),'method'=>$_SERVER['REQUEST_METHOD']??'GET'],'ip_address'=>$_SERVER['REMOTE_ADDR']??null,'user_agent'=>$_SERVER['HTTP_USER_AGENT']??null]);
             return $next();
         });
-
         (require $root . '/app/Routes/web.php')($routes, $controllers);
         (require $root . '/app/Routes/api.php')($routes, $controllers);
-
-        $routes->fallback(static function () use ($view): never {
-            http_response_code(404);
-            $view->page('Not found', $view->portalCard('<h1>Page not found</h1><p class="muted">The requested page does not exist.</p>'));
-        });
-
+        $routes->fallback(static function () use ($view): never { http_response_code(404); $view->page('Not found', $view->portalCard('<h1>Page not found</h1><p class="muted">The requested page does not exist.</p>')); });
         $routes->dispatch();
         exit;
     }
 
     private static function startSession(string $root, array $config): void
     {
-        $sessionPath = $root . '/data/sessions';
-        if (!is_dir($sessionPath)) mkdir($sessionPath, 0775, true);
-        session_save_path($sessionPath);
-        session_name($config['session_name'] ?? 'pixiepoint_session');
-        session_set_cookie_params([
-            'httponly' => true,
-            'secure' => (bool)($config['cookie_secure'] ?? true) && (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off'),
-            'samesite' => 'Lax',
-        ]);
+        $sessionPath=$root.'/data/sessions'; if(!is_dir($sessionPath)) mkdir($sessionPath,0775,true);
+        session_save_path($sessionPath); session_name($config['session_name']??'pixiepoint_session');
+        session_set_cookie_params(['httponly'=>true,'secure'=>(bool)($config['cookie_secure']??true)&&(!empty($_SERVER['HTTPS'])&&$_SERVER['HTTPS']!=='off'),'samesite'=>'Lax']);
         session_start();
     }
 }
