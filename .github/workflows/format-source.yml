@@ -1,0 +1,66 @@
+name: Format source
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          tools: composer
+
+      - name: Install PHP CS Fixer
+        run: composer global require friendsofphp/php-cs-fixer:^3 --no-interaction --no-progress
+
+      - name: Format PHP source
+        run: |
+          "$(composer global config bin-dir --absolute)/php-cs-fixer" fix \
+            --config=.php-cs-fixer.dist.php \
+            --using-cache=no \
+            --allow-risky=no
+
+      - name: Format templates and frontend files
+        run: |
+          npx --yes prettier@3 \
+            --plugin=@prettier/plugin-php \
+            --write \
+            "app/**/views/**/*.php" \
+            "app/Views/**/*.php" \
+            "public/**/*.{html,js,css}" \
+            "mt_hotspot/**/*.html"
+
+      - name: Validate PHP syntax
+        run: |
+          find app src bin config public -type f -name '*.php' -print0 \
+            | xargs -0 -n1 php -l
+          php -l router.php
+          php -l config.example.php
+
+      - name: Commit formatted source
+        run: |
+          if git diff --quiet; then
+            echo "Source is already formatted."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Format source code"
+          git push
