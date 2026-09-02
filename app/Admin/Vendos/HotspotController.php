@@ -13,8 +13,12 @@ final class HotspotController
   [$data,$errors]=$this->validateQuery($raw);
   $context=['routerIdentity'=>$data['router_identity'],'serverAddress'=>$data['server_address'],'ip'=>$data['client_ip'],'interfaceName'=>$data['interface']];
   $vendos=$context['routerIdentity']===''?[]:$this->api->forHotspot($context['routerIdentity'],$context['serverAddress'],$context['ip'],$context['interfaceName']);
-  $debug=$context['routerIdentity']===''?['input'=>$context,'candidateCount'=>0,'selectedCount'=>0,'selectedIds'=>[],'candidates'=>[]]:$this->api->debugForHotspot($context['routerIdentity'],$context['serverAddress'],$context['ip'],$context['interfaceName']);
-  echo $this->view->render('hotspot/compatibility',['context'=>$context,'vendos'=>$vendos,'debug'=>['raw'=>$raw,'processed'=>$context,'validationErrors'=>$errors,'matching'=>$debug]]);exit;
+  $debug=[];
+  if($this->api->debugEnabled()){
+   $matching=$context['routerIdentity']===''?['input'=>$context,'candidateCount'=>0,'selectedCount'=>0,'selectedIds'=>[],'candidates'=>[]]:$this->api->debugForHotspot($context['routerIdentity'],$context['serverAddress'],$context['ip'],$context['interfaceName']);
+   $debug=['raw'=>$raw,'processed'=>$context,'validationErrors'=>$errors,'matching'=>$matching];
+  }
+  echo $this->view->render('hotspot/compatibility',['context'=>$context,'vendos'=>$vendos,'debug'=>$debug]);exit;
  }
  /** Legacy JSON endpoint retained for integrations; the captive portal no longer uses it. */
  public function index():never
