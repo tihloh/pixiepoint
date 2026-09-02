@@ -12,7 +12,7 @@
   function loadScript(src,id){return new Promise(function(resolve,reject){if(id&&document.getElementById(id))return resolve();const s=document.createElement("script");if(id)s.id=id;s.src=src;s.onload=resolve;s.onerror=reject;document.head.appendChild(s);});}
   async function loadLoginMarkup(){
     const root=document.getElementById("pixiepoint-root");if(!root)throw new Error("Portal root missing");
-    const c=window.PIXIEPOINT_CONTEXT||{},q=new URLSearchParams({fragment:"1",router_identity:c.routerIdentity||"",client_ip:c.ip||"",interface:c.interfaceName||"",v:String(version)});
+    const c=window.PIXIEPOINT_CONTEXT||{},q=new URLSearchParams({fragment:"1",router_identity:c.routerIdentity||"",server_address:c.serverAddress||"",interface:c.interfaceName||"",v:String(version)});
     root.innerHTML=await request(`${hostedOrigin}/hotspot/compat?${q.toString()}`,"text/html");
     window.PIXIEPOINT_VENDOS=Array.from(root.querySelectorAll("#compat-vendo option")).map(function(o){return{id:o.value,name:o.textContent.trim(),baseUrl:o.dataset.baseUrl||"",passwordMode:o.dataset.passwordMode||"blank",chargingEnabled:o.dataset.charging==="1",eloadEnabled:o.dataset.eload==="1"};});
   }
