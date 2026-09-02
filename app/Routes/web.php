@@ -18,7 +18,6 @@ return static function (RouteManager $routes, array $c): void {
     $routes->get('/', [$c['auth'], 'home'])->name('home');
     $routes->post('/', [$c['hotspot'], 'portal'])->name('hotspot.portal');
     $routes->get('/hotspot/compat', [$c['hotspot'], 'compatibilityPortal'])->name('hotspot.compat');
-    $routes->get('/hotspot/vendos', [$c['vendo'], 'listForHotspot'])->name('hotspot.vendos');
     $routes->get('/hotspot/device-info', [$c['device_info'], 'show'])->name('hotspot.device_info');
     $routes->post('/hotspot/device-voucher', [$c['device_info'], 'saveVoucher'])->name('hotspot.device_voucher');
     $routes->post('/hotspot/authenticate', [$c['hotspot'], 'authenticate'])->name('hotspot.authenticate');
@@ -56,17 +55,8 @@ return static function (RouteManager $routes, array $c): void {
     $routes->get('/dashboard', [$c['dashboard'], 'index'])->name('dashboard')->auth()->middleware('prefab.access');
     $routes->post('/devices/claim', [$c['dashboard'], 'claimDevice'])->name('devices.claim')->auth()->middleware('prefab.access');
 
-    $routes->get('/admin/routers', [$c['admin'], 'routers'])->name('admin.routers.index')->auth()->permission('routers.view')->middleware('prefab.access');
-    $routes->post('/admin/routers', [$c['admin'], 'routers'])->name('admin.routers.store')->auth()->permission('routers.manage')->middleware('prefab.access');
-
-    $routes->get('/admin/vendos', [$c['admin'], 'vendos'])->name('admin.vendos.index')->auth()->permission('vendos.view')->middleware('prefab.access');
-    $routes->post('/admin/vendos', [$c['admin'], 'vendos'])->name('admin.vendos.store')->auth()->permission('vendos.manage')->middleware('prefab.access');
-
-    $routes->get('/admin/vouchers', [$c['admin'], 'vouchers'])->name('admin.vouchers.index')->auth()->permission('vouchers.view')->middleware('prefab.access');
-    $routes->post('/admin/vouchers', [$c['admin'], 'vouchers'])->name('admin.vouchers.store')->auth()->permission('vouchers.manage')->middleware('prefab.access');
-
-    $routes->get('/admin/devices', [$c['admin'], 'devices'])->name('admin.devices.index')->auth()->permission('devices.view')->middleware('prefab.access');
-    $routes->get('/admin/sessions', [$c['admin'], 'sessions'])->name('admin.sessions.index')->auth()->permission('sessions.view')->middleware('prefab.access');
-    $routes->get('/admin/sales', [$c['admin'], 'sales'])->name('admin.sales.index')->auth()->permission('sales.view')->middleware('prefab.access');
-    $routes->get('/admin/logs', [$c['admin'], 'logs'])->name('admin.logs.index')->auth()->permission('logs.view')->middleware('prefab.access');
+    $adminRoot = dirname(__DIR__) . '/Admin';
+    foreach (['Routers', 'Vendos', 'Vouchers', 'Devices', 'Sessions', 'Sales', 'Logs'] as $feature) {
+        (require $adminRoot . '/' . $feature . '/routes.php')($routes, $c);
+    }
 };

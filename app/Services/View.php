@@ -17,9 +17,13 @@ final class View
             throw new RuntimeException('Invalid view path.');
         }
 
-        $file = dirname(__DIR__) . '/Views/' . $view . '.php';
-        if (!is_file($file)) {
-            throw new RuntimeException('View not found: ' . $view);
+        return $this->renderFile(dirname(__DIR__) . '/Views/' . $view . '.php', $data);
+    }
+
+    public function renderFile(string $file, array $data = []): string
+    {
+        if (!is_file($file) || strtolower((string)pathinfo($file, PATHINFO_EXTENSION)) !== 'php') {
+            throw new RuntimeException('View not found: ' . $file);
         }
 
         extract($data, EXTR_SKIP);

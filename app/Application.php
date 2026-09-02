@@ -5,12 +5,19 @@ declare(strict_types=1);
 namespace PixiePoint\App;
 
 use PixiePoint\App\Api\AccountingController;
-use PixiePoint\App\Controllers\AdminController;
+use PixiePoint\App\Admin\Routers\Controller as RoutersController;
+use PixiePoint\App\Admin\Vendos\Api as VendoApi;
+use PixiePoint\App\Admin\Vendos\Controller as VendosController;
+use PixiePoint\App\Admin\Vendos\HotspotController as VendoHotspotController;
+use PixiePoint\App\Admin\Vouchers\Controller as VouchersController;
+use PixiePoint\App\Admin\Devices\Controller as DevicesController;
+use PixiePoint\App\Admin\Sessions\Controller as SessionsController;
+use PixiePoint\App\Admin\Sales\Controller as SalesController;
+use PixiePoint\App\Admin\Logs\Controller as LogsController;
 use PixiePoint\App\Controllers\AuthController;
 use PixiePoint\App\Controllers\DashboardController;
 use PixiePoint\App\Controllers\DeviceInfoController;
 use PixiePoint\App\Controllers\HotspotController;
-use PixiePoint\App\Controllers\VendoController;
 use PixiePoint\App\Models\Router as RouterModel;
 use PixiePoint\App\Services\AuthContext;
 use PixiePoint\App\Services\DeviceIdentity;
@@ -39,14 +46,21 @@ final class Application
         $points = new PointWallet($app->db);
         $logs = $prefab['logs'];
         $routes = $prefab['routes'];
+        $vendoApi = new VendoApi($app->db);
 
         $controllers = [
             'auth' => new AuthController($prefab['users'], $auth, $google, $view),
             'dashboard' => new DashboardController($app->db, $auth, $view, $devices, $points),
             'hotspot' => new HotspotController($app->db, new RouterModel($app->db), $auth, $view, $devices),
-            'vendo' => new VendoController($app->db),
             'device_info' => new DeviceInfoController($app->db, $networkDevices, $points),
-            'admin' => new AdminController($app->db, $auth, $view, $logs),
+            'admin.routers' => new RoutersController($app->db, $auth, $view, $logs),
+            'admin.vendos' => new VendosController($app->db, $auth, $view, $logs),
+            'vendos.hotspot' => new VendoHotspotController($vendoApi),
+            'admin.vouchers' => new VouchersController($app->db, $auth, $view, $logs),
+            'admin.devices' => new DevicesController($app->db, $auth, $view, $logs),
+            'admin.sessions' => new SessionsController($app->db, $auth, $view, $logs),
+            'admin.sales' => new SalesController($app->db, $auth, $view, $logs),
+            'admin.logs' => new LogsController($app->db, $auth, $view, $logs),
             'api' => new AccountingController($app->db, $app->config, $networkDevices),
         ];
 
