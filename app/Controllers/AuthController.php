@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace PixiePoint\App\Controllers;
 
+use PDO;
 use PixiePoint\App\Services\AuthContext;
 use PixiePoint\App\Services\GoogleOAuth;
 use PixiePoint\App\Services\View;
@@ -18,6 +19,7 @@ final class AuthController
         private AuthContext $auth,
         private GoogleOAuth $google,
         private View $view,
+        private PDO $db,
     ) {
     }
 
@@ -211,9 +213,16 @@ final class AuthController
         }
     }
 
+    /**
+     * Setup only needs to know whether the application has at least one user.
+     * Prefab UserManager intentionally has no count() API, so use the mapped
+     * application users table directly for this application-level check.
+     */
     private function hasUsers(): bool
     {
-        return $this->users->count() > 0;
+        return (bool) $this->db
+            ->query('SELECT 1 FROM users LIMIT 1')
+            ->fetchColumn();
     }
 
     private function isPost(): bool
