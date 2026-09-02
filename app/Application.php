@@ -33,7 +33,7 @@ final class Application
     public static function run(string $root): never
     {
         require_once $root . '/src/App.php';
-        $app = new \App($root); self::startSession($root, $app->config);
+        $app = new \App($root); self::startSession($app->config);
         $prefab = PrefabKernel::boot($app->db, $root);
         $auth = new AuthContext($prefab['users'], $prefab['auth'], $prefab['permissions']);
         $view = new View($app->config); $google = new GoogleOAuth($app->db,$app->config,$prefab['users']);
@@ -59,5 +59,5 @@ final class Application
         $routes->fallback(static function()use($view):never{http_response_code(404);$view->page('Not found',$view->portalCard('<h1>Page not found</h1><p class="muted">The requested page does not exist.</p>'));});
         $routes->dispatch(); exit;
     }
-    private static function startSession(string $root,array $config):void{$sessionPath=$root.'/data/sessions';if(!is_dir($sessionPath))mkdir($sessionPath,0775,true);session_save_path($sessionPath);session_name($config['session_name']??'pixiepoint_session');session_set_cookie_params(['httponly'=>true,'secure'=>(bool)($config['cookie_secure']??true)&&(!empty($_SERVER['HTTPS'])&&$_SERVER['HTTPS']!=='off'),'samesite'=>'Lax']);session_start();}
+    private static function startSession(array $config):void{session_save_path(sys_get_temp_dir());session_name($config['session_name']??'pixiepoint_session');session_set_cookie_params(['httponly'=>true,'secure'=>(bool)($config['cookie_secure']??true)&&(!empty($_SERVER['HTTPS'])&&$_SERVER['HTTPS']!=='off'),'samesite'=>'Lax']);session_start();}
 }
