@@ -5,6 +5,7 @@
 /** @var array $sessions */
 /** @var string $deviceRecovery */
 /** @var bool $hasManagement */
+/** @var string $routerRegistrationCommand */
 ?>
 
 <div class="heading">
@@ -12,6 +13,7 @@
         <h1>My dashboard</h1>
         <p class="muted">Points, devices and recent Wi-Fi activity.</p>
     </div>
+    <span class="badge"><?= e($role) ?></span>
 </div>
 
 <section class="grid" aria-label="Account summary">
@@ -21,6 +23,31 @@
             <strong><?= e($value) ?></strong>
         </div>
     <?php endforeach; ?>
+</section>
+
+<section class="panel">
+    <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
+        <div>
+            <h2>Register a MikroTik</h2>
+            <p class="muted mb-0">
+                Run this command in the RouterOS Terminal of the MikroTik you want to claim.
+            </p>
+        </div>
+        <button class="btn btn-outline-secondary" type="button" data-copy-router-registration>
+            Copy command
+        </button>
+    </div>
+
+    <textarea
+        id="router-registration-command"
+        class="form-control font-monospace mt-3"
+        rows="6"
+        readonly
+    ><?= e($routerRegistrationCommand) ?></textarea>
+
+    <p class="small text-body-secondary mt-2 mb-0">
+        The command reads the RouterOS identity and hardware serial. Registration fails if either is already claimed.
+    </p>
 </section>
 
 <?= $deviceRecovery ?>
@@ -61,3 +88,16 @@
         </tbody>
     </table>
 </section>
+
+<script>
+    document.querySelector('[data-copy-router-registration]').addEventListener('click', async function () {
+        const command = document.getElementById('router-registration-command').value;
+
+        await navigator.clipboard.writeText(command);
+        this.textContent = 'Copied';
+
+        setTimeout(() => {
+            this.textContent = 'Copy command';
+        }, 1200);
+    });
+</script>
