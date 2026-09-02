@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace PixiePoint\App;
 
 use PixiePoint\App\Api\AccountingController;
+use PixiePoint\App\Admin\Routers\AgentController as RouterAgentController;
+use PixiePoint\App\Admin\Routers\CommandQueue as RouterCommandQueue;
 use PixiePoint\App\Admin\Routers\Controller as RoutersController;
 use PixiePoint\App\Admin\Vendos\Api as VendoApi;
 use PixiePoint\App\Admin\Vendos\Controller as VendosController;
@@ -38,13 +40,14 @@ final class Application
         $auth = new AuthContext($prefab['users'], $prefab['auth'], $prefab['permissions']);
         $view = new View($app->config); $google = new GoogleOAuth($app->db,$app->config,$prefab['users']);
         $devices=new DeviceIdentity($app->db); $networkDevices=new NetworkDeviceIdentity($app->db); $points=new PointWallet($app->db);
-        $logs=$prefab['logs']; $routes=$prefab['routes']; $vendoApi=new VendoApi($app->db);
+        $logs=$prefab['logs']; $routes=$prefab['routes']; $vendoApi=new VendoApi($app->db); $routerQueue=new RouterCommandQueue($app->db);
         $controllers=[
             'auth'=>new AuthController($prefab['users'],$auth,$google,$view),
             'dashboard'=>new DashboardController($app->db,$auth,$view,$devices,$points),
             'hotspot'=>new HotspotController($app->db,new RouterModel($app->db),$auth,$view,$devices),
             'device_info'=>new DeviceInfoController($app->db,$networkDevices,$points),
             'admin.routers'=>new RoutersController($app->db,$auth,$view,$logs),
+            'router.agent'=>new RouterAgentController($app->db,$routerQueue),
             'admin.vendos'=>new VendosController($app->db,$auth,$view,$logs),
             'vendos.hotspot'=>new VendoHotspotController($vendoApi,$view),
             'admin.vouchers'=>new VouchersController($app->db,$auth,$view,$logs),
