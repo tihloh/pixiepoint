@@ -13,10 +13,10 @@ final class AgentController
         private readonly CommandQueue $queue,
     ) {}
 
-    public function install(): never
+    public function install(string $token): never
     {
-        $router = $this->router();
-        $token = $this->token();
+        $token = trim($token);
+        $router = $this->router($token);
         $identity = str_replace(['\r','\n','"'], '', (string)$router['identity']);
 
         $script = <<<'ROS'
@@ -68,9 +68,9 @@ ROS;
         exit;
     }
 
-    public function poll(): never
+    public function poll(string $token): never
     {
-        $router = $this->router();
+        $router = $this->router(trim($token));
         $this->touch((int)$router['id']);
 
         $command = $this->queue->deliverNext((int)$router['id']);
@@ -82,14 +82,14 @@ ROS;
         exit;
     }
 
-    public function ack(): never
+    public function ack(string $token, string|int $id, string $status): never
     {
-        $router = $this->router();
+        $router = $this->router(trim($token));
         $this->touch((int)$router['id']);
 
-        $id = max(0, (int)($_GET['id'] ?? 0));
-        $status = strtolower(trim((string)($_GET['status'] ?? '')));
-        if ($id < 1 || !$this->queue->acknowledge((int)$router['id'], $id, $status, '')) {
+        $commandId = max(0, (int)$id);
+        $status = strtolower(trim($status));
+        if ($commandId < 1 || !$this->queue->acknowledge((int)$router['id'], $commandId, $status, '')) {
             http_response_code(422);
             exit('invalid');
         }
@@ -98,14 +98,8 @@ ROS;
         exit('ok');
     }
 
-    private function token(): string
+    private function router(string $token): array
     {
-        return trim((string)($_GET['token'] ?? ''));
-    }
-
-    private function router(): array
-    {
-        $token = $this->token();
         if ($token === '') {
             http_response_code(401);
             exit('unauthorized');
