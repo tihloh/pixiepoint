@@ -111,7 +111,7 @@ final class GoogleOAuth
             'password_hash' => null,
             'google_sub' => $sub,
             'avatar_url' => $picture !== '' ? $picture : null,
-            'platform_role' => 'user',
+            'platform_role' => 'member',
             'points' => 0,
         ], $context);
 
@@ -148,13 +148,23 @@ final class GoogleOAuth
     private function requestJson(string $url, ?array $form = null, array $headers = []): array
     {
         $headers[] = 'Accept: application/json';
-        $options = ['http' => ['method' => $form === null ? 'GET' : 'POST', 'header' => implode("\r\n", $headers), 'ignore_errors' => true, 'timeout' => 15]];
+        $options = [
+            'http' => [
+                'method' => $form === null ? 'GET' : 'POST',
+                'header' => implode("\r\n", $headers),
+                'ignore_errors' => true,
+                'timeout' => 15,
+            ],
+        ];
+
         if ($form !== null) {
             $options['http']['header'] .= "\r\nContent-Type: application/x-www-form-urlencoded";
             $options['http']['content'] = http_build_query($form, '', '&', PHP_QUERY_RFC3986);
         }
+
         $body = @file_get_contents($url, false, stream_context_create($options));
         $data = is_string($body) ? json_decode($body, true) : null;
+
         if (!is_array($data) || isset($data['error'])) {
             throw new RuntimeException('Google sign-in could not be completed.');
         }
