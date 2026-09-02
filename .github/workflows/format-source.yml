@@ -34,7 +34,8 @@ jobs:
       - name: Install PHP CS Fixer
         run: composer global require friendsofphp/php-cs-fixer:^3 --no-interaction --no-progress
 
-      # Pure PHP files use PHP CS Fixer for language-level consistency.
+      # PixiePoint is a PHP project. Keep automated formatting PHP-only so local
+      # development and CI do not require Node.js, npm, Prettier, or node_modules.
       - name: Format PHP source
         run: |
           "$(composer global config bin-dir --absolute)/php-cs-fixer" fix \
@@ -42,26 +43,8 @@ jobs:
             --using-cache=no \
             --allow-risky=no
 
-      # Mixed PHP/HTML templates need an HTML-aware formatter. Install the PHP
-      # plugin into the workspace so Prettier can resolve it reliably.
-      - name: Install template formatter
-        run: npm install --no-save --no-package-lock prettier@3 @prettier/plugin-php
-
-      - name: Format PHP templates
-        run: |
-          npx prettier \
-            --plugin=@prettier/plugin-php \
-            --write \
-            "app/Admin/**/views/**/*.php" \
-            "app/Views/**/*.php"
-
-      - name: Format frontend files
-        run: |
-          npx prettier \
-            --write \
-            "public/**/*.{html,js,css}" \
-            "mt_hotspot/**/*.html"
-
+      # Mixed PHP/HTML views are intentionally kept human-readable in source.
+      # PHP CS Fixer normalizes their PHP portions without rewriting the markup.
       - name: Validate PHP syntax
         run: |
           find app src bin config public -type f -name '*.php' -print0 \
@@ -79,5 +62,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
-          git commit -m "Format source code"
+          git commit -m "Format PHP source"
           git push
