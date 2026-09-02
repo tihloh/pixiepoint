@@ -2,8 +2,11 @@
 # Installed by PixiePoint quick setup.
 # Keep this agent small; PixiePoint owns the business logic.
 
+:local url "https://hs.portalx.win/hotspot/health"
+
 :do {
-    /tool fetch url="https://hs.portalx.win/hotspot/health" mode=https output=none check-certificate=no
+    :local fetchResult [/tool fetch url=$url mode=https output=user as-value]
+    :local data ($fetchResult->"data")
 } on-error={
-    :log warning "PixiePoint agent fetch failed"
+    :log warning "PixiePoint fetch failed"
 }
