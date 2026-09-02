@@ -20,6 +20,7 @@ final class Controller extends FeatureController
 
         if ($this->isPost()) {
             require_csrf();
+            $action = (string)($_POST['action'] ?? 'create');
             $result = Input::fromRequest()->process([
                 'name' => 'trim|required|string|max:160',
                 'router_id' => 'required|integer|min:1',
@@ -28,6 +29,7 @@ final class Controller extends FeatureController
                 'password_mode' => 'trim|required|string|max:32',
                 'charging_enabled' => 'default:0|integer|min:0|max:1',
                 'eload_enabled' => 'default:0|integer|min:0|max:1',
+                'enabled' => 'default:0|integer|min:0|max:1',
             ]);
 
             if ($result->fails()) {
@@ -48,20 +50,37 @@ final class Controller extends FeatureController
                         $routerCheck->execute([(int)$data['router_id']]);
                         if (!$routerCheck->fetchColumn()) throw new RuntimeException('Router unavailable.');
 
-                        $stmt = $this->db->prepare('INSERT INTO vendos(owner_user_id,router_id,name,base_url,interface_name,password_mode,charging_enabled,eload_enabled) VALUES(?,?,?,?,?,?,?,?)');
-                        $stmt->execute([
-                            $userId,
-                            (int)$data['router_id'],
-                            $data['name'],
-                            rtrim((string)$data['base_url'], '/'),
-                            $data['interface_name'] ?? null,
-                            $data['password_mode'],
-                            (int)($data['charging_enabled'] ?? 0),
-                            (int)($data['eload_enabled'] ?? 0),
-                        ]);
-                        $id = (int)$this->db->lastInsertId();
-                        $this->audit('vendo.created', 'vendo', $id, 'PisoWiFi vendo was registered.', ['router_id' => (int)$data['router_id']]);
-                        $message = '<div class="alert ok">Vendo added.</div>';
+                        if ($action === 'update') {
+                            $id = max(0, (int)($_POST['id'] ?? 0));
+                            if ($id < 1) throw new RuntimeException('Vendo not found.');
+                            $sql = 'UPDATE vendos SET router_id=?,name=?,base_url=?,interface_name=?,password_mode=?,charging_enabled=?,eload_enabled=?,enabled=? WHERE id=?';
+                            $params = [
+                                (int)$data['router_id'], $data['name'], rtrim((string)$data['base_url'], '/'), $data['interface_name'] ?? null,
+                                $data['password_mode'], (int)($data['charging_enabled'] ?? 0), (int)($data['eload_enabled'] ?? 0), (int)($data['enabled'] ?? 0), $id,
+                            ];
+                            if (!$platformOwner) {
+                                $sql .= ' AND owner_user_id=?';
+                                $params[] = $userId;
+                            }
+                            $stmt = $this->db->prepare($sql);
+                            $stmt->execute($params);
+                            if ($stmt->rowCount() < 1) {
+                                $exists = $this->db->prepare('SELECT id FROM vendos WHERE id=?' . ($platformOwner ? '' : ' AND owner_user_id=?'));
+                                $exists->execute($platformOwner ? [$id] : [$id, $userId]);
+                                if (!$exists->fetchColumn()) throw new RuntimeException('Vendo not found.');
+                            }
+                            $this->audit('vendo.updated', 'vendo', $id, 'PisoWiFi vendo was updated.', ['router_id' => (int)$data['router_id']]);
+                            $message = '<div class="alert ok">Vendo updated.</div>';
+                        } else {
+                            $stmt = $this->db->prepare('INSERT INTO vendos(owner_user_id,router_id,name,base_url,interface_name,password_mode,charging_enabled,eload_enabled) VALUES(?,?,?,?,?,?,?,?)');
+                            $stmt->execute([
+                                $userId, (int)$data['router_id'], $data['name'], rtrim((string)$data['base_url'], '/'), $data['interface_name'] ?? null,
+                                $data['password_mode'], (int)($data['charging_enabled'] ?? 0), (int)($data['eload_enabled'] ?? 0),
+                            ]);
+                            $id = (int)$this->db->lastInsertId();
+                            $this->audit('vendo.created', 'vendo', $id, 'PisoWiFi vendo was registered.', ['router_id' => (int)$data['router_id']]);
+                            $message = '<div class="alert ok">Vendo added.</div>';
+                        }
                     } catch (Throwable $e) {
                         $message = '<div class="alert">The vendo could not be saved. ' . e($e->getMessage()) . '</div>';
                     }
