@@ -74,6 +74,10 @@ final class View
             . '<div><strong>PixiePoint Wi-Fi</strong><div class="text-body-secondary small">MikroTik hotspot access</div></div>'
             . '</div>'
             . $this->bootstrapMarkup($body)
+            . '<div class="d-flex flex-wrap justify-content-center gap-3 mt-4 pt-3 border-top small">'
+            . '<a href="/privacy-policy.html">Privacy Policy</a>'
+            . '<a href="/terms-of-service.html">Terms of Service</a>'
+            . '</div>'
             . '</div>'
             . '</section>';
     }
