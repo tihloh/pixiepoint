@@ -41,13 +41,12 @@ jobs:
             --using-cache=no \
             --allow-risky=no
 
-      - name: Format templates and frontend files
+      # PHP CS Fixer handles PHP/template code. Prettier is limited to native
+      # frontend files so the workflow does not depend on a PHP Prettier plugin.
+      - name: Format frontend files
         run: |
           npx --yes prettier@3 \
-            --plugin=@prettier/plugin-php \
             --write \
-            "app/**/views/**/*.php" \
-            "app/Views/**/*.php" \
             "public/**/*.{html,js,css}" \
             "mt_hotspot/**/*.html"
 
