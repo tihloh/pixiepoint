@@ -10,6 +10,7 @@
 <?= $message ?>
 
 <?php // Nothing to confirm when the request cannot be tied to a current device.
+
 if (!$current) {
   return;
 } ?>
