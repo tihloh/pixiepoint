@@ -204,7 +204,8 @@ final class DashboardController
             $stmt->execute([$key, $userId]);
         }
 
-        $url = 'https://hs.portalx.win/api/router/register?key=' . $key;
+        // Keep RouterOS URLs path-only. This avoids query strings entirely.
+        $url = 'https://hs.portalx.win/api/router/register/' . $key;
 
         return ':local identity [/system identity get name]; '
             . ':local serial [/system routerboard get serial-number]; '
