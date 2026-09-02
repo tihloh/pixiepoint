@@ -149,6 +149,12 @@ button,input,select,textarea { font: inherit; }
 .portal > .card > .actions { align-items:stretch; }
 .portal > .card > .actions > * { min-width:0; }
 
+.compat-debug { margin-top:1rem; padding:.75rem; border:1px dashed #536a86; border-radius:.75rem; background:rgba(255,255,255,.025); }
+.compat-debug summary { cursor:pointer; font-weight:700; }
+.compat-debug-grid { display:grid; gap:.65rem; margin-top:.75rem; }
+.compat-debug-grid strong { display:block; margin-bottom:.25rem; font-size:.82rem; color:#c5d1e0; }
+.compat-debug pre { max-height:220px; margin:0; padding:.65rem; overflow:auto; white-space:pre-wrap; overflow-wrap:anywhere; border-radius:.55rem; color:#d7e2f0; background:#050d17; font:11px/1.4 var(--bs-font-monospace); }
+
 @media (max-width:768px) { .heading { align-items:flex-start; flex-direction:column; } }
 @media (max-width:576px) {
   .portal { align-items:start; padding:.75rem; }
