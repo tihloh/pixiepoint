@@ -12,9 +12,9 @@ use Tihloh\Prefab\Logs\Services\LogManager;
 /**
  * Registers a MikroTik to the account whose API key is used by RouterOS.
  *
- * Registration deliberately requires values read by the RouterOS command from
- * the router itself. The server also enforces unique RouterOS identity and
- * hardware ID constraints so a router can only be claimed once.
+ * The response is itself a RouterOS script. That lets the one registration
+ * command fetch and import the result without parsing an as-value map, which
+ * keeps the flow compatible with older RouterOS versions.
  */
 final class RegistrationController
 {
@@ -121,16 +121,12 @@ final class RegistrationController
                 'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? null,
             ]);
 
-            // RouterOS consumes the second line to install the newly-issued
-            // router-specific agent without requiring another web setup step.
-            echo "SUCCESS\n", $agentKey;
-            exit;
+            $this->success($agentKey);
         } catch (PDOException) {
             if ($this->db->inTransaction()) {
                 $this->db->rollBack();
             }
 
-            // The database unique constraints are the final race-safe guard.
             $this->fail('Router identity or hardware is already registered.');
         } catch (\Throwable) {
             if ($this->db->inTransaction()) {
@@ -141,9 +137,38 @@ final class RegistrationController
         }
     }
 
+    /**
+     * Returns the post-registration installer as RouterOS commands.
+     */
+    private function success(string $agentKey): never
+    {
+        $installUrl = 'https://hs.portalx.win/api/router/install/' . $agentKey;
+
+        echo ':put "PixiePoint router registered";', "\n";
+        echo '/tool fetch url="', $installUrl,
+            '" mode=https dst-path="PixiePointAgent.rsc";', "\n";
+        echo '/system scheduler remove [find name="pixiepoint-agent"];', "\n";
+        echo '/system script remove [find name="pixiepoint-agent"];', "\n";
+        echo '/system script add name="pixiepoint-agent" ',
+            'source=[/file get [find name="PixiePointAgent.rsc"] contents] ',
+            'policy=read,write,test;', "\n";
+        echo '/system scheduler add name="pixiepoint-agent" interval=5s ',
+            'start-time=startup on-event="/system script run pixiepoint-agent" ',
+            'policy=read,write,test;', "\n";
+        echo '/file remove [find name="PixiePointAgent.rsc"];', "\n";
+        echo '/system script run pixiepoint-agent;', "\n";
+        echo ':put "SUCCESS - PixiePoint Agent installed";', "\n";
+        exit;
+    }
+
+    /**
+     * Errors are also valid RouterOS so importing the fetched response prints a
+     * useful message instead of producing a second syntax error.
+     */
     private function fail(string $message): never
     {
-        echo "ERROR\n", $message;
+        $message = str_replace(["\r", "\n", '"'], ['', ' ', "'"], $message);
+        echo ':put "ERROR - ', $message, '";', "\n";
         exit;
     }
 }
