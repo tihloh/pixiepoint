@@ -58,8 +58,15 @@ SQL);
     public function acknowledge(int $routerId, int $commandId, string $status, string $result = ''): bool
     {
         if (!in_array($status, ['completed','failed'], true)) return false;
-        $stmt = $this->db->prepare('UPDATE router_commands SET status=?,completed_at=NOW(),result=? WHERE id=? AND router_id=? AND status=\'delivered\'');
-        $stmt->execute([$status, $result !== '' ? mb_substr($result, 0, 2000) : null, $commandId, $routerId]);
+
+        if ($status === 'completed') {
+            $stmt = $this->db->prepare("DELETE FROM router_commands WHERE id=? AND router_id=? AND status='delivered'");
+            $stmt->execute([$commandId, $routerId]);
+            return $stmt->rowCount() > 0;
+        }
+
+        $stmt = $this->db->prepare("UPDATE router_commands SET status='failed',completed_at=NOW(),result=? WHERE id=? AND router_id=? AND status='delivered'");
+        $stmt->execute([$result !== '' ? mb_substr($result, 0, 2000) : null, $commandId, $routerId]);
         return $stmt->rowCount() > 0;
     }
 }
