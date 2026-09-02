@@ -10,6 +10,7 @@ use PixiePoint\App\Controllers\AuthController;
 use PixiePoint\App\Controllers\DashboardController;
 use PixiePoint\App\Controllers\DeviceInfoController;
 use PixiePoint\App\Controllers\HotspotController;
+use PixiePoint\App\Controllers\VendoController;
 use PixiePoint\App\Models\Router as RouterModel;
 use PixiePoint\App\Services\AuthContext;
 use PixiePoint\App\Services\DeviceIdentity;
@@ -43,6 +44,7 @@ final class Application
             'auth' => new AuthController($prefab['users'], $auth, $google, $view),
             'dashboard' => new DashboardController($app->db, $auth, $view, $devices, $points),
             'hotspot' => new HotspotController($app->db, new RouterModel($app->db), $auth, $view, $devices),
+            'vendo' => new VendoController($app->db),
             'device_info' => new DeviceInfoController($app->db, $networkDevices, $points),
             'admin' => new AdminController($app->db, $auth, $view, $logs),
             'api' => new AccountingController($app->db, $app->config, $networkDevices),
@@ -51,12 +53,8 @@ final class Application
         $routes->middleware('prefab.access', static function (callable $next, RouteMatch $match) use ($auth, $view, $logs) {
             $meta = $match->route()->metadata();
 
-            if ($meta['auth'] ?? false) {
-                $auth->requireAccount();
-            }
-            if (!empty($meta['permission'])) {
-                $auth->requirePermission((string)$meta['permission'], $view);
-            }
+            if ($meta['auth'] ?? false) $auth->requireAccount();
+            if (!empty($meta['permission'])) $auth->requirePermission((string)$meta['permission'], $view);
             if (!empty($meta['log'])) {
                 $logs->record([
                     'action' => (string)$meta['log'],
