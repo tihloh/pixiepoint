@@ -58,16 +58,17 @@ final class DashboardController
                 ->query('SELECT COUNT(*) FROM routers WHERE enabled = 1')
                 ->fetchColumn();
         } else {
-            $routerCount = $this->db->prepare(
+            $routerCountStmt = $this->db->prepare(
                 'SELECT COUNT(*) '
                 . 'FROM routers r '
                 . 'JOIN router_members rm ON rm.router_id=r.id '
                 . 'WHERE rm.user_id=? AND r.enabled=1',
             );
-            $routerCount->execute([$userId]);
+            $routerCountStmt->execute([$userId]);
+            $routerCount = (int) $routerCountStmt->fetchColumn();
 
-            if ((int) $routerCount->fetchColumn() > 0) {
-                $metrics['Routers'] = (int) $routerCount->fetchColumn();
+            if ($routerCount > 0) {
+                $metrics['Routers'] = $routerCount;
             }
         }
 
