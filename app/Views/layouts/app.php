@@ -31,6 +31,7 @@
             <div class="navbar-nav ms-auto align-items-lg-center gap-lg-1 py-2 py-lg-0">
                 <a class="nav-link" href="/dashboard">Dashboard</a>
                 <?php if ($access['routers'] ?? false): ?><a class="nav-link" href="/admin/routers">Routers</a><?php endif; ?>
+                <?php if ($access['vendos'] ?? false): ?><a class="nav-link" href="/admin/vendos">Vendos</a><?php endif; ?>
                 <?php if ($access['vouchers'] ?? false): ?><a class="nav-link" href="/admin/vouchers">Vouchers</a><?php endif; ?>
                 <?php if ($access['devices'] ?? false): ?><a class="nav-link" href="/admin/devices">Devices</a><?php endif; ?>
                 <?php if ($access['sessions'] ?? false): ?><a class="nav-link" href="/admin/sessions">Sessions</a><?php endif; ?>
