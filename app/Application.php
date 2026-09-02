@@ -52,6 +52,7 @@ final class Application
             $prefab['users'],
             $prefab['auth'],
             $prefab['permissions'],
+            $app->db,
         );
 
         // Application-level services shared by multiple features.
