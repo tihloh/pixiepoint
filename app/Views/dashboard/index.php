@@ -8,17 +8,17 @@
 ?>
 <div class="heading">
     <div>
-        <span class="badge rounded-pill text-bg-primary mb-2"><?= e($role) ?></span>
         <h1>My dashboard</h1>
-        <p class="muted">Account overview for <?= e($user['name']) ?>.</p>
+        <p class="muted">Your account summary, points, devices and recent Wi-Fi activity.</p>
     </div>
 </div>
 
-<section class="grid">
+<section class="grid" aria-label="Account summary">
     <?php foreach ($metrics as $label => $value): ?>
         <div class="metric">
             <small><?= e($label) ?></small>
             <strong><?= e($value) ?></strong>
+            <div class="text-body-secondary small">Current value for this account.</div>
         </div>
     <?php endforeach; ?>
 </section>
@@ -28,13 +28,13 @@
 <?php if ($hasManagement): ?>
 <section class="panel">
     <h2>Management access</h2>
-    <p class="muted">Available management tools appear in the navigation according to your permissions.</p>
+    <p class="muted mb-0">Use the navigation above to open the management pages enabled for your account.</p>
 </section>
 <?php endif; ?>
 
 <section class="panel">
     <h2>Recent Wi-Fi sessions</h2>
-    <p class="muted">Recent sessions linked to your account.</p>
+    <p class="muted">Shows the latest hotspot sessions linked to this account so you can see where and when your access was used.</p>
     <table>
         <thead><tr><th>Access</th><th>Device</th><th>Router</th><th>Status</th><th>Updated</th></tr></thead>
         <tbody>
