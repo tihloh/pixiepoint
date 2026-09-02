@@ -60,7 +60,7 @@ jobs:
 
       - name: Commit formatted source
         run: |
-          if git diff --quiet; then
+          if git diff --quiet && git diff --cached --quiet; then
             echo "Source is already formatted."
             exit 0
           fi
