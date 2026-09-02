@@ -230,11 +230,17 @@ final class AuthController
         return strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST';
     }
 
+    /**
+     * Public account screens use the same centered portal card as the captive
+     * portal so their width and spacing remain constrained on large displays.
+     */
     private function portal(string $title, string $view, array $data): never
     {
+        $body = $this->view->render($view, $data);
+
         $this->view->page(
             $title,
-            $this->view->render($view, $data),
+            $this->view->portalCard($body),
         );
     }
 
