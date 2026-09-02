@@ -91,7 +91,7 @@ function csrf_token(): string
         $_SESSION['csrf'] = bin2hex(random_bytes(24));
     }
 
-return $_SESSION['csrf'];
+    return $_SESSION['csrf'];
 }
 function require_csrf(): void
 {
@@ -122,7 +122,7 @@ function bytes_nice(int $bytes): string
         $unit++;
     }
 
-return number_format($size, $unit === 0 ? 0 : 1) . ' ' . $units[$unit];
+    return number_format($size, $unit === 0 ? 0 : 1) . ' ' . $units[$unit];
 }
 function duration_nice(int $seconds): string
 {

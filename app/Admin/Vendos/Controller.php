@@ -126,7 +126,7 @@ final class Controller extends FeatureController
             return null;
         }
 
-return rtrim($value, '/');
+        return rtrim($value, '/');
     }
     private function validCidr(string $cidr): bool
     {
@@ -138,6 +138,6 @@ return rtrim($value, '/');
             return false;
         }$bits = strlen($bin) * 8;
 
-        return filter_var($prefix,FILTER_VALIDATE_INT,['options' => ['min_range' => 0,'max_range' => $bits]]) !== false;
+        return filter_var($prefix, FILTER_VALIDATE_INT, ['options' => ['min_range' => 0,'max_range' => $bits]]) !== false;
     }
 }
