@@ -116,6 +116,15 @@ final class Controller extends FeatureController
             $routers = $stmt->fetchAll();
         }
 
+        foreach ($routers as &$router) {
+            $router['can_manage_team'] = $access->canManageTeam(
+                (int) $router['id'],
+                $userId,
+                $platformOwner,
+            );
+        }
+        unset($router);
+
         $this->page('Routers', __DIR__ . '/views/index.php', [
             'message' => $message,
             'routers' => $routers,
