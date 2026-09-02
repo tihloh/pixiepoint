@@ -28,8 +28,8 @@
 
             <?php foreach ($logs as $log): ?>
                 <tr>
-                    <td><?= e($log['summary'] ?? '—') ?></td>
-                    <td><?= e($log['when'] ?? '—') ?></td>
+                    <td><?= e($log['event'] ?? '—') ?></td>
+                    <td><?= e($log['created_at'] ?? '—') ?></td>
                 </tr>
             <?php endforeach; ?>
         </tbody>
