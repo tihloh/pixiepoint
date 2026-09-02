@@ -25,6 +25,12 @@ jobs:
         with:
           fetch-depth: 0
 
+      # node_modules was accidentally committed while the temporary Prettier
+      # formatter was being tested. PixiePoint does not use Node.js, so remove
+      # any tracked copy before the formatting commit is created.
+      - name: Remove tracked Node dependencies
+        run: git rm -r --ignore-unmatch node_modules
+
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
@@ -54,7 +60,7 @@ jobs:
 
       - name: Commit formatted source
         run: |
-          if git diff --quiet; then
+          if git diff --quiet && git diff --cached --quiet; then
             echo "Source is already formatted."
             exit 0
           fi
