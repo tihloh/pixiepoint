@@ -64,6 +64,25 @@ CREATE TABLE IF NOT EXISTS routers (
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS vendos (
+    id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    owner_user_id BIGINT UNSIGNED NULL,
+    router_id BIGINT UNSIGNED NOT NULL,
+    name VARCHAR(160) NOT NULL,
+    base_url VARCHAR(255) NOT NULL,
+    interface_name VARCHAR(128) NULL,
+    password_mode VARCHAR(32) NOT NULL DEFAULT 'blank',
+    charging_enabled TINYINT(1) NOT NULL DEFAULT 0,
+    eload_enabled TINYINT(1) NOT NULL DEFAULT 0,
+    enabled TINYINT(1) NOT NULL DEFAULT 1,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_vendos_owner (owner_user_id),
+    INDEX idx_vendos_router (router_id),
+    FOREIGN KEY(owner_user_id) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY(router_id) REFERENCES routers(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS vouchers (
     id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
     code VARCHAR(128) NOT NULL UNIQUE,
@@ -164,7 +183,6 @@ CREATE TABLE IF NOT EXISTS router_login_events (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 SQL);
 
-        // Upgrade existing PixiePoint databases without removing guest or legacy data.
         $this->db->exec("ALTER TABLE users MODIFY COLUMN password_hash VARCHAR(255) NULL");
         $this->db->exec("ALTER TABLE users ADD COLUMN IF NOT EXISTS google_sub VARCHAR(255) NULL AFTER password_hash");
         $this->db->exec("ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url VARCHAR(1000) NULL AFTER google_sub");
@@ -181,28 +199,11 @@ SQL);
         $this->db->exec("UPDATE router_login_events SET points_awarded=0 WHERE user_id IS NULL AND points_awarded>0");
         $this->db->exec("UPDATE devices d SET last_voucher=(SELECT r.username FROM router_login_events r WHERE r.device_id=d.id AND r.username<>'' ORDER BY r.id DESC LIMIT 1) WHERE (d.last_voucher IS NULL OR d.last_voucher='') AND EXISTS (SELECT 1 FROM router_login_events r2 WHERE r2.device_id=d.id AND r2.username<>'')");
 
-        try {
-            $this->db->exec("CREATE UNIQUE INDEX idx_users_google_sub ON users (google_sub)");
-        } catch (PDOException) {
-            // Index already exists on upgraded installations.
-        }
-        try {
-            $this->db->exec("CREATE UNIQUE INDEX idx_devices_uuid ON devices (uuid)");
-        } catch (PDOException) {
-            // Index already exists on upgraded installations.
-        }
-        try {
-            $this->db->exec("CREATE INDEX idx_devices_merged ON devices (merged_into_device_id)");
-        } catch (PDOException) {
-            // Index already exists on upgraded installations.
-        }
+        try { $this->db->exec("CREATE UNIQUE INDEX idx_users_google_sub ON users (google_sub)"); } catch (PDOException) {}
+        try { $this->db->exec("CREATE UNIQUE INDEX idx_devices_uuid ON devices (uuid)"); } catch (PDOException) {}
+        try { $this->db->exec("CREATE INDEX idx_devices_merged ON devices (merged_into_device_id)"); } catch (PDOException) {}
 
-        // Carry forward an existing first-install administrator as the platform owner.
         $this->db->exec("INSERT IGNORE INTO users(name,email,password_hash,platform_role,created_at) SELECT name,email,password_hash,'platform_owner',created_at FROM admins");
-
-        // Legacy groups/permissions tables, if present on an upgraded database,
-        // are intentionally not dropped. New authorization storage is owned by
-        // Prefab Users + Prefab Permissions.
     }
 }
 
@@ -218,9 +219,7 @@ function now(): string
 
 function csrf_token(): string
 {
-    if (empty($_SESSION['csrf'])) {
-        $_SESSION['csrf'] = bin2hex(random_bytes(24));
-    }
+    if (empty($_SESSION['csrf'])) $_SESSION['csrf'] = bin2hex(random_bytes(24));
     return $_SESSION['csrf'];
 }
 
@@ -250,10 +249,7 @@ function bytes_nice(int $bytes): string
     $units = ['B', 'KB', 'MB', 'GB', 'TB'];
     $size = max(0, $bytes);
     $unit = 0;
-    while ($size >= 1024 && $unit < count($units) - 1) {
-        $size /= 1024;
-        $unit++;
-    }
+    while ($size >= 1024 && $unit < count($units) - 1) { $size /= 1024; $unit++; }
     return number_format($size, $unit === 0 ? 0 : 1) . ' ' . $units[$unit];
 }
 
