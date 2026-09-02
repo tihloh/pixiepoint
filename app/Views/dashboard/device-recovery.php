@@ -13,8 +13,7 @@
 <?php if ($current['user_id'] !== null && (int)$current['user_id'] !== $userId): ?>
 <section class="panel">
     <h2>Device identity conflict</h2>
-    <p class="muted">This browser currently points to a device already owned by another account.</p>
-    <div class="alert">PixiePoint will not merge it automatically. Use another device identity or resolve ownership before claiming it.</div>
+    <div class="alert">This device is already linked to another account.</div>
 </section>
 <?php return; endif; ?>
 
@@ -22,16 +21,10 @@
 
 <section class="panel">
     <h2>Confirm this device</h2>
-    <p class="muted">Tell PixiePoint whether this browser belongs to one of your saved devices or should become a new device.</p>
+    <p class="muted">Choose a saved device or save this one as new.</p>
 
     <?php if ($guestPoints > 0): ?>
-        <div class="notice"><strong><?= e($guestPoints) ?> guest points</strong> are waiting on this device. Confirming the device lets PixiePoint move those points into your account.</div>
-    <?php endif; ?>
-
-    <?php if ($known): ?>
-        <p class="muted">Choose an existing device below to restore its identity and history to this browser.</p>
-    <?php else: ?>
-        <p class="muted">No matching saved device was found. Save this browser as a new device to protect its identity and guest wallet with your account.</p>
+        <div class="notice"><strong><?= e($guestPoints) ?> guest points</strong> will be added to your account when confirmed.</div>
     <?php endif; ?>
 
     <div class="actions">
@@ -43,7 +36,6 @@
                 <input type="hidden" name="device_id" value="<?= e($current['id']) ?>">
                 <input type="hidden" name="target_device_id" value="<?= e($device['id']) ?>">
                 <button class="button secondary full" type="submit">Use <?= e($label) ?></button>
-                <small class="d-block text-body-secondary mt-2">Links this browser to the selected saved device.</small>
             </form>
         <?php endforeach; ?>
 
@@ -52,7 +44,6 @@
             <input type="hidden" name="device_id" value="<?= e($current['id']) ?>">
             <input type="hidden" name="target_device_id" value="0">
             <button class="button full" type="submit">Save as new device</button>
-            <small class="d-block text-body-secondary mt-2">Creates a separate saved device for this browser.</small>
         </form>
     </div>
 </section>
