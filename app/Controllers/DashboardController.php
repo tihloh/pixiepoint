@@ -185,8 +185,9 @@ final class DashboardController
     }
 
     /**
-     * Returns one RouterOS command that registers the MikroTik and immediately
-     * installs the router-specific PixiePoint Agent returned by registration.
+     * Returns one short RouterOS command. The registration endpoint returns a
+     * RouterOS script that installs the agent, so the terminal command does not
+     * need to parse /tool fetch as-value output.
      */
     private function routerRegistrationCommand(int $userId): string
     {
@@ -209,24 +210,11 @@ final class DashboardController
 
         return ':local identity [/system identity get name]; '
             . ':local serial [/system routerboard get serial-number]; '
-            . ':local result [/tool fetch url="' . $registerUrl . '" mode=https '
+            . '/tool fetch url="' . $registerUrl . '" mode=https '
             . 'http-header-field=("X-PixiePoint-Identity: " . $identity . ",X-PixiePoint-Serial: " . $serial) '
-            . 'output=user as-value]; '
-            . ':local data ($result->"data"); '
-            . ':if ([:pick $data 0 7] = "SUCCESS") do={ '
-            . ':local token [:pick $data 8 [:len $data]]; '
-            . ':local installUrl ("https://hs.portalx.win/api/router/install/" . $token); '
-            . '/tool fetch url=$installUrl mode=https dst-path="PixiePointAgent.rsc"; '
-            . '/system scheduler remove [find name="pixiepoint-agent"]; '
-            . '/system script remove [find name="pixiepoint-agent"]; '
-            . '/system script add name="pixiepoint-agent" '
-            . 'source=[/file get [find name="PixiePointAgent.rsc"] contents] policy=read,write,test; '
-            . '/system scheduler add name="pixiepoint-agent" interval=5s start-time=startup '
-            . 'on-event="/system script run pixiepoint-agent" policy=read,write,test; '
-            . '/file remove [find name="PixiePointAgent.rsc"]; '
-            . '/system script run pixiepoint-agent; '
-            . ':put ("SUCCESS - Router registered and PixiePoint Agent installed") '
-            . '} else={ :put $data }';
+            . 'dst-path="PixiePointRegister.rsc"; '
+            . '/import file-name="PixiePointRegister.rsc"; '
+            . '/file remove [find name="PixiePointRegister.rsc"]';
     }
 
     private function accountRole(array $user): string
