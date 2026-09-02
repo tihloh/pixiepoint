@@ -28,17 +28,11 @@ final class AuthController
         $error = (string)($_SESSION['login_error'] ?? '');
         unset($_SESSION['login_error']);
 
-        $body = '<h1>Welcome to PixiePoint</h1>'
-            . '<p class="muted">Sign in to manage your PixiePoint account, points, saved devices and activity across participating PixiePoint Wi-Fi hotspots.</p>'
-            . $error
-            . $this->googleButton()
-            . '<form method="post" action="/login" class="auth-form">'
-            . '<input type="hidden" name="_csrf" value="' . e(csrf_token()) . '">'
-            . '<div class="field"><label>Email</label><input name="email" type="email" autocomplete="username" required autofocus></div>'
-            . '<div class="field"><label>Password</label><input name="password" type="password" autocomplete="current-password" required></div>'
-            . '<button class="button full">Log in</button>'
-            . '</form>'
-            . '<p class="muted auth-footer">No account? <a href="/register">Create a free account</a></p>';
+        $body = $this->view->render('auth/home', [
+            'error' => $error,
+            'googleButton' => $this->googleButton(),
+            'csrf' => csrf_token(),
+        ]);
 
         $this->view->page('PixiePoint', $this->view->portalCard($body));
     }
