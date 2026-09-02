@@ -56,6 +56,83 @@ final class AdminController
         ]);
     }
 
+    public function vendos(): never
+    {
+        $user = $this->auth->requireAccount();
+        $userId = (int)$user['id'];
+        $platformOwner = $this->auth->isPlatformOwner();
+        $message = '';
+
+        if ($this->isPost()) {
+            require_csrf();
+            $result = Input::fromRequest()->process([
+                'name' => 'trim|required|string|max:160',
+                'router_id' => 'required|integer|min:1',
+                'base_url' => 'trim|required|string|max:255',
+                'interface_name' => 'trim|null_if_empty|nullable|string|max:128',
+                'password_mode' => 'trim|required|string|max:32',
+                'charging_enabled' => 'default:0|integer|min:0|max:1',
+                'eload_enabled' => 'default:0|integer|min:0|max:1',
+            ]);
+
+            if ($result->fails()) {
+                $message = $this->errors($result->errors());
+            } else {
+                $data = $result->validated();
+                $url = parse_url((string)$data['base_url']);
+                $scheme = strtolower((string)($url['scheme'] ?? ''));
+                $host = trim((string)($url['host'] ?? ''));
+                if (!in_array($scheme, ['http', 'https'], true) || $host === '') {
+                    $message = '<div class="alert">Local base URL must be a complete http:// or https:// address.</div>';
+                } elseif (!in_array((string)$data['password_mode'], ['blank', 'voucher'], true)) {
+                    $message = '<div class="alert">Invalid password mode.</div>';
+                } else {
+                    try {
+                        $routerCheck = $this->db->prepare('SELECT id FROM routers WHERE id=? AND enabled=1');
+                        $routerCheck->execute([(int)$data['router_id']]);
+                        if (!$routerCheck->fetchColumn()) throw new \RuntimeException('Router unavailable.');
+
+                        $stmt = $this->db->prepare('INSERT INTO vendos(owner_user_id,router_id,name,base_url,interface_name,password_mode,charging_enabled,eload_enabled) VALUES(?,?,?,?,?,?,?,?)');
+                        $stmt->execute([
+                            $userId,
+                            (int)$data['router_id'],
+                            $data['name'],
+                            rtrim((string)$data['base_url'], '/'),
+                            $data['interface_name'] ?? null,
+                            $data['password_mode'],
+                            (int)($data['charging_enabled'] ?? 0),
+                            (int)($data['eload_enabled'] ?? 0),
+                        ]);
+                        $id = (int)$this->db->lastInsertId();
+                        $this->audit('vendo.created', 'vendo', $id, 'PisoWiFi vendo was registered.', ['router_id' => (int)$data['router_id']]);
+                        $message = '<div class="alert ok">Vendo added.</div>';
+                    } catch (Throwable $e) {
+                        $message = '<div class="alert">The vendo could not be saved. ' . e($e->getMessage()) . '</div>';
+                    }
+                }
+            }
+        }
+
+        $sql = 'SELECT v.*,r.name router_name,r.identity router_identity,u.email owner_email FROM vendos v JOIN routers r ON r.id=v.router_id LEFT JOIN users u ON u.id=v.owner_user_id';
+        $params = [];
+        if (!$platformOwner) {
+            $sql .= ' WHERE v.owner_user_id=?';
+            $params[] = $userId;
+        }
+        $sql .= ' ORDER BY v.created_at DESC';
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+
+        $this->adminPage('Vendos', 'admin/vendos', [
+            'message' => $message,
+            'vendos' => $stmt->fetchAll(),
+            'routers' => $this->db->query('SELECT id,name,identity FROM routers WHERE enabled=1 ORDER BY name')->fetchAll(),
+            'canManageVendos' => $this->auth->can('vendos.manage'),
+            'isPlatformOwner' => $platformOwner,
+            'csrf' => csrf_token(),
+        ]);
+    }
+
     public function vouchers(): never
     {
         $message = '';
