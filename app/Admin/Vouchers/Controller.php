@@ -12,7 +12,8 @@ final class Controller extends FeatureController
 {
     public function index(): never
     {
-        $message = '';
+        $message = (string)($_SESSION['admin_flash'] ?? '');
+        unset($_SESSION['admin_flash']);
         if ($this->isPost()) {
             require_csrf();
             $action = (string)($_POST['action'] ?? 'create');
@@ -57,6 +58,8 @@ final class Controller extends FeatureController
                     $message = '<div class="alert">' . e($e->getMessage() ?: 'That voucher code already exists or the voucher could not be saved.') . '</div>';
                 }
             }
+            $_SESSION['admin_flash'] = $message;
+            redirect('/admin/vouchers');
         }
 
         $this->page('Vouchers', __DIR__ . '/views/index.php', [
