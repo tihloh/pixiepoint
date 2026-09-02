@@ -62,6 +62,7 @@ final class CommandQueue
 
             if (!$row) {
                 $this->db->commit();
+
                 return null;
             }
 

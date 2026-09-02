@@ -18,14 +18,19 @@ final class AuthController
         private AuthContext $auth,
         private GoogleOAuth $google,
         private View $view,
-    ) {}
+    ) {
+    }
 
     public function home(): never
     {
-        if (!$this->hasUsers()) redirect('/setup');
-        if ($this->auth->auth()->check()) redirect('/dashboard');
+        if (!$this->hasUsers()) {
+            redirect('/setup');
+        }
+        if ($this->auth->auth()->check()) {
+            redirect('/dashboard');
+        }
 
-        $error = (string)($_SESSION['login_error'] ?? '');
+        $error = (string) ($_SESSION['login_error'] ?? '');
         unset($_SESSION['login_error']);
 
         $this->portal('PixiePoint', 'auth/home', [
@@ -37,7 +42,9 @@ final class AuthController
 
     public function setup(): never
     {
-        if ($this->hasUsers()) redirect('/');
+        if ($this->hasUsers()) {
+            redirect('/');
+        }
         $error = '';
 
         if ($this->isPost()) {
@@ -52,6 +59,7 @@ final class AuthController
                 $error = $this->errors($result->errors());
             } else {
                 $data = $result->validated();
+
                 try {
                     $this->users->create([
                         'name' => $data['name'],
@@ -76,8 +84,12 @@ final class AuthController
 
     public function register(): never
     {
-        if (!$this->hasUsers()) redirect('/setup');
-        if ($this->auth->auth()->check()) redirect('/dashboard');
+        if (!$this->hasUsers()) {
+            redirect('/setup');
+        }
+        if ($this->auth->auth()->check()) {
+            redirect('/dashboard');
+        }
         $error = '';
 
         if ($this->isPost()) {
@@ -92,6 +104,7 @@ final class AuthController
                 $error = $this->errors($result->errors());
             } else {
                 $data = $result->validated();
+
                 try {
                     $this->users->create([
                         'name' => $data['name'],
@@ -123,9 +136,15 @@ final class AuthController
 
     public function login(): never
     {
-        if (!$this->hasUsers()) redirect('/setup');
-        if ($this->auth->auth()->check()) redirect('/dashboard');
-        if (!$this->isPost()) redirect('/');
+        if (!$this->hasUsers()) {
+            redirect('/setup');
+        }
+        if ($this->auth->auth()->check()) {
+            redirect('/dashboard');
+        }
+        if (!$this->isPost()) {
+            redirect('/');
+        }
 
         require_csrf();
         $result = Input::fromRequest()->process([
@@ -151,15 +170,22 @@ final class AuthController
 
     public function logout(): never
     {
-        if ($this->auth->auth()->check()) $this->auth->auth()->logout($this->requestContext());
+        if ($this->auth->auth()->check()) {
+            $this->auth->auth()->logout($this->requestContext());
+        }
         session_regenerate_id(true);
         redirect('/');
     }
 
     public function googleStart(): never
     {
-        if (!$this->hasUsers()) redirect('/setup');
-        if ($this->auth->auth()->check()) redirect('/dashboard');
+        if (!$this->hasUsers()) {
+            redirect('/setup');
+        }
+        if ($this->auth->auth()->check()) {
+            redirect('/dashboard');
+        }
+
         try {
             header('Location: ' . $this->google->authorizationUrl(), true, 302);
             exit;
@@ -171,14 +197,16 @@ final class AuthController
 
     public function googleCallback(): never
     {
-        if (!$this->hasUsers()) redirect('/setup');
+        if (!$this->hasUsers()) {
+            redirect('/setup');
+        }
         if (isset($_GET['error'])) {
             $_SESSION['login_error'] = '<div class="alert">Google sign-in was cancelled or could not be completed.</div>';
             redirect('/');
         }
 
         try {
-            $id = $this->google->complete((string)($_GET['code'] ?? ''), (string)($_GET['state'] ?? ''));
+            $id = $this->google->complete((string) ($_GET['code'] ?? ''), (string) ($_GET['state'] ?? ''));
             $this->google->establishSession($id);
             redirect('/dashboard');
         } catch (Throwable $e) {
@@ -214,8 +242,11 @@ final class AuthController
     {
         $messages = [];
         foreach ($errors as $fieldErrors) {
-            foreach ((array)$fieldErrors as $message) $messages[] = e($message);
+            foreach ((array) $fieldErrors as $message) {
+                $messages[] = e($message);
+            }
         }
+
         return '<div class="alert">' . implode('<br>', $messages ?: ['Please check the form.']) . '</div>';
     }
 }

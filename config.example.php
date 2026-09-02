@@ -10,8 +10,8 @@ return [
     'cookie_secure' => filter_var(getenv('COOKIE_SECURE') ?: 'true', FILTER_VALIDATE_BOOL),
     'timezone' => getenv('APP_TIMEZONE') ?: 'Asia/Manila',
     'accounting_key' => getenv('ACCOUNTING_KEY') ?: '',
-    'points_pesos_per_point' => max(1, (int)(getenv('POINTS_PESOS_PER_POINT') ?: 5)),
-    'points_exclude_sales_at_or_above' => max(0, (int)(getenv('POINTS_EXCLUDE_SALES_AT_OR_ABOVE') ?: 50)),
+    'points_pesos_per_point' => max(1, (int) (getenv('POINTS_PESOS_PER_POINT') ?: 5)),
+    'points_exclude_sales_at_or_above' => max(0, (int) (getenv('POINTS_EXCLUDE_SALES_AT_OR_ABOVE') ?: 50)),
     'google_client_id' => getenv('GOOGLE_CLIENT_ID') ?: '',
     'google_client_secret' => getenv('GOOGLE_CLIENT_SECRET') ?: '',
 ];

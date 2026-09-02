@@ -10,14 +10,14 @@
 
 <?php if (!$current): return; endif; ?>
 
-<?php if ($current['user_id'] !== null && (int)$current['user_id'] !== $userId): ?>
+<?php if ($current['user_id'] !== null && (int) $current['user_id'] !== $userId): ?>
 <section class="panel">
     <h2>Device identity conflict</h2>
     <div class="alert">This device is already linked to another account.</div>
 </section>
 <?php return; endif; ?>
 
-<?php if ($current['user_id'] !== null && (int)$current['user_id'] === $userId): return; endif; ?>
+<?php if ($current['user_id'] !== null && (int) $current['user_id'] === $userId): return; endif; ?>
 
 <section class="panel">
     <h2>Confirm this device</h2>
@@ -29,8 +29,10 @@
 
     <div class="actions">
         <?php foreach ($known as $device): ?>
-            <?php if ((int)$device['id'] === (int)$current['id']) continue; ?>
-            <?php $label = $device['mac'] ?: ('Device ' . substr((string)$device['uuid'], 0, 8)); ?>
+            <?php if ((int) $device['id'] === (int) $current['id']) {
+                continue;
+            } ?>
+            <?php $label = $device['mac'] ?: ('Device ' . substr((string) $device['uuid'], 0, 8)); ?>
             <form method="post" action="/devices/claim">
                 <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
                 <input type="hidden" name="device_id" value="<?= e($current['id']) ?>">

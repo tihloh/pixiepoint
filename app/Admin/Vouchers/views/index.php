@@ -23,7 +23,7 @@
                 <td><?= e($v['uses'] . ' / ' . $v['max_uses']) ?><div class="small text-body-secondary"><?= e($v['max_devices']) ?> device(s)</div></td>
                 <td><?= e($v['expires_at'] ?: 'Never') ?></td>
                 <td><span class="badge <?= $v['enabled'] ? '' : 'off' ?>"><?= $v['enabled'] ? 'Enabled' : 'Disabled' ?></span></td>
-                <td class="text-end"><button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="modal" data-bs-target="#voucherModal" data-mode="edit" data-id="<?= e($v['id']) ?>" data-code="<?= e($v['code']) ?>" data-label="<?= e($v['label'] ?? '') ?>" data-duration="<?= e($v['duration_minutes']) ?>" data-data-limit="<?= e($v['data_limit_mb'] ?? '') ?>" data-max-devices="<?= e($v['max_devices']) ?>" data-max-uses="<?= e($v['max_uses']) ?>" data-expires="<?= e($v['expires_at'] ? str_replace(' ', 'T', substr((string)$v['expires_at'], 0, 16)) : '') ?>" data-enabled="<?= $v['enabled'] ? '1' : '0' ?>">Edit</button></td>
+                <td class="text-end"><button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="modal" data-bs-target="#voucherModal" data-mode="edit" data-id="<?= e($v['id']) ?>" data-code="<?= e($v['code']) ?>" data-label="<?= e($v['label'] ?? '') ?>" data-duration="<?= e($v['duration_minutes']) ?>" data-data-limit="<?= e($v['data_limit_mb'] ?? '') ?>" data-max-devices="<?= e($v['max_devices']) ?>" data-max-uses="<?= e($v['max_uses']) ?>" data-expires="<?= e($v['expires_at'] ? str_replace(' ', 'T', substr((string) $v['expires_at'], 0, 16)) : '') ?>" data-enabled="<?= $v['enabled'] ? '1' : '0' ?>">Edit</button></td>
             </tr><?php endforeach; ?>
             </tbody>
         </table>

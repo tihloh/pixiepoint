@@ -17,6 +17,7 @@ final class AppUser extends PrefabUser implements AuthenticatableUserInterface
     public function authPasswordHash(): ?string
     {
         $hash = $this->get('password_hash');
+
         return is_string($hash) && $hash !== '' ? $hash : null;
     }
 

@@ -12,12 +12,13 @@ final class GoogleOAuth
     public function __construct(
         private PDO $db,
         private array $config,
-    ) {}
+    ) {
+    }
 
     public function enabled(): bool
     {
-        return trim((string)($this->config['google_client_id'] ?? '')) !== ''
-            && trim((string)($this->config['google_client_secret'] ?? '')) !== '';
+        return trim((string) ($this->config['google_client_id'] ?? '')) !== ''
+            && trim((string) ($this->config['google_client_secret'] ?? '')) !== '';
     }
 
     public function authorizationUrl(): string
@@ -46,8 +47,8 @@ final class GoogleOAuth
     public function complete(string $code, string $state): int
     {
         $this->ensureEnabled();
-        $expectedState = (string)($_SESSION['google_oauth_state'] ?? '');
-        $verifier = (string)($_SESSION['google_oauth_verifier'] ?? '');
+        $expectedState = (string) ($_SESSION['google_oauth_state'] ?? '');
+        $verifier = (string) ($_SESSION['google_oauth_verifier'] ?? '');
         unset($_SESSION['google_oauth_state'], $_SESSION['google_oauth_verifier']);
 
         if ($code === '' || $state === '' || $expectedState === '' || !hash_equals($expectedState, $state) || $verifier === '') {
@@ -63,8 +64,10 @@ final class GoogleOAuth
             'code_verifier' => $verifier,
         ]);
 
-        $accessToken = (string)($token['access_token'] ?? '');
-        if ($accessToken === '') throw new RuntimeException('Google did not return an access token.');
+        $accessToken = (string) ($token['access_token'] ?? '');
+        if ($accessToken === '') {
+            throw new RuntimeException('Google did not return an access token.');
+        }
 
         $profile = $this->requestJson(
             'https://openidconnect.googleapis.com/v1/userinfo',
@@ -72,11 +75,11 @@ final class GoogleOAuth
             ['Authorization: Bearer ' . $accessToken],
         );
 
-        $sub = trim((string)($profile['sub'] ?? ''));
-        $email = strtolower(trim((string)($profile['email'] ?? '')));
+        $sub = trim((string) ($profile['sub'] ?? ''));
+        $email = strtolower(trim((string) ($profile['email'] ?? '')));
         $verified = filter_var($profile['email_verified'] ?? false, FILTER_VALIDATE_BOOL);
-        $name = trim((string)($profile['name'] ?? ''));
-        $picture = substr(trim((string)($profile['picture'] ?? '')), 0, 1000);
+        $name = trim((string) ($profile['name'] ?? ''));
+        $picture = substr(trim((string) ($profile['picture'] ?? '')), 0, 1000);
 
         if ($sub === '' || $email === '' || !$verified || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
             throw new RuntimeException('Google did not provide a verified email address.');
@@ -87,16 +90,20 @@ final class GoogleOAuth
         $user = $stmt->fetch();
 
         if ($user) {
-            if (!(bool)$user['active']) throw new RuntimeException('This PixiePoint account is disabled.');
-            $id = (int)$user['id'];
+            if (!(bool) $user['active']) {
+                throw new RuntimeException('This PixiePoint account is disabled.');
+            }
+            $id = (int) $user['id'];
             $update = $this->db->prepare('UPDATE users SET google_sub=?,name=IF(name="" OR name IS NULL,?,name),avatar_url=? WHERE id=?');
             $update->execute([$sub, $name !== '' ? $name : $email, $picture !== '' ? $picture : null, $id]);
+
             return $id;
         }
 
         $insert = $this->db->prepare("INSERT INTO users(name,email,password_hash,google_sub,avatar_url,platform_role) VALUES(?,?,NULL,?,?,'user')");
         $insert->execute([$name !== '' ? $name : $email, $email, $sub, $picture !== '' ? $picture : null]);
-        return (int)$this->db->lastInsertId();
+
+        return (int) $this->db->lastInsertId();
     }
 
     public function establishSession(int $userId): void
@@ -107,12 +114,14 @@ final class GoogleOAuth
 
     private function redirectUri(): string
     {
-        return rtrim((string)($this->config['base_url'] ?? ''), '/') . '/auth/google/callback';
+        return rtrim((string) ($this->config['base_url'] ?? ''), '/') . '/auth/google/callback';
     }
 
     private function ensureEnabled(): void
     {
-        if (!$this->enabled()) throw new RuntimeException('Google sign-in is not configured.');
+        if (!$this->enabled()) {
+            throw new RuntimeException('Google sign-in is not configured.');
+        }
     }
 
     private function requestJson(string $url, ?array $form = null, array $headers = []): array
@@ -136,6 +145,7 @@ final class GoogleOAuth
         if (!is_array($data) || isset($data['error'])) {
             throw new RuntimeException('Google sign-in could not be completed.');
         }
+
         return $data;
     }
 }

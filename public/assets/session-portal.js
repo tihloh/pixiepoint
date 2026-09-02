@@ -1,8 +1,8 @@
 (function () {
-  "use strict";
+  'use strict';
 
   const session = window.PIXIEPOINT_SESSION || {};
-  const root = document.getElementById("pixiepoint-root");
+  const root = document.getElementById('pixiepoint-root');
   const vendos = window.PIXIEPOINT_VENDOS || [];
   const vendo = vendos[0] || null;
 
@@ -35,11 +35,11 @@
   function escapeHtml(value) {
     return String(value).replace(/[&<>"']/g, function (char) {
       return {
-        "&": "&amp;",
-        "<": "&lt;",
-        ">": "&gt;",
-        '"': "&quot;",
-        "'": "&#39;"
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;',
       }[char];
     });
   }
@@ -47,33 +47,37 @@
   function request(path, method, data) {
     return new Promise(function (resolve, reject) {
       if (!vendo) {
-        reject(new Error("No coin slot configured."));
+        reject(new Error('No coin slot configured.'));
         return;
       }
 
       const xhr = new XMLHttpRequest();
-      const query = method === "GET" && data
-        ? `?${new URLSearchParams(data).toString()}`
-        : "";
+      const query = method === 'GET' && data ? `?${new URLSearchParams(data).toString()}` : '';
 
-      xhr.open(method || "GET", vendo.baseUrl + path + query, true);
+      xhr.open(method || 'GET', vendo.baseUrl + path + query, true);
       xhr.timeout = 7000;
 
       xhr.onload = function () {
         let body = xhr.responseText;
-        try { body = JSON.parse(body); } catch (_) {}
+        try {
+          body = JSON.parse(body);
+        } catch (_) {}
         resolve({
           ok: xhr.status >= 200 && xhr.status < 300,
           status: xhr.status,
-          body: body
+          body: body,
         });
       };
 
-      xhr.onerror = function () { reject(new Error("Coin slot unavailable.")); };
-      xhr.ontimeout = function () { reject(new Error("Coin slot timed out.")); };
+      xhr.onerror = function () {
+        reject(new Error('Coin slot unavailable.'));
+      };
+      xhr.ontimeout = function () {
+        reject(new Error('Coin slot timed out.'));
+      };
 
-      if (method === "POST") {
-        xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+      if (method === 'POST') {
+        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
         xhr.send(new URLSearchParams(data || {}).toString());
         return;
       }
@@ -83,36 +87,40 @@
   }
 
   function responseData(result) {
-    if (result && typeof result.body === "object") return result.body || {};
-    try { return JSON.parse(result.body || "{}"); } catch (_) { return {}; }
+    if (result && typeof result.body === 'object') return result.body || {};
+    try {
+      return JSON.parse(result.body || '{}');
+    } catch (_) {
+      return {};
+    }
   }
 
   function isTrue(value) {
-    return value === true || value === 1 || value === "1" || value === "true";
+    return value === true || value === 1 || value === '1' || value === 'true';
   }
 
   window.openLogout = function () {
-    if (window.name !== "hotspot_status") return true;
+    if (window.name !== 'hotspot_status') return true;
 
     window.open(
       session.logoutUrl,
-      "hotspot_logout",
-      "toolbar=0,location=0,directories=0,status=0,menubars=0,resizable=1,width=280,height=250"
+      'hotspot_logout',
+      'toolbar=0,location=0,directories=0,status=0,menubars=0,resizable=1,width=280,height=250',
     );
     window.close();
     return false;
   };
 
   function endSession() {
-    const logoutUrl = session.logoutUrl || "";
-    const loginUrl = session.loginUrl || "/login";
+    const logoutUrl = session.logoutUrl || '';
+    const loginUrl = session.loginUrl || '/login';
 
     if (!logoutUrl) {
       location.href = loginUrl;
       return;
     }
 
-    const separator = logoutUrl.includes("?") ? "&" : "?";
+    const separator = logoutUrl.includes('?') ? '&' : '?';
     const xhr = new XMLHttpRequest();
     let finished = false;
 
@@ -122,7 +130,7 @@
       location.href = loginUrl;
     }
 
-    xhr.open("GET", `${logoutUrl}${separator}erase-cookie=on`, true);
+    xhr.open('GET', `${logoutUrl}${separator}erase-cookie=on`, true);
     xhr.timeout = 4000;
     xhr.onload = returnToLogin;
     xhr.onerror = returnToLogin;
@@ -135,7 +143,7 @@
   let extendCoinTotal = 0;
   let finalizingExtension = false;
 
-  document.body.className = "";
+  document.body.className = '';
   root.outerHTML = `
     <main class="portal">
       <section class="card">
@@ -148,12 +156,12 @@
         </div>
 
         <h1>You're connected</h1>
-        <p class="muted">Live Wi-Fi session for ${escapeHtml(session.mac || "this device")}.</p>
+        <p class="muted">Live Wi-Fi session for ${escapeHtml(session.mac || 'this device')}.</p>
 
         <div class="context">
           <div>
             <small>Time left</small>
-            <span id="pp-left">${timeLeft ? duration(timeLeft) : "Unlimited"}</span>
+            <span id="pp-left">${timeLeft ? duration(timeLeft) : 'Unlimited'}</span>
           </div>
           <div>
             <small>Data</small>
@@ -165,14 +173,14 @@
           class="button secondary full"
           id="pp-extend"
           type="button"
-          ${vendo && session.username ? "" : "hidden"}
+          ${vendo && session.username ? '' : 'hidden'}
         >Extend time</button>
 
         <div id="pp-extend-box" class="compat-transaction" hidden>
           <div class="d-flex justify-content-between gap-3 align-items-start">
             <div>
               <small>Extend current voucher</small>
-              <strong class="d-block">${escapeHtml(session.username || "—")}</strong>
+              <strong class="d-block">${escapeHtml(session.username || '—')}</strong>
             </div>
             <small id="pp-extend-countdown" class="compat-countdown">Waiting…</small>
           </div>
@@ -201,7 +209,7 @@
         </div>
 
         <div class="actions">
-          <form action="${escapeHtml(session.logoutUrl || "#")}" name="logout" onsubmit="return openLogout()">
+          <form action="${escapeHtml(session.logoutUrl || '#')}" name="logout" onsubmit="return openLogout()">
             <button class="button secondary" type="submit">Disconnect</button>
           </form>
           <button class="button secondary" id="pp-end-session" type="button">End session</button>
@@ -210,22 +218,24 @@
     </main>
   `;
 
-  const extendButton = document.getElementById("pp-extend");
-  const extendBox = document.getElementById("pp-extend-box");
-  const extendStatus = document.getElementById("pp-extend-status");
-  const extendAmount = document.getElementById("pp-extend-amount");
-  const extendTime = document.getElementById("pp-extend-time");
-  const extendCountdown = document.getElementById("pp-extend-countdown");
-  const extendProgressBar = document.getElementById("pp-extend-progress-bar");
-  const finishButton = document.getElementById("pp-extend-finish");
-  const cancelButton = document.getElementById("pp-extend-cancel");
-  const endSessionButton = document.getElementById("pp-end-session");
+  const extendButton = document.getElementById('pp-extend');
+  const extendBox = document.getElementById('pp-extend-box');
+  const extendStatus = document.getElementById('pp-extend-status');
+  const extendAmount = document.getElementById('pp-extend-amount');
+  const extendTime = document.getElementById('pp-extend-time');
+  const extendCountdown = document.getElementById('pp-extend-countdown');
+  const extendProgressBar = document.getElementById('pp-extend-progress-bar');
+  const finishButton = document.getElementById('pp-extend-finish');
+  const cancelButton = document.getElementById('pp-extend-cancel');
+  const endSessionButton = document.getElementById('pp-end-session');
 
   function transactionAmount(data) {
     return number(
       data.totalCoin !== undefined
         ? data.totalCoin
-        : (data.amount !== undefined ? data.amount : data.coin)
+        : data.amount !== undefined
+          ? data.amount
+          : data.coin,
     );
   }
 
@@ -234,8 +244,8 @@
     extendAmount.textContent = `₱${extendCoinTotal}`;
 
     const seconds = number(data.timeAdded);
-    const addedTime = data.time || data.minutes || data.duration ||
-      (seconds ? duration(seconds) : "—");
+    const addedTime =
+      data.time || data.minutes || data.duration || (seconds ? duration(seconds) : '—');
     extendTime.textContent = addedTime;
 
     finishButton.disabled = extendCoinTotal <= 0;
@@ -245,13 +255,11 @@
   function updateExtensionCountdown(data) {
     const remainMs = number(data.remainTime);
     const waitMs = number(data.waitTime);
-    const percent = waitMs > 0
-      ? Math.max(0, Math.min(100, (remainMs / waitMs) * 100))
-      : 100;
+    const percent = waitMs > 0 ? Math.max(0, Math.min(100, (remainMs / waitMs) * 100)) : 100;
     const seconds = Math.max(0, Math.ceil(remainMs / 1000));
 
     extendProgressBar.style.width = `${percent}%`;
-    extendCountdown.textContent = seconds > 0 ? `${seconds}s` : "0s";
+    extendCountdown.textContent = seconds > 0 ? `${seconds}s` : '0s';
     return seconds;
   }
 
@@ -263,10 +271,10 @@
     extendBox.hidden = true;
     extendButton.hidden = false;
     extendButton.disabled = false;
-    extendAmount.textContent = "₱0";
-    extendTime.textContent = "—";
-    extendProgressBar.style.width = "100%";
-    extendCountdown.textContent = "Waiting…";
+    extendAmount.textContent = '₱0';
+    extendTime.textContent = '—';
+    extendProgressBar.style.width = '100%';
+    extendCountdown.textContent = 'Waiting…';
     finishButton.disabled = true;
     cancelButton.disabled = false;
 
@@ -284,24 +292,24 @@
     finishButton.disabled = true;
     cancelButton.disabled = true;
     extendStatus.textContent = autoFinish
-      ? "Coin time ended. Saving extension…"
-      : "Saving extension…";
+      ? 'Coin time ended. Saving extension…'
+      : 'Saving extension…';
 
-    request("/useVoucher", "POST", { voucher: session.username })
+    request('/useVoucher', 'POST', { voucher: session.username })
       .then(function (result) {
         const data = responseData(result);
         if (!result.ok || (!isTrue(data.status) && !isTrue(data.success))) {
-          throw new Error(data.message || data.errorCode || "Could not save extension.");
+          throw new Error(data.message || data.errorCode || 'Could not save extension.');
         }
 
-        extendStatus.textContent = "Time extended. Refreshing status…";
+        extendStatus.textContent = 'Time extended. Refreshing status…';
         setTimeout(function () {
           location.href = session.refreshUrl || location.href;
         }, 700);
       })
       .catch(function (error) {
         if (autoFinish && extendCoinTotal > 0) {
-          extendStatus.textContent = "Extension completed. Refreshing status…";
+          extendStatus.textContent = 'Extension completed. Refreshing status…';
           setTimeout(function () {
             location.href = session.refreshUrl || location.href;
           }, 700);
@@ -321,17 +329,15 @@
     clearTimeout(pollTimer);
     pollTimer = null;
     cancelButton.disabled = true;
-    extendStatus.textContent = autoCancel
-      ? "No coin received. Closing coin slot…"
-      : "Cancelling…";
+    extendStatus.textContent = autoCancel ? 'No coin received. Closing coin slot…' : 'Cancelling…';
 
-    request("/cancelTopUp", "POST", {
+    request('/cancelTopUp', 'POST', {
       voucher: session.username,
-      mac: session.mac || ""
+      mac: session.mac || '',
     })
       .catch(function () {})
       .then(function () {
-        resetExtension(autoCancel ? "No coin received. Coin slot closed." : "Extension cancelled.");
+        resetExtension(autoCancel ? 'No coin received. Coin slot closed.' : 'Extension cancelled.');
       });
   }
 
@@ -350,38 +356,39 @@
     clearTimeout(pollTimer);
     if (finalizingExtension) return;
 
-    request("/checkCoin", "POST", { voucher: session.username })
+    request('/checkCoin', 'POST', { voucher: session.username })
       .then(function (result) {
         const data = responseData(result);
-        const errorCode = String(data.errorCode || "");
+        const errorCode = String(data.errorCode || '');
 
         if (result.ok && (isTrue(data.status) || isTrue(data.success))) {
           updateExtensionDetails(data);
-          extendProgressBar.style.width = "100%";
-          extendCountdown.textContent = "Renewed";
-          extendStatus.textContent = "Coin received. Insert another coin or wait for the timer.";
-        } else if (errorCode === "coin.is.reading") {
-          extendStatus.textContent = "Verifying coin, please wait…";
-        } else if (errorCode === "coin.not.inserted") {
+          extendProgressBar.style.width = '100%';
+          extendCountdown.textContent = 'Renewed';
+          extendStatus.textContent = 'Coin received. Insert another coin or wait for the timer.';
+        } else if (errorCode === 'coin.is.reading') {
+          extendStatus.textContent = 'Verifying coin, please wait…';
+        } else if (errorCode === 'coin.not.inserted') {
           updateExtensionDetails(data);
           const seconds = updateExtensionCountdown(data);
-          extendStatus.textContent = extendCoinTotal > 0
-            ? "Insert another coin to renew the timer, or press Done."
-            : "Waiting for coin…";
+          extendStatus.textContent =
+            extendCoinTotal > 0
+              ? 'Insert another coin to renew the timer, or press Done.'
+              : 'Waiting for coin…';
 
           if (seconds <= 0) {
             handleExtensionTimeout();
             return;
           }
-        } else if (errorCode === "coinslot.busy") {
+        } else if (errorCode === 'coinslot.busy') {
           if (extendCoinTotal > 0) {
             finalizeExtension(true);
           } else {
-            resetExtension("Coin slot was cancelled or is busy.");
+            resetExtension('Coin slot was cancelled or is busy.');
           }
           return;
         } else {
-          throw new Error(data.message || errorCode || "The coin slot reported an error.");
+          throw new Error(data.message || errorCode || 'The coin slot reported an error.');
         }
 
         pollTimer = setTimeout(pollExtension, 1000);
@@ -393,38 +400,40 @@
   }
 
   function startExtension(retryCount) {
-    request("/topUp", "POST", {
+    request('/topUp', 'POST', {
       voucher: session.username,
-      mac: session.mac || "",
-      ipAddress: session.ip || "",
-      extendTime: 1
+      mac: session.mac || '',
+      ipAddress: session.ip || '',
+      extendTime: 1,
     })
       .then(function (result) {
         const data = responseData(result);
         if (!result.ok || (!isTrue(data.status) && !isTrue(data.success))) {
-          throw new Error(data.message || data.errorCode || "Extension failed.");
+          throw new Error(data.message || data.errorCode || 'Extension failed.');
         }
 
         updateExtensionDetails(data);
-        extendStatus.textContent = "Coin slot active. Insert a coin now.";
-        extendProgressBar.style.width = "100%";
-        extendCountdown.textContent = "Ready";
+        extendStatus.textContent = 'Coin slot active. Insert a coin now.';
+        extendProgressBar.style.width = '100%';
+        extendCountdown.textContent = 'Ready';
         pollExtension();
       })
       .catch(function (error) {
         if (retryCount < 3) {
-          setTimeout(function () { startExtension(retryCount + 1); }, 1000);
+          setTimeout(function () {
+            startExtension(retryCount + 1);
+          }, 1000);
           return;
         }
 
-        resetExtension(error.message || "Coin slot is unavailable.");
+        resetExtension(error.message || 'Coin slot is unavailable.');
       });
   }
 
   if (endSessionButton) {
     endSessionButton.onclick = function () {
       endSessionButton.disabled = true;
-      endSessionButton.textContent = "Ending…";
+      endSessionButton.textContent = 'Ending…';
       endSession();
     };
   }
@@ -438,11 +447,11 @@
       finalizingExtension = false;
       extendButton.hidden = true;
       extendBox.hidden = false;
-      extendAmount.textContent = "₱0";
-      extendTime.textContent = "—";
-      extendProgressBar.style.width = "100%";
-      extendCountdown.textContent = "Starting…";
-      extendStatus.textContent = "Activating coin slot…";
+      extendAmount.textContent = '₱0';
+      extendTime.textContent = '—';
+      extendProgressBar.style.width = '100%';
+      extendCountdown.textContent = 'Starting…';
+      extendStatus.textContent = 'Activating coin slot…';
       finishButton.disabled = true;
       cancelButton.disabled = false;
 
@@ -465,7 +474,7 @@
   setInterval(function () {
     if (timeLeft <= 0) return;
     timeLeft--;
-    const timeLeftElement = document.getElementById("pp-left");
+    const timeLeftElement = document.getElementById('pp-left');
     if (timeLeftElement) timeLeftElement.textContent = duration(timeLeft);
   }, 1000);
-}());
+})();

@@ -15,7 +15,8 @@ final class AuthContext
         private UserManager $users,
         private AuthManager $auth,
         private PermissionManager $permissions,
-    ) {}
+    ) {
+    }
 
     public function auth(): AuthManager
     {
@@ -25,16 +26,24 @@ final class AuthContext
     public function user(): ?array
     {
         $id = $this->auth->id();
-        if ($id === null) return null;
+        if ($id === null) {
+            return null;
+        }
         $user = $this->users->find($id);
+
         return $user && $user->active ? $user->toArray() : null;
     }
 
     public function requireAccount(): array
     {
-        if (!$this->auth->check()) redirect('/login');
+        if (!$this->auth->check()) {
+            redirect('/login');
+        }
         $user = $this->user();
-        if (!$user) redirect('/logout');
+        if (!$user) {
+            redirect('/logout');
+        }
+
         return $user;
     }
 
@@ -46,13 +55,18 @@ final class AuthContext
     public function can(string $permission): bool
     {
         $user = $this->user();
-        if (!$user) return false;
+        if (!$user) {
+            return false;
+        }
 
         // The owner bypass is intentional: platform ownership is a separate
         // security boundary, while all delegated access uses Prefab Permissions.
-        if (($user['platform_role'] ?? '') === 'platform_owner') return true;
+        if (($user['platform_role'] ?? '') === 'platform_owner') {
+            return true;
+        }
 
         $groupIds = $this->users->groups()->groupIdsForUser($user['id']);
+
         return $this->permissions->can(new PermissionUser($user['id'], $groupIds), $permission);
     }
 
@@ -66,6 +80,7 @@ final class AuthContext
                 $view->portalCard('<h1>Access denied</h1><p class="muted">Your account does not have <span class="code">' . e($permission) . '</span>.</p><a class="button full" href="/dashboard">Back to dashboard</a>'),
             );
         }
+
         return $user;
     }
 

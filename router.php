@@ -7,4 +7,3 @@ if ($path !== '/' && is_file($file)) {
     return false;
 }
 require __DIR__ . '/public/index.php';
-

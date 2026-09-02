@@ -1,8 +1,8 @@
 (function () {
-  "use strict";
+  'use strict';
 
   const session = window.PIXIEPOINT_DISCONNECTED || {};
-  const root = document.getElementById("pixiepoint-root");
+  const root = document.getElementById('pixiepoint-root');
 
   if (!root) return;
 
@@ -35,11 +35,11 @@
   function escapeHtml(value) {
     return String(value).replace(/[&<>"']/g, function (char) {
       return {
-        "&": "&amp;",
-        "<": "&lt;",
-        ">": "&gt;",
-        '"': "&quot;",
-        "'": "&#39;"
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;',
       }[char];
     });
   }
@@ -47,7 +47,7 @@
   const totalTransfer = number(session.bytesIn) + number(session.bytesOut);
   const timeLeft = number(session.sessionTimeLeft);
 
-  document.body.className = "";
+  document.body.className = '';
 
   root.outerHTML = `
     <main class="portal">
@@ -64,12 +64,16 @@
         <p class="muted">Your Wi-Fi access is disconnected, but your remaining time is preserved.</p>
 
         <div class="context">
-          ${timeLeft > 0 ? `
+          ${
+            timeLeft > 0
+              ? `
             <div>
               <small>Time left</small>
               <strong>${duration(timeLeft)}</strong>
             </div>
-          ` : ""}
+          `
+              : ''
+          }
           <div>
             <small>Used this session</small>
             <strong>${duration(session.uptime)}</strong>
@@ -81,12 +85,12 @@
         </div>
 
         <div class="actions">
-          <a class="button" href="${escapeHtml(session.loginUrl || "#")}">Resume</a>
-          <a class="button secondary" href="${escapeHtml(session.loginUrl || "#")}">End session</a>
+          <a class="button" href="${escapeHtml(session.loginUrl || '#')}">Resume</a>
+          <a class="button secondary" href="${escapeHtml(session.loginUrl || '#')}">End session</a>
         </div>
 
         <p class="muted">Resume reconnects using the remaining time. End session will return to the login flow.</p>
       </section>
     </main>
   `;
-}());
+})();

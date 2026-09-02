@@ -12,4 +12,3 @@ try {
     fwrite(STDERR, "Migration failed: {$exception->getMessage()}\n");
     exit(1);
 }
-

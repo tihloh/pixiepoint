@@ -4,19 +4,19 @@ declare(strict_types=1);
 
 namespace PixiePoint\App\Admin\Vouchers;
 
-use Throwable;
 use PixiePoint\App\Admin\Shared\FeatureController;
+use Throwable;
 use Tihloh\Prefab\Input\Input;
 
 final class Controller extends FeatureController
 {
     public function index(): never
     {
-        $message = (string)($_SESSION['admin_flash'] ?? '');
+        $message = (string) ($_SESSION['admin_flash'] ?? '');
         unset($_SESSION['admin_flash']);
         if ($this->isPost()) {
             require_csrf();
-            $action = (string)($_POST['action'] ?? 'create');
+            $action = (string) ($_POST['action'] ?? 'create');
             $result = Input::fromRequest()->process([
                 'code' => 'trim|uppercase|null_if_empty|nullable|string|max:128',
                 'label' => 'trim|null_if_empty|nullable|string|max:255',
@@ -32,16 +32,21 @@ final class Controller extends FeatureController
                 $message = $this->errors($result->errors());
             } else {
                 $data = $result->validated();
+
                 try {
                     if ($action === 'update') {
-                        $id = max(0, (int)($_POST['id'] ?? 0));
-                        if ($id < 1) throw new \RuntimeException('Voucher not found.');
+                        $id = max(0, (int) ($_POST['id'] ?? 0));
+                        if ($id < 1) {
+                            throw new \RuntimeException('Voucher not found.');
+                        }
                         $code = $data['code'] ?? '';
-                        if ($code === '') throw new \RuntimeException('Voucher code is required when editing.');
+                        if ($code === '') {
+                            throw new \RuntimeException('Voucher code is required when editing.');
+                        }
                         $stmt = $this->db->prepare('UPDATE vouchers SET code=?,label=?,duration_minutes=?,data_limit_mb=?,max_devices=?,max_uses=?,expires_at=?,enabled=? WHERE id=?');
                         $stmt->execute([
                             $code, $data['label'] ?? null, $data['duration_minutes'], $data['data_limit_mb'] ?? null,
-                            $data['max_devices'], $data['max_uses'], $data['expires_at'] ?? null, (int)($data['enabled'] ?? 0), $id,
+                            $data['max_devices'], $data['max_uses'], $data['expires_at'] ?? null, (int) ($data['enabled'] ?? 0), $id,
                         ]);
                         $this->audit('voucher.updated', 'voucher', $id, 'PisoWiFi voucher was updated.', ['code' => $code]);
                         $message = '<div class="alert ok">Voucher <span class="code">' . e($code) . '</span> updated.</div>';
@@ -50,7 +55,7 @@ final class Controller extends FeatureController
                         $password = bin2hex(random_bytes(8));
                         $stmt = $this->db->prepare('INSERT INTO vouchers(code,password,label,duration_minutes,data_limit_mb,max_devices,max_uses,expires_at) VALUES(?,?,?,?,?,?,?,?)');
                         $stmt->execute([$code, $password, $data['label'] ?? null, $data['duration_minutes'], $data['data_limit_mb'] ?? null, $data['max_devices'], $data['max_uses'], $data['expires_at'] ?? null]);
-                        $id = (int)$this->db->lastInsertId();
+                        $id = (int) $this->db->lastInsertId();
                         $this->audit('voucher.created', 'voucher', $id, 'PisoWiFi voucher was created.', ['code' => $code]);
                         $message = '<div class="alert ok">Voucher <span class="code">' . e($code) . '</span> created.</div>';
                     }

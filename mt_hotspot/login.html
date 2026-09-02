@@ -1,54 +1,67 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#07111f">
-  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <title>PixiePoint Wi-Fi</title>
-  <style>
-    html, body { min-height: 100%; margin: 0; }
-    body { display: grid; place-items: center; background: #07111f; color: #eef4ff; font: 16px system-ui; text-align: center; }
-    p { color: #9fb0c7; }
-  </style>
-</head>
-<body>
-  $(if chap-id)
-  <form id="chap-login" action="$(link-login-only)" method="post" hidden>
-    <input name="username">
-    <input name="password">
-    <input name="dst" value="$(link-orig)">
-    <input name="popup" value="true">
-  </form>
-  $(endif)
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+    <meta name="theme-color" content="#07111f" />
+    <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate" />
+    <title>PixiePoint Wi-Fi</title>
+    <style>
+      html,
+      body {
+        min-height: 100%;
+        margin: 0;
+      }
+      body {
+        display: grid;
+        place-items: center;
+        background: #07111f;
+        color: #eef4ff;
+        font: 16px system-ui;
+        text-align: center;
+      }
+      p {
+        color: #9fb0c7;
+      }
+    </style>
+  </head>
+  <body>
+    $(if chap-id)
+    <form id="chap-login" action="$(link-login-only)" method="post" hidden>
+      <input name="username" />
+      <input name="password" />
+      <input name="dst" value="$(link-orig)" />
+      <input name="popup" value="true" />
+    </form>
+    $(endif)
 
-  <form id="pap-login" action="$(link-login-only)" method="post" hidden>
-    <input name="username">
-    <input name="password">
-    <input name="dst" value="$(link-orig)">
-    <input name="popup" value="true">
-  </form>
+    <form id="pap-login" action="$(link-login-only)" method="post" hidden>
+      <input name="username" />
+      <input name="password" />
+      <input name="dst" value="$(link-orig)" />
+      <input name="popup" value="true" />
+    </form>
 
-  <main id="pixiepoint-root">
-    <strong>PixiePoint Wi-Fi</strong>
-    <p id="boot-status">Checking the hosted portal…</p>
-  </main>
+    <main id="pixiepoint-root">
+      <strong>PixiePoint Wi-Fi</strong>
+      <p id="boot-status">Checking the hosted portal…</p>
+    </main>
 
-  <script src="md5.js"></script>
-  <script>
-    window.PIXIEPOINT_CONTEXT = {
-      mac: "$(mac)",
-      ip: "$(ip)",
-      username: "$(username)",
-      routerIdentity: "$(identity)",
-      interfaceName: "$(interface-name)",
-      serverAddress: "$(server-address)",
-      sessionTimeLeft: "$(session-time-left-secs)",
-      error: "$(error)"
-    };
-    window.PIXIEPOINT_CHAP = { id: "$(chap-id)", challenge: "$(chap-challenge)" };
-    window.PIXIEPOINT_BOOTSTRAP = true;
-  </script>
-  <script src="https://hs.portalx.win/assets/hotspot-loader.js?v=20260902-2"></script>
-</body>
+    <script src="md5.js"></script>
+    <script>
+      window.PIXIEPOINT_CONTEXT = {
+        mac: '$(mac)',
+        ip: '$(ip)',
+        username: '$(username)',
+        routerIdentity: '$(identity)',
+        interfaceName: '$(interface-name)',
+        serverAddress: '$(server-address)',
+        sessionTimeLeft: '$(session-time-left-secs)',
+        error: '$(error)',
+      };
+      window.PIXIEPOINT_CHAP = { id: '$(chap-id)', challenge: '$(chap-challenge)' };
+      window.PIXIEPOINT_BOOTSTRAP = true;
+    </script>
+    <script src="https://hs.portalx.win/assets/hotspot-loader.js?v=20260902-2"></script>
+  </body>
 </html>

@@ -1,26 +1,29 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>PixiePoint Wi-Fi</title>
-</head>
-<body>
-  <main id="pixiepoint-root">PixiePoint Wi-Fi</main>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>PixiePoint Wi-Fi</title>
+  </head>
+  <body>
+    <main id="pixiepoint-root">PixiePoint Wi-Fi</main>
 
-  <script src="vendo-config.js"></script>
-  <script>
-    window.PIXIEPOINT_DISCONNECTED = {
-      username: "$(username)",
-      mac: "$(mac)",
-      ip: "$(ip)",
-      uptime: "$(uptime-secs)",
-      sessionTimeLeft: "$(session-time-left-secs)",
-      bytesIn: "$(bytes-in)",
-      bytesOut: "$(bytes-out)",
-      loginUrl: "$(link-login)"
-    };
-  </script>
-  <script src="https://hs.portalx.win/assets/hotspot-loader.js" data-pixiepoint-page="disconnected"></script>
-</body>
+    <script src="vendo-config.js"></script>
+    <script>
+      window.PIXIEPOINT_DISCONNECTED = {
+        username: '$(username)',
+        mac: '$(mac)',
+        ip: '$(ip)',
+        uptime: '$(uptime-secs)',
+        sessionTimeLeft: '$(session-time-left-secs)',
+        bytesIn: '$(bytes-in)',
+        bytesOut: '$(bytes-out)',
+        loginUrl: '$(link-login)',
+      };
+    </script>
+    <script
+      src="https://hs.portalx.win/assets/hotspot-loader.js"
+      data-pixiepoint-page="disconnected"
+    ></script>
+  </body>
 </html>

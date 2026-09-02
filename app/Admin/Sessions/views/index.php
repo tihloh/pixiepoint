@@ -11,8 +11,8 @@
         <td class="code"><?= e($s['mac'] ?: '—') ?></td>
         <td><?= e($s['router_name'] ?: '—') ?></td>
         <td><span class="badge <?= $s['status'] === 'active' ? '' : 'off' ?>"><?= e($s['status']) ?></span></td>
-        <td><?= e(duration_nice((int)$s['uptime_seconds'])) ?></td>
-        <td><?= e(bytes_nice((int)$s['bytes_in'] + (int)$s['bytes_out'])) ?></td>
+        <td><?= e(duration_nice((int) $s['uptime_seconds'])) ?></td>
+        <td><?= e(bytes_nice((int) $s['bytes_in'] + (int) $s['bytes_out'])) ?></td>
     </tr><?php endforeach; ?>
     </tbody></table>
 </section>

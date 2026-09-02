@@ -4,19 +4,19 @@ declare(strict_types=1);
 
 namespace PixiePoint\App\Admin\Routers;
 
-use Throwable;
 use PixiePoint\App\Admin\Shared\FeatureController;
+use Throwable;
 use Tihloh\Prefab\Input\Input;
 
 final class Controller extends FeatureController
 {
     public function index(): never
     {
-        $message = (string)($_SESSION['admin_flash'] ?? '');
+        $message = (string) ($_SESSION['admin_flash'] ?? '');
         unset($_SESSION['admin_flash']);
         if ($this->isPost()) {
             require_csrf();
-            $action = (string)($_POST['action'] ?? 'create');
+            $action = (string) ($_POST['action'] ?? 'create');
             $result = Input::fromRequest()->process([
                 'name' => 'trim|required|string|max:160',
                 'identity' => 'trim|required|string|max:160',
@@ -29,18 +29,21 @@ final class Controller extends FeatureController
                 $message = $this->errors($result->errors());
             } else {
                 $data = $result->validated();
+
                 try {
                     if ($action === 'update') {
-                        $id = max(0, (int)($_POST['id'] ?? 0));
-                        if ($id < 1) throw new \RuntimeException('Router not found.');
+                        $id = max(0, (int) ($_POST['id'] ?? 0));
+                        if ($id < 1) {
+                            throw new \RuntimeException('Router not found.');
+                        }
                         $stmt = $this->db->prepare('UPDATE routers SET name=?,identity=?,public_host=?,location=?,enabled=? WHERE id=?');
-                        $stmt->execute([$data['name'], $data['identity'], $data['public_host'] ?? null, $data['location'] ?? null, (int)($data['enabled'] ?? 0), $id]);
+                        $stmt->execute([$data['name'], $data['identity'], $data['public_host'] ?? null, $data['location'] ?? null, (int) ($data['enabled'] ?? 0), $id]);
                         $this->audit('router.updated', 'router', $id, 'MikroTik router was updated.', ['identity' => $data['identity']]);
                         $message = '<div class="alert ok">Router updated.</div>';
                     } else {
                         $stmt = $this->db->prepare('INSERT INTO routers(name,identity,public_host,location,api_key) VALUES(?,?,?,?,?)');
                         $stmt->execute([$data['name'], $data['identity'], $data['public_host'] ?? null, $data['location'] ?? null, bin2hex(random_bytes(24))]);
-                        $id = (int)$this->db->lastInsertId();
+                        $id = (int) $this->db->lastInsertId();
                         $this->audit('router.created', 'router', $id, 'MikroTik router was registered.', ['identity' => $data['identity']]);
                         $message = '<div class="alert ok">Router registered.</div>';
                     }

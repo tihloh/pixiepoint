@@ -12,7 +12,8 @@ final class PermissionUser implements PermissionSubjectInterface
     public function __construct(
         private int|string $id,
         private array $groupIds = [],
-    ) {}
+    ) {
+    }
 
     public function permissionSubjectId(): int|string
     {

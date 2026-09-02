@@ -16,15 +16,20 @@ final class PointWallet
 
     public function walletForDevice(int $deviceId, ?int $userId = null): array
     {
-        if ($userId) return $this->walletForUser($userId);
+        if ($userId) {
+            return $this->walletForUser($userId);
+        }
 
         $stmt = $this->db->prepare("SELECT * FROM point_wallets WHERE device_id=? AND status='active' LIMIT 1");
         $stmt->execute([$deviceId]);
-        if ($wallet = $stmt->fetch()) return $wallet;
+        if ($wallet = $stmt->fetch()) {
+            return $wallet;
+        }
 
         $this->db->prepare("INSERT INTO point_wallets(device_id,status,created_at,updated_at) VALUES(?,'active',?,?)")
             ->execute([$deviceId, now(), now()]);
-        return $this->find((int)$this->db->lastInsertId());
+
+        return $this->find((int) $this->db->lastInsertId());
     }
 
     public function walletForUser(int $userId): array
@@ -32,30 +37,34 @@ final class PointWallet
         $stmt = $this->db->prepare("SELECT * FROM point_wallets WHERE user_id=? AND status='active' LIMIT 1");
         $stmt->execute([$userId]);
         if ($wallet = $stmt->fetch()) {
-            $points = (int)$this->db->query('SELECT points FROM users WHERE id=' . $userId)->fetchColumn();
-            if ((int)$wallet['balance'] !== $points) {
+            $points = (int) $this->db->query('SELECT points FROM users WHERE id=' . $userId)->fetchColumn();
+            if ((int) $wallet['balance'] !== $points) {
                 $this->db->prepare('UPDATE point_wallets SET balance=?,updated_at=? WHERE id=?')->execute([$points, now(), $wallet['id']]);
                 $wallet['balance'] = $points;
             }
+
             return $wallet;
         }
 
         $lookup = $this->db->prepare('SELECT points FROM users WHERE id=?');
         $lookup->execute([$userId]);
-        $points = max(0, (int)$lookup->fetchColumn());
+        $points = max(0, (int) $lookup->fetchColumn());
         $this->db->prepare("INSERT INTO point_wallets(user_id,balance,status,created_at,updated_at) VALUES(?,?,'active',?,?)")
             ->execute([$userId, $points, now(), now()]);
-        return $this->find((int)$this->db->lastInsertId());
+
+        return $this->find((int) $this->db->lastInsertId());
     }
 
     public function earn(int $deviceId, ?int $userId, int $points, string $eventKey): array
     {
         $wallet = $this->walletForDevice($deviceId, $userId);
         $points = max(0, $points);
-        if ($points === 0) return $wallet;
+        if ($points === 0) {
+            return $wallet;
+        }
 
         $stmt = $this->db->prepare("INSERT IGNORE INTO point_ledger(wallet_id,points,entry_type,source_type,source_key,description,created_at) VALUES(?,?,'earn','router_login',?,'PisoWiFi purchase',?)");
-        $stmt->execute([(int)$wallet['id'], $points, $eventKey, now()]);
+        $stmt->execute([(int) $wallet['id'], $points, $eventKey, now()]);
         if ($stmt->rowCount() > 0) {
             $this->db->prepare('UPDATE point_wallets SET balance=balance+?,updated_at=? WHERE id=?')
                 ->execute([$points, now(), $wallet['id']]);
@@ -64,7 +73,7 @@ final class PointWallet
             }
         }
 
-        return $this->find((int)$wallet['id']);
+        return $this->find((int) $wallet['id']);
     }
 
     /** Convert old/unclaimed guest event points into a real device wallet. */
@@ -76,10 +85,12 @@ final class PointWallet
         $imported = 0;
 
         foreach ($stmt->fetchAll() as $event) {
-            $points = max(0, (int)$event['points']);
-            if ($points === 0) continue;
+            $points = max(0, (int) $event['points']);
+            if ($points === 0) {
+                continue;
+            }
             $insert = $this->db->prepare("INSERT IGNORE INTO point_ledger(wallet_id,points,entry_type,source_type,source_key,description,created_at) VALUES(?,?,'earn','router_login',?,'Guest PisoWiFi points',?)");
-            $insert->execute([(int)$wallet['id'], $points, (string)$event['event_key'], now()]);
+            $insert->execute([(int) $wallet['id'], $points, (string) $event['event_key'], now()]);
             if ($insert->rowCount() > 0) {
                 $imported += $points;
                 $this->db->prepare('UPDATE point_wallets SET balance=balance+?,updated_at=? WHERE id=?')->execute([$points, now(), $wallet['id']]);
@@ -97,14 +108,16 @@ final class PointWallet
         $guestStmt = $this->db->prepare("SELECT * FROM point_wallets WHERE device_id=? AND status='active' LIMIT 1 FOR UPDATE");
         $guestStmt->execute([$deviceId]);
         $guest = $guestStmt->fetch();
-        if (!$guest) return 0;
+        if (!$guest) {
+            return 0;
+        }
 
-        $points = max(0, (int)$guest['balance']);
+        $points = max(0, (int) $guest['balance']);
         $user = $this->walletForUser($userId);
         if ($points > 0) {
-            $claimKey = 'wallet-claim:' . (int)$guest['id'];
+            $claimKey = 'wallet-claim:' . (int) $guest['id'];
             $insert = $this->db->prepare("INSERT IGNORE INTO point_ledger(wallet_id,points,entry_type,source_type,source_key,description,created_at) VALUES(?,?,'claim','device_wallet',?,'Claimed guest points',?)");
-            $insert->execute([(int)$user['id'], $points, $claimKey, now()]);
+            $insert->execute([(int) $user['id'], $points, $claimKey, now()]);
             if ($insert->rowCount() > 0) {
                 $this->db->prepare('UPDATE point_wallets SET balance=balance+?,updated_at=? WHERE id=?')->execute([$points, now(), $user['id']]);
                 $this->db->prepare('UPDATE users SET points=points+? WHERE id=?')->execute([$points, $userId]);
@@ -121,9 +134,12 @@ final class PointWallet
 
     public function balanceForDevice(int $deviceId, ?int $userId = null): int
     {
-        if ($userId) return (int)$this->walletForUser($userId)['balance'];
+        if ($userId) {
+            return (int) $this->walletForUser($userId)['balance'];
+        }
         $this->importLegacyGuestPoints($deviceId);
-        return (int)$this->walletForDevice($deviceId, null)['balance'];
+
+        return (int) $this->walletForDevice($deviceId, null)['balance'];
     }
 
     private function migrate(): void
@@ -166,7 +182,10 @@ SQL);
         $stmt = $this->db->prepare('SELECT * FROM point_wallets WHERE id=? LIMIT 1');
         $stmt->execute([$walletId]);
         $wallet = $stmt->fetch();
-        if (!$wallet) throw new RuntimeException('Point wallet could not be loaded.');
+        if (!$wallet) {
+            throw new RuntimeException('Point wallet could not be loaded.');
+        }
+
         return $wallet;
     }
 }
