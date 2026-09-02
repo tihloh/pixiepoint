@@ -81,6 +81,7 @@ final class RegistrationController
                 $this->fail('This MikroTik hardware is already registered.');
             }
 
+            $agentKey = bin2hex(random_bytes(24));
             $stmt = $this->db->prepare(
                 'INSERT INTO routers(name,identity,hardware_id,api_key,enabled) '
                 . 'VALUES(?,?,?,?,1)',
@@ -89,7 +90,7 @@ final class RegistrationController
                 $identity,
                 $identity,
                 $hardwareId,
-                bin2hex(random_bytes(24)),
+                $agentKey,
             ]);
 
             $routerId = (int) $this->db->lastInsertId();
@@ -120,9 +121,9 @@ final class RegistrationController
                 'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? null,
             ]);
 
-            echo "SUCCESS\n";
-            echo 'Router registered: ' . $identity . "\n";
-            echo 'Open PixiePoint > Routers to continue setup.';
+            // RouterOS consumes the second line to install the newly-issued
+            // router-specific agent without requiring another web setup step.
+            echo "SUCCESS\n", $agentKey;
             exit;
         } catch (PDOException) {
             if ($this->db->inTransaction()) {
