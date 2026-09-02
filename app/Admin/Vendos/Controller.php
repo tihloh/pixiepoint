@@ -7,7 +7,7 @@ final class Controller extends FeatureController
 {
  public function index():never
  {
-  $user=$this->auth->requireAccount();$userId=(int)$user['id'];$platformOwner=$this->auth->isPlatformOwner();$message='';
+  $user=$this->auth->requireAccount();$userId=(int)$user['id'];$platformOwner=$this->auth->isPlatformOwner();$message=(string)($_SESSION['admin_flash']??'');unset($_SESSION['admin_flash']);
   if($this->isPost()){
    require_csrf();$action=(string)($_POST['action']??'create');
    if($action==='toggle_debug'){
@@ -37,6 +37,7 @@ final class Controller extends FeatureController
      }catch(Throwable $e){$message='<div class="alert">The vendo could not be saved. '.e($e->getMessage()).'</div>';}
     }
    }
+   $_SESSION['admin_flash']=$message;redirect('/admin/vendos');
   }
   $sql='SELECT v.*,r.name router_name,r.identity router_identity,u.email owner_email FROM vendos v JOIN routers r ON r.id=v.router_id LEFT JOIN users u ON u.id=v.owner_user_id';$params=[];if(!$platformOwner){$sql.=' WHERE v.owner_user_id=?';$params[]=$userId;}$sql.=' ORDER BY v.created_at DESC';$stmt=$this->db->prepare($sql);$stmt->execute($params);
   $this->page('Vendos',__DIR__.'/views/index.php',['message'=>$message,'vendos'=>$stmt->fetchAll(),'routers'=>$this->db->query('SELECT id,name,identity FROM routers WHERE enabled=1 ORDER BY name')->fetchAll(),'canManageVendos'=>$this->auth->can('vendos.manage'),'isPlatformOwner'=>$platformOwner,'csrf'=>csrf_token()]);
