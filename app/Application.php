@@ -9,6 +9,7 @@ use PixiePoint\App\Admin\Logs\Controller as LogsController;
 use PixiePoint\App\Admin\Routers\AgentController as RouterAgentController;
 use PixiePoint\App\Admin\Routers\CommandQueue as RouterCommandQueue;
 use PixiePoint\App\Admin\Routers\Controller as RoutersController;
+use PixiePoint\App\Admin\Routers\TeamController as RouterTeamController;
 use PixiePoint\App\Admin\Sales\Controller as SalesController;
 use PixiePoint\App\Admin\Sessions\Controller as SessionsController;
 use PixiePoint\App\Admin\Vendos\Api as VendoApi;
@@ -93,6 +94,12 @@ final class Application
                 $points,
             ),
             'admin.routers' => new RoutersController(
+                $app->db,
+                $auth,
+                $view,
+                $logs,
+            ),
+            'admin.router-team' => new RouterTeamController(
                 $app->db,
                 $auth,
                 $view,
@@ -218,6 +225,7 @@ final class Application
             'secure' => (bool) ($config['cookie_secure'] ?? true)
                 && (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off'),
             'samesite' => 'Lax',
+            'path' => '/',
         ]);
 
         session_start();
