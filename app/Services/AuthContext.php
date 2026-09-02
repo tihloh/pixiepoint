@@ -121,12 +121,22 @@ final class AuthContext
             return true;
         }
 
-        $groupIds = $this->users->groups()->groupIdsForUser($user['id']);
-        if ($this->permissions->can(new PermissionUser($user['id'], $groupIds), $permission)) {
+        $userId = (int) $user['id'];
+
+        // Router access is always resource-scoped. A normal account may open
+        // the Routers page only when at least one router is actually linked to
+        // that account through router_members. Global Prefab permissions do not
+        // grant visibility to unrelated routers.
+        if (in_array($permission, ['routers.view', 'routers.manage'], true)) {
+            return $this->routerTeamCan($userId, $permission);
+        }
+
+        $groupIds = $this->users->groups()->groupIdsForUser($userId);
+        if ($this->permissions->can(new PermissionUser($userId, $groupIds), $permission)) {
             return true;
         }
 
-        return $this->routerTeamCan((int) $user['id'], $permission);
+        return $this->routerTeamCan($userId, $permission);
     }
 
     public function requirePermission(string $permission, View $view): array
