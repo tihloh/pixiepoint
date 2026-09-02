@@ -11,10 +11,14 @@ final class Controller extends FeatureController
   if($this->isPost()){
    require_csrf();$action=(string)($_POST['action']??'create');
    if($action==='toggle_debug'){
-    $enabled=(string)($_POST['debug_enabled']??'0')==='1';
-    $stmt=$this->db->prepare("INSERT INTO vendo_settings(setting_key,setting_value) VALUES('hotspot_debug',?) ON DUPLICATE KEY UPDATE setting_value=VALUES(setting_value)");$stmt->execute([$enabled?'1':'0']);
-    $this->audit('vendo.debug.'.($enabled?'enabled':'disabled'),'vendo',null,'Hotspot vendo debug display was '.($enabled?'enabled.':'disabled.'));
-    $message='<div class="alert ok">Hotspot debug '.($enabled?'enabled':'disabled').'.</div>';
+    $id=max(0,(int)($_POST['id']??0));$enabled=(string)($_POST['debug_enabled']??'0')==='1';
+    if($id<1){$message='<div class="alert">Vendo not found.</div>';}
+    else{
+     $sql='UPDATE vendos SET debug_enabled=? WHERE id=?';$params=[$enabled?1:0,$id];if(!$platformOwner){$sql.=' AND owner_user_id=?';$params[]=$userId;}
+     $stmt=$this->db->prepare($sql);$stmt->execute($params);
+     $exists=$this->db->prepare('SELECT name FROM vendos WHERE id=?'.($platformOwner?'':' AND owner_user_id=?'));$exists->execute($platformOwner?[$id]:[$id,$userId]);$name=$exists->fetchColumn();
+     if(!$name)$message='<div class="alert">Vendo not found.</div>';else{$this->audit('vendo.debug.'.($enabled?'enabled':'disabled'),'vendo',$id,'Hotspot debug was '.($enabled?'enabled':'disabled').' for this vendo.');$message='<div class="alert ok">Debug '.($enabled?'enabled':'disabled').' for '.e($name).'.</div>';}
+    }
    }else{
     $result=Input::fromRequest()->process(['name'=>'trim|required|string|max:160','router_id'=>'required|integer|min:1','base_url'=>'trim|required|string|max:255','server_ip'=>'trim|required|string|max:45','client_subnet'=>'trim|null_if_empty|nullable|string|max:64','interface_name'=>'trim|null_if_empty|nullable|string|max:128','password_mode'=>'trim|required|string|max:32','charging_enabled'=>'default:0|integer|min:0|max:1','eload_enabled'=>'default:0|integer|min:0|max:1','enabled'=>'default:0|integer|min:0|max:1']);
     if($result->fails())$message=$this->errors($result->errors());else{
@@ -35,8 +39,7 @@ final class Controller extends FeatureController
    }
   }
   $sql='SELECT v.*,r.name router_name,r.identity router_identity,u.email owner_email FROM vendos v JOIN routers r ON r.id=v.router_id LEFT JOIN users u ON u.id=v.owner_user_id';$params=[];if(!$platformOwner){$sql.=' WHERE v.owner_user_id=?';$params[]=$userId;}$sql.=' ORDER BY v.created_at DESC';$stmt=$this->db->prepare($sql);$stmt->execute($params);
-  $debugStmt=$this->db->prepare("SELECT setting_value FROM vendo_settings WHERE setting_key='hotspot_debug' LIMIT 1");$debugStmt->execute();$debugEnabled=(string)($debugStmt->fetchColumn()?:'0')==='1';
-  $this->page('Vendos',__DIR__.'/views/index.php',['message'=>$message,'vendos'=>$stmt->fetchAll(),'routers'=>$this->db->query('SELECT id,name,identity FROM routers WHERE enabled=1 ORDER BY name')->fetchAll(),'canManageVendos'=>$this->auth->can('vendos.manage'),'isPlatformOwner'=>$platformOwner,'debugEnabled'=>$debugEnabled,'csrf'=>csrf_token()]);
+  $this->page('Vendos',__DIR__.'/views/index.php',['message'=>$message,'vendos'=>$stmt->fetchAll(),'routers'=>$this->db->query('SELECT id,name,identity FROM routers WHERE enabled=1 ORDER BY name')->fetchAll(),'canManageVendos'=>$this->auth->can('vendos.manage'),'isPlatformOwner'=>$platformOwner,'csrf'=>csrf_token()]);
  }
  private function normalizeBaseUrl(string $value):?string{$value=trim($value);if($value==='')return null;if(!preg_match('~^https?://~i',$value))$value='http://'.$value;$parts=parse_url($value);if(!$parts||!in_array(strtolower((string)($parts['scheme']??'')),['http','https'],true)||trim((string)($parts['host']??''))==='')return null;return rtrim($value,'/');}
  private function validCidr(string $cidr):bool{if(!str_contains($cidr,'/'))return false;[$ip,$prefix]=array_pad(explode('/',$cidr,2),2,'');$bin=@inet_pton($ip);if($bin===false)return false;$bits=strlen($bin)*8;return filter_var($prefix,FILTER_VALIDATE_INT,['options'=>['min_range'=>0,'max_range'=>$bits]])!==false;}
