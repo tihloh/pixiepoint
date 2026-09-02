@@ -42,14 +42,14 @@ jobs:
             --using-cache=no \
             --allow-risky=no
 
-      # Mixed PHP/HTML templates need an HTML-aware formatter. Installing the
-      # PHP plugin explicitly prevents templates from being left as dense HTML.
+      # Mixed PHP/HTML templates need an HTML-aware formatter. Install the PHP
+      # plugin into the workspace so Prettier can resolve it reliably.
+      - name: Install template formatter
+        run: npm install --no-save --no-package-lock prettier@3 @prettier/plugin-php
+
       - name: Format PHP templates
         run: |
-          npx --yes \
-            --package=prettier@3 \
-            --package=@prettier/plugin-php \
-            prettier \
+          npx prettier \
             --plugin=@prettier/plugin-php \
             --write \
             "app/Admin/**/views/**/*.php" \
@@ -57,7 +57,7 @@ jobs:
 
       - name: Format frontend files
         run: |
-          npx --yes prettier@3 \
+          npx prettier \
             --write \
             "public/**/*.{html,js,css}" \
             "mt_hotspot/**/*.html"
