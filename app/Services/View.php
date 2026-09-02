@@ -6,47 +6,83 @@ namespace PixiePoint\App\Services;
 
 use RuntimeException;
 
+/**
+ * Small PHP view renderer used by both the portal and management interface.
+ *
+ * Views remain ordinary PHP files so markup stays easy to inspect and edit.
+ */
 final class View
 {
-    public function __construct(private array $config) {}
+    public function __construct(private array $config)
+    {
+    }
 
+    /**
+     * Renders a view from app/Views using a slash-delimited view name.
+     */
     public function render(string $view, array $data = []): string
     {
         $view = trim(str_replace('\\', '/', $view), '/');
+
         if ($view === '' || str_contains($view, '..')) {
             throw new RuntimeException('Invalid view path.');
         }
 
-        return $this->renderFile(dirname(__DIR__) . '/Views/' . $view . '.php', $data);
+        return $this->renderFile(
+            dirname(__DIR__) . '/Views/' . $view . '.php',
+            $data,
+        );
     }
 
+    /**
+     * Renders an explicit PHP view file, including feature-local admin views.
+     */
     public function renderFile(string $file, array $data = []): string
     {
-        if (!is_file($file) || strtolower((string)pathinfo($file, PATHINFO_EXTENSION)) !== 'php') {
+        if (
+            !is_file($file)
+            || strtolower((string) pathinfo($file, PATHINFO_EXTENSION)) !== 'php'
+        ) {
             throw new RuntimeException('View not found: ' . $file);
         }
 
         extract($data, EXTR_SKIP);
         ob_start();
         require $file;
-        return (string)ob_get_clean();
+
+        return (string) ob_get_clean();
     }
 
-    /** @param array<string,bool> $access */
-    public function page(string $title, string $content, bool $dashboard = false, array $access = []): never
-    {
+    /**
+     * Renders the application layout and ends the current request.
+     *
+     * @param array<string, bool> $access Navigation permissions for management pages.
+     */
+    public function page(
+        string $title,
+        string $content,
+        bool $dashboard = false,
+        array $access = [],
+    ): never {
         $cssFile = dirname(__DIR__, 2) . '/public/assets/app.css';
+
         echo $this->render('layouts/app', [
             'title' => $title,
             'name' => e($this->config['app_name'] ?? 'PixiePoint Wi-Fi'),
             'content' => $this->bootstrapMarkup($content),
             'dashboard' => $dashboard,
             'access' => $access,
-            'cssVersion' => is_file($cssFile) ? (string)filemtime($cssFile) : '1',
+            'cssVersion' => is_file($cssFile)
+                ? (string) filemtime($cssFile)
+                : '1',
         ]);
+
         exit;
     }
 
+    /**
+     * Wraps public hotspot content in the shared portal card layout.
+     */
     public function portalCard(string $body): string
     {
         return $this->render('partials/portal-card', [
@@ -54,6 +90,12 @@ final class View
         ]);
     }
 
+    /**
+     * Maps PixiePoint's small semantic CSS vocabulary to Bootstrap classes.
+     *
+     * This keeps feature views readable without repeating long Bootstrap class
+     * lists throughout every template.
+     */
     private function bootstrapMarkup(string $html): string
     {
         $replacements = [
@@ -78,14 +120,45 @@ final class View
         ];
 
         $html = strtr($html, $replacements);
-        $html = preg_replace('/<input(?![^>]*\\bclass=)([^>]*)>/i', '<input class="form-control"$1>', $html) ?? $html;
-        $html = preg_replace('/<select(?![^>]*\\bclass=)([^>]*)>/i', '<select class="form-select"$1>', $html) ?? $html;
-        $html = preg_replace('/<textarea(?![^>]*\\bclass=)([^>]*)>/i', '<textarea class="form-control"$1>', $html) ?? $html;
-        $html = preg_replace_callback('/<label([^>]*)>/i', static function (array $match): string {
-            if (str_contains($match[1], 'class=')) return $match[0];
-            return '<label class="form-label"' . $match[1] . '>';
-        }, $html) ?? $html;
-        $html = str_replace('<table>', '<div class="table-responsive"><table class="table table-hover align-middle mb-0">', $html);
+
+        // Apply Bootstrap controls only when the template did not provide an
+        // explicit class itself.
+        $html = preg_replace(
+            '/<input(?![^>]*\\bclass=)([^>]*)>/i',
+            '<input class="form-control"$1>',
+            $html,
+        ) ?? $html;
+
+        $html = preg_replace(
+            '/<select(?![^>]*\\bclass=)([^>]*)>/i',
+            '<select class="form-select"$1>',
+            $html,
+        ) ?? $html;
+
+        $html = preg_replace(
+            '/<textarea(?![^>]*\\bclass=)([^>]*)>/i',
+            '<textarea class="form-control"$1>',
+            $html,
+        ) ?? $html;
+
+        $html = preg_replace_callback(
+            '/<label([^>]*)>/i',
+            static function (array $match): string {
+                if (str_contains($match[1], 'class=')) {
+                    return $match[0];
+                }
+
+                return '<label class="form-label"' . $match[1] . '>';
+            },
+            $html,
+        ) ?? $html;
+
+        $html = str_replace(
+            '<table>',
+            '<div class="table-responsive"><table class="table table-hover align-middle mb-0">',
+            $html,
+        );
+
         return str_replace('</table>', '</table></div>', $html);
     }
 }
