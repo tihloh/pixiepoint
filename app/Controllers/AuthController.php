@@ -29,7 +29,7 @@ final class AuthController
         unset($_SESSION['login_error']);
 
         $body = '<h1>Welcome to PixiePoint</h1>'
-            . '<p class="muted">Sign in to your PixiePoint account for Wi-Fi rewards, saved devices, session history and support. Registration is optional for basic hotspot access.</p>'
+            . '<p class="muted">Sign in to manage your PixiePoint account, points, saved devices and activity across participating PixiePoint Wi-Fi hotspots.</p>'
             . $error
             . $this->googleButton()
             . '<form method="post" action="/login" class="auth-form">'
@@ -119,7 +119,7 @@ final class AuthController
             }
         }
 
-        $this->view->page('Create account', $this->view->portalCard('<h1>Create your account</h1><p class="muted">Registration is optional for basic PisoWiFi access. An account unlocks points, saved devices, history and better support.</p>' . $error . $this->googleButton() . '<form method="post" class="auth-form"><input type="hidden" name="_csrf" value="' . e(csrf_token()) . '"><div class="field"><label>Name</label><input name="name" autocomplete="name" required></div><div class="field"><label>Email</label><input name="email" type="email" autocomplete="email" required></div><div class="field"><label>Password</label><input name="password" type="password" minlength="8" autocomplete="new-password" required></div><button class="button full">Create free account</button></form><p class="muted auth-footer">Already registered? <a href="/">Log in</a></p>'));
+        $this->view->page('Create account', $this->view->portalCard('<h1>Create your account</h1><p class="muted">Create a PixiePoint account to keep your points, saved devices and activity together across participating PixiePoint Wi-Fi hotspots.</p>' . $error . $this->googleButton() . '<form method="post" class="auth-form"><input type="hidden" name="_csrf" value="' . e(csrf_token()) . '"><div class="field"><label>Name</label><input name="name" autocomplete="name" required></div><div class="field"><label>Email</label><input name="email" type="email" autocomplete="email" required></div><div class="field"><label>Password</label><input name="password" type="password" minlength="8" autocomplete="new-password" required></div><button class="button full">Create free account</button></form><p class="muted auth-footer">Already registered? <a href="/">Log in</a></p>'));
     }
 
     public function login(): never
