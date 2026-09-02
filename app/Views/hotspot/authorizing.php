@@ -4,6 +4,7 @@
 /** @var string $username */
 /** @var string $password */
 ?>
+
 <h1>Authorizing…</h1>
 <p class="muted">Your access code was accepted. Connecting this device now.</p>
 
@@ -14,5 +15,11 @@
     <input type="hidden" name="popup" value="true">
 </form>
 
-<script>document.getElementById('router-login').submit();</script>
-<noscript><button class="button full" type="submit" form="router-login">Continue</button></noscript>
+<script>
+    // Continue the RouterOS login flow immediately after PixiePoint accepts the code.
+    document.getElementById('router-login').submit();
+</script>
+
+<noscript>
+    <button class="button full" type="submit" form="router-login">Continue</button>
+</noscript>
