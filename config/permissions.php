@@ -13,6 +13,16 @@ return [
         'description' => 'Register and configure MikroTik routers.',
         'default' => false,
     ],
+    'vendos.view' => [
+        'name' => 'View vendos',
+        'description' => 'View PixiePoint coin-slot/vendo configurations.',
+        'default' => false,
+    ],
+    'vendos.manage' => [
+        'name' => 'Manage vendos',
+        'description' => 'Create and manage owned PixiePoint vendos.',
+        'default' => false,
+    ],
     'vouchers.view' => [
         'name' => 'View vouchers',
         'description' => 'View PisoWiFi vouchers.',
