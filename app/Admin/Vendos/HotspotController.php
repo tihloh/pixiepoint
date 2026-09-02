@@ -14,8 +14,8 @@ final class HotspotController
   $context=['routerIdentity'=>$data['router_identity'],'serverAddress'=>$data['server_address'],'ip'=>$data['client_ip'],'interfaceName'=>$data['interface']];
   $vendos=$context['routerIdentity']===''?[]:$this->api->forHotspot($context['routerIdentity'],$context['serverAddress'],$context['ip'],$context['interfaceName']);
   $debug=[];
-  if($this->api->debugEnabled()){
-   $matching=$context['routerIdentity']===''?['input'=>$context,'candidateCount'=>0,'selectedCount'=>0,'selectedIds'=>[],'candidates'=>[]]:$this->api->debugForHotspot($context['routerIdentity'],$context['serverAddress'],$context['ip'],$context['interfaceName']);
+  if($this->api->hasDebugTarget($context['routerIdentity'])){
+   $matching=$this->api->debugForHotspot($context['routerIdentity'],$context['serverAddress'],$context['ip'],$context['interfaceName']);
    $debug=['raw'=>$raw,'processed'=>$context,'validationErrors'=>$errors,'matching'=>$matching];
   }
   echo $this->view->render('hotspot/compatibility',['context'=>$context,'vendos'=>$vendos,'debug'=>$debug]);exit;
