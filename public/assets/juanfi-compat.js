@@ -6,95 +6,6 @@
   var totalCoinReceived = 0, finalizingTopup = false;
   var $ = function (id) { return document.getElementById(id); };
 
-  function renderPortal() {
-    if ($("compat-app")) return;
-    var root = $("pixiepoint-root");
-    if (!root) return;
-
-    document.body.className = "";
-    root.outerHTML = `
-      <main class="portal">
-        <section class="card">
-          <div class="brand">
-            <div class="logo">P</div>
-            <div>
-              <strong>PixiePoint Wi-Fi</strong>
-              <div class="muted">MikroTik hotspot access</div>
-            </div>
-          </div>
-
-          <div class="compat" id="compat-app">
-            <h1>Connect to Wi-Fi</h1>
-            <p class="muted">Insert coins or use your voucher.</p>
-            <div id="compat-alert" class="alert" hidden></div>
-
-            <div class="field">
-              <label for="compat-vendo">Coin slot</label>
-              <select id="compat-vendo"></select>
-              <small id="compat-health" class="compat-status">Connecting to the local vendo…</small>
-            </div>
-
-            <form id="compat-voucher-form">
-              <label for="compat-voucher">Voucher</label>
-              <div class="voucher-inline">
-                <input id="compat-voucher" autocomplete="off" required>
-                <button class="button" id="compat-connect" type="submit">Connect</button>
-              </div>
-            </form>
-
-            <div id="compat-topup-slot">
-              <button class="button full" id="compat-topup" type="button" disabled>Insert coin</button>
-
-              <div id="compat-transaction" class="compat-transaction" hidden>
-                <div class="d-flex justify-content-between gap-3 align-items-start">
-                  <div>
-                    <small>Your voucher</small>
-                    <strong id="compat-code" class="d-block">—</strong>
-                  </div>
-                  <small id="compat-countdown" class="compat-countdown">Waiting…</small>
-                </div>
-
-                <div class="compat-coin-progress" aria-label="Coin slot timeout">
-                  <div id="compat-progress-bar" class="compat-coin-progress-bar"></div>
-                </div>
-
-                <div class="context">
-                  <div>
-                    <small>Coin total</small>
-                    <span id="compat-amount">₱0</span>
-                  </div>
-                  <div>
-                    <small>Time</small>
-                    <span id="compat-time">—</span>
-                  </div>
-                </div>
-
-                <p id="compat-progress" class="muted mb-2">Insert a coin now.</p>
-                <div class="actions">
-                  <button class="button" id="compat-finish" type="button" disabled>Done</button>
-                  <button class="button secondary" id="compat-cancel" type="button">Cancel</button>
-                </div>
-              </div>
-            </div>
-
-            <button class="button secondary full" id="compat-rates" type="button" disabled>View rates</button>
-
-            <div class="compat-tools" id="compat-services">
-              <button class="button secondary" id="compat-charging" type="button" hidden>Phone charging</button>
-              <button class="button secondary" id="compat-eload" type="button" hidden>Buy e-load</button>
-            </div>
-
-            <div id="compat-rate-list" class="compat-rate-list" hidden></div>
-            <div id="compat-charger-list" class="compat-rate-list" hidden></div>
-            <div id="compat-eload-panel" class="compat-rate-list" hidden>
-              <div id="compat-eload-products">Loading products…</div>
-            </div>
-          </div>
-        </section>
-      </main>
-    `;
-  }
-
   function localRequest(path, method, data) {
     return new Promise(function (resolve, reject) {
       var xhr = new XMLHttpRequest();
@@ -562,8 +473,6 @@
       products.textContent = error.message;
     });
   }
-
-  renderPortal();
 
   window.addEventListener("message", function (event) {
     var data = event.data || {};
