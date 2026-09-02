@@ -9,6 +9,7 @@ use PixiePoint\App\Admin\Logs\Controller as LogsController;
 use PixiePoint\App\Admin\Routers\AgentController as RouterAgentController;
 use PixiePoint\App\Admin\Routers\CommandQueue as RouterCommandQueue;
 use PixiePoint\App\Admin\Routers\Controller as RoutersController;
+use PixiePoint\App\Admin\Routers\RegistrationController as RouterRegistrationController;
 use PixiePoint\App\Admin\Routers\TeamController as RouterTeamController;
 use PixiePoint\App\Admin\Sales\Controller as SalesController;
 use PixiePoint\App\Admin\Sessions\Controller as SessionsController;
@@ -104,6 +105,10 @@ final class Application
                 $app->db,
                 $auth,
                 $view,
+                $logs,
+            ),
+            'router.registration' => new RouterRegistrationController(
+                $app->db,
                 $logs,
             ),
             'router.agent' => new RouterAgentController(
