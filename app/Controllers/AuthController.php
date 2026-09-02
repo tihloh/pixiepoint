@@ -111,15 +111,21 @@ final class AuthController
                         'email' => $data['email'],
                         'password_hash' => password_hash($data['password'], PASSWORD_DEFAULT),
                         'active' => true,
-                        'platform_role' => 'user',
+                        'platform_role' => 'member',
                         'points' => 0,
                     ], $this->requestContext());
 
-                    $attempt = $this->auth->auth()->attempt($data['email'], $data['password'], $this->requestContext());
+                    $attempt = $this->auth->auth()->attempt(
+                        $data['email'],
+                        $data['password'],
+                        $this->requestContext(),
+                    );
+
                     if ($attempt->success) {
                         session_regenerate_id(true);
                         redirect('/dashboard');
                     }
+
                     redirect('/');
                 } catch (Throwable) {
                     $error = '<div class="alert">An account with that email already exists. Try logging in instead.</div>';
@@ -158,56 +164,46 @@ final class AuthController
         }
 
         $data = $result->validated();
-        $attempt = $this->auth->auth()->attempt($data['email'], $data['password'], $this->requestContext());
-        if ($attempt->success) {
-            session_regenerate_id(true);
-            redirect('/dashboard');
+        $attempt = $this->auth->auth()->attempt(
+            $data['email'],
+            $data['password'],
+            $this->requestContext(),
+        );
+
+        if (!$attempt->success) {
+            $_SESSION['login_error'] = '<div class="alert">Invalid email or password.</div>';
+            redirect('/');
         }
 
-        $_SESSION['login_error'] = '<div class="alert">The email or password is incorrect.</div>';
-        redirect('/');
+        session_regenerate_id(true);
+        redirect('/dashboard');
     }
 
     public function logout(): never
     {
-        if ($this->auth->auth()->check()) {
-            $this->auth->auth()->logout($this->requestContext());
-        }
+        $this->auth->auth()->logout($this->requestContext());
         session_regenerate_id(true);
         redirect('/');
     }
 
     public function googleStart(): never
     {
-        if (!$this->hasUsers()) {
-            redirect('/setup');
-        }
-        if ($this->auth->auth()->check()) {
-            redirect('/dashboard');
-        }
-
-        try {
-            header('Location: ' . $this->google->authorizationUrl(), true, 302);
-            exit;
-        } catch (Throwable $e) {
-            $_SESSION['login_error'] = '<div class="alert">' . e($e->getMessage()) . '</div>';
+        if (!$this->google->enabled()) {
+            $_SESSION['login_error'] = '<div class="alert">Google sign-in is not configured.</div>';
             redirect('/');
         }
+
+        redirect($this->google->authorizationUrl());
     }
 
     public function googleCallback(): never
     {
-        if (!$this->hasUsers()) {
-            redirect('/setup');
-        }
-        if (isset($_GET['error'])) {
-            $_SESSION['login_error'] = '<div class="alert">Google sign-in was cancelled or could not be completed.</div>';
-            redirect('/');
-        }
-
         try {
-            $id = $this->google->complete((string) ($_GET['code'] ?? ''), (string) ($_GET['state'] ?? ''));
-            $this->google->establishSession($id);
+            $userId = $this->google->complete(
+                (string) ($_GET['code'] ?? ''),
+                (string) ($_GET['state'] ?? ''),
+            );
+            $this->google->establishSession($userId);
             redirect('/dashboard');
         } catch (Throwable $e) {
             $_SESSION['login_error'] = '<div class="alert">' . e($e->getMessage()) . '</div>';
@@ -215,19 +211,22 @@ final class AuthController
         }
     }
 
-    private function portal(string $title, string $view, array $data): never
-    {
-        $this->view->page($title, $this->view->portalCard($this->view->render($view, $data)));
-    }
-
     private function hasUsers(): bool
     {
-        return $this->users->all(1) !== [];
+        return $this->users->count() > 0;
     }
 
     private function isPost(): bool
     {
         return strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST';
+    }
+
+    private function portal(string $title, string $view, array $data): never
+    {
+        $this->view->page(
+            $title,
+            $this->view->render($view, $data),
+        );
     }
 
     private function requestContext(): array
@@ -241,12 +240,15 @@ final class AuthController
     private function errors(array $errors): string
     {
         $messages = [];
+
         foreach ($errors as $fieldErrors) {
             foreach ((array) $fieldErrors as $message) {
                 $messages[] = e($message);
             }
         }
 
-        return '<div class="alert">' . implode('<br>', $messages ?: ['Please check the form.']) . '</div>';
+        return '<div class="alert">'
+            . implode('<br>', $messages ?: ['Please check the form.'])
+            . '</div>';
     }
 }
