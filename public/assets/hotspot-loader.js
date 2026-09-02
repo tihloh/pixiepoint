@@ -15,6 +15,21 @@
     if (element) element.textContent = message;
   }
 
+  function request(url, type) {
+    return new Promise(function (resolve, reject) {
+      const xhr = new XMLHttpRequest();
+      xhr.open("GET", url, true);
+      xhr.timeout = 7000;
+      if (type) xhr.setRequestHeader("Accept", type);
+      xhr.onload = function () {
+        if (xhr.status >= 200 && xhr.status < 300) resolve(xhr.responseText);
+        else reject(new Error("HTTP " + xhr.status));
+      };
+      xhr.onerror = xhr.ontimeout = function () { reject(new Error("Request failed")); };
+      xhr.send();
+    });
+  }
+
   function randomVoucher() {
     const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
     const bytes = new Uint8Array(6);
@@ -26,35 +41,30 @@
     }
 
     let voucher = "PP";
-    for (let i = 0; i < bytes.length; i++) {
-      voucher += alphabet[bytes[i] % alphabet.length];
-    }
+    for (let i = 0; i < bytes.length; i++) voucher += alphabet[bytes[i] % alphabet.length];
     return voucher;
   }
 
   function setVoucher(voucher, force) {
     if (!isLogin) return;
-
     const input = document.getElementById("compat-voucher");
     if (!input) return;
 
     voucher = String(voucher || "").trim().toUpperCase();
     if (!voucher) return;
-
     if (!force && input.value.trim() !== "") return;
+
     input.value = voucher;
     voucherResolved = true;
   }
 
   function applyDeviceProfile(profile) {
     if (!isLogin || !profile || !profile.ok) return;
-
     const savedVoucher = String(profile.saved_voucher || "").trim();
     if (savedVoucher) {
       setVoucher(savedVoucher, true);
       return;
     }
-
     if (!voucherResolved) setVoucher(randomVoucher(), false);
   }
 
@@ -65,11 +75,7 @@
 
   function loadStyle(href, id) {
     return new Promise(function (resolve, reject) {
-      if (id && document.getElementById(id)) {
-        resolve();
-        return;
-      }
-
+      if (id && document.getElementById(id)) return resolve();
       const link = document.createElement("link");
       if (id) link.id = id;
       link.rel = "stylesheet";
@@ -82,11 +88,7 @@
 
   function loadScript(src, id) {
     return new Promise(function (resolve, reject) {
-      if (id && document.getElementById(id)) {
-        resolve();
-        return;
-      }
-
+      if (id && document.getElementById(id)) return resolve();
       const script = document.createElement("script");
       if (id) script.id = id;
       script.src = src;
@@ -96,6 +98,26 @@
     });
   }
 
+  async function loadLoginMarkup() {
+    const root = document.getElementById("pixiepoint-root");
+    if (!root) throw new Error("Portal root missing");
+
+    const html = await request(`${hostedOrigin}/hotspot/compat?fragment=1&v=${version}`, "text/html");
+    root.innerHTML = html;
+  }
+
+  async function loadVendos() {
+    const context = window.PIXIEPOINT_CONTEXT || {};
+    const query = new URLSearchParams({
+      router_identity: context.routerIdentity || "",
+      interface: context.interfaceName || ""
+    });
+
+    const raw = await request(`${hostedOrigin}/hotspot/vendos?${query.toString()}&v=${version}`, "application/json");
+    const data = JSON.parse(raw);
+    window.PIXIEPOINT_VENDOS = data && data.ok && Array.isArray(data.vendos) ? data.vendos : [];
+  }
+
   async function loadPortal() {
     if (started) return;
     started = true;
@@ -103,30 +125,23 @@
 
     try {
       await Promise.all([
-        loadStyle(
-          `https://cdn.jsdelivr.net/npm/bootstrap@${bootstrapVersion}/dist/css/bootstrap.min.css`,
-          "pixiepoint-bootstrap-css"
-        ),
+        loadStyle(`https://cdn.jsdelivr.net/npm/bootstrap@${bootstrapVersion}/dist/css/bootstrap.min.css`, "pixiepoint-bootstrap-css"),
         loadStyle(`${hostedOrigin}/assets/app.css?v=${version}`, "pixiepoint-css")
       ]);
 
-      await loadScript(
-        `https://cdn.jsdelivr.net/npm/bootstrap@${bootstrapVersion}/dist/js/bootstrap.bundle.min.js`,
-        "pixiepoint-bootstrap-js"
-      );
+      await loadScript(`https://cdn.jsdelivr.net/npm/bootstrap@${bootstrapVersion}/dist/js/bootstrap.bundle.min.js`, "pixiepoint-bootstrap-js");
 
-      if (isStatus) {
-        await loadScript(`${hostedOrigin}/assets/session-portal.js?v=${version}`, "pixiepoint-session");
-      } else if (isLogin) {
+      if (isLogin) {
+        await Promise.all([loadLoginMarkup(), loadVendos()]);
         await loadScript(`${hostedOrigin}/assets/juanfi-compat.js?v=${version}`, "pixiepoint-app");
+      } else if (isStatus) {
+        await loadScript(`${hostedOrigin}/assets/session-portal.js?v=${version}`, "pixiepoint-session");
       }
 
       await loadScript(`${hostedOrigin}/assets/device-info.js?v=${version}`, "pixiepoint-device-info");
 
       if (isLogin) {
-        if (window.PIXIEPOINT_DEVICE_PROFILE) {
-          applyDeviceProfile(window.PIXIEPOINT_DEVICE_PROFILE);
-        }
+        if (window.PIXIEPOINT_DEVICE_PROFILE) applyDeviceProfile(window.PIXIEPOINT_DEVICE_PROFILE);
         setTimeout(ensureVoucherFallback, 1500);
       }
     } catch (_) {
@@ -140,18 +155,16 @@
   function check() {
     if (started) return;
 
-    const request = new XMLHttpRequest();
-    request.open("GET", `${hostedOrigin}/hotspot/health?t=${Date.now()}`, true);
-    request.timeout = 5000;
-    request.setRequestHeader("Accept", "application/json");
+    const requestHealth = new XMLHttpRequest();
+    requestHealth.open("GET", `${hostedOrigin}/hotspot/health?t=${Date.now()}`, true);
+    requestHealth.timeout = 5000;
+    requestHealth.setRequestHeader("Accept", "application/json");
 
-    request.onload = function () {
+    requestHealth.onload = function () {
       let health = null;
-      try {
-        health = JSON.parse(request.responseText);
-      } catch (_) {}
+      try { health = JSON.parse(requestHealth.responseText); } catch (_) {}
 
-      if (request.status >= 200 && request.status < 300 && health && health.ready === true) {
+      if (requestHealth.status >= 200 && requestHealth.status < 300 && health && health.ready === true) {
         loadPortal();
         return;
       }
@@ -161,15 +174,13 @@
       retryTimer = setTimeout(check, 4000);
     };
 
-    request.onerror = request.ontimeout = function () {
-      status(navigator.onLine === false
-        ? "No network connection · retrying…"
-        : "Hosted portal unavailable · retrying…");
+    requestHealth.onerror = requestHealth.ontimeout = function () {
+      status(navigator.onLine === false ? "No network connection · retrying…" : "Hosted portal unavailable · retrying…");
       clearTimeout(retryTimer);
       retryTimer = setTimeout(check, 4000);
     };
 
-    request.send();
+    requestHealth.send();
   }
 
   window.addEventListener("pixiepoint:device-profile", function (event) {
