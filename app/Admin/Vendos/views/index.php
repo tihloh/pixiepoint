@@ -1,21 +1,358 @@
 <?php
-/** @var string $message */ /** @var array $vendos */ /** @var array $routers */ /** @var bool $canManageVendos */ /** @var string $csrf */
+/** @var string $message */
+/** @var array $vendos */
+/** @var array $routers */
+/** @var bool $canManageVendos */
+/** @var string $csrf */
 ?>
-<div class="heading"><div><h1>Vendos</h1><p class="muted">Configure coin slots and how each vendo is identified from its MikroTik hotspot.</p></div><?php if ($canManageVendos):?><button class="button" type="button" data-bs-toggle="modal" data-bs-target="#vendoModal" data-mode="create">Add vendo</button><?php endif;?></div>
+
+<!-- Page heading and primary action. -->
+<div class="heading">
+    <div>
+        <h1>Vendos</h1>
+        <p class="muted">
+            Configure coin slots and how each vendo is identified from its MikroTik hotspot.
+        </p>
+    </div>
+
+    <?php if ($canManageVendos): ?>
+        <button
+            class="button"
+            type="button"
+            data-bs-toggle="modal"
+            data-bs-target="#vendoModal"
+            data-mode="create"
+        >
+            Add vendo
+        </button>
+    <?php endif; ?>
+</div>
+
 <?= $message ?>
-<section class="panel"><h2>Configured vendos</h2><p class="muted">Server IP is the primary identifier. Client subnet is an optional alternative, while interface is used as a secondary discriminator.</p><div class="table-responsive"><table class="table align-middle"><thead><tr><th>Name</th><th>Router</th><th>Server IP</th><th>Client subnet</th><th>Interface</th><th>Vendo address</th><th>Status</th><?php if ($canManageVendos):?><th class="text-end">Action</th><?php endif;?></tr></thead><tbody>
-<?php foreach ($vendos as $v):?><tr><td><strong><?=e($v['name'])?></strong><?php if (!empty($v['debug_enabled'])):?><div class="small text-warning">Debug enabled</div><?php endif;?></td><td><?=e($v['router_name'])?><div class="small text-body-secondary"><?=e($v['router_identity'])?></div></td><td class="code"><?=e($v['server_ip'] ?: 'Not set')?></td><td class="code"><?=e($v['client_subnet'] ?: '—')?></td><td><?=e($v['interface_name'] ?: '—')?></td><td class="code"><?=e(preg_replace('~^https?://~i', '', $v['base_url']))?></td><td><span class="badge <?=$v['enabled'] ? '' : 'off'?>"><?=$v['enabled'] ? 'Enabled' : 'Disabled'?></span></td><?php if ($canManageVendos):?><td class="text-end"><div class="d-inline-flex gap-1"><form method="post" class="d-inline"><input type="hidden" name="_csrf" value="<?=e($csrf)?>"><input type="hidden" name="action" value="toggle_debug"><input type="hidden" name="id" value="<?=e($v['id'])?>"><input type="hidden" name="debug_enabled" value="<?=!empty($v['debug_enabled']) ? '0' : '1'?>"><button class="btn btn-sm <?=!empty($v['debug_enabled']) ? 'btn-warning' : 'btn-outline-secondary'?>" type="submit">Debug: <?=!empty($v['debug_enabled']) ? 'On' : 'Off'?></button></form><button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="modal" data-bs-target="#vendoModal" data-mode="edit" data-id="<?=e($v['id'])?>" data-name="<?=e($v['name'])?>" data-router="<?=e($v['router_id'])?>" data-url="<?=e(preg_replace('~^https?://~i', '', $v['base_url']))?>" data-server-ip="<?=e($v['server_ip'] ?? '')?>" data-subnet="<?=e($v['client_subnet'] ?? '')?>" data-interface="<?=e($v['interface_name'] ?? '')?>" data-password-mode="<?=e($v['password_mode'])?>" data-charging="<?=$v['charging_enabled'] ? '1' : '0'?>" data-eload="<?=$v['eload_enabled'] ? '1' : '0'?>" data-enabled="<?=$v['enabled'] ? '1' : '0'?>">Edit</button></div></td><?php endif;?></tr><?php endforeach;?>
-<?php if (!$vendos):?><tr><td colspan="<?=$canManageVendos ? 8 : 7?>" class="empty">No vendos configured. Use Add vendo to link your first coin-slot controller.</td></tr><?php endif;?></tbody></table></div></section>
-<?php if ($canManageVendos):?>
-<div class="modal fade" id="vendoModal" tabindex="-1" aria-labelledby="vendoModalTitle" aria-hidden="true"><div class="modal-dialog modal-lg modal-dialog-scrollable"><div class="modal-content"><form method="post"><div class="modal-header"><div><h2 class="modal-title fs-5 mb-1" id="vendoModalTitle">Add vendo</h2><p class="small text-body-secondary mb-0">Link a coin-slot controller to its MikroTik hotspot.</p></div><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div><div class="modal-body"><input type="hidden" name="_csrf" value="<?=e($csrf)?>"><input type="hidden" name="action" value="create"><input type="hidden" name="id" value="0"><div class="row g-3">
-<div class="col-md-6"><label>Name</label><input name="name" required maxlength="160"><small class="text-body-secondary">Friendly name of this coin slot.</small></div>
-<div class="col-md-6"><label>Router</label><select name="router_id" required><option value="">Select router</option><?php foreach ($routers as $r):?><option value="<?=e($r['id'])?>"><?=e($r['name'])?> · <?=e($r['identity'])?></option><?php endforeach;?></select><small class="text-body-secondary">Limits identification to this RouterOS identity.</small></div>
-<div class="col-md-6"><label>Server IP</label><input name="server_ip" placeholder="10.0.3.1" required maxlength="45"><small class="text-body-secondary">Primary identifier: MikroTik <code>$(server-address)</code>.</small></div>
-<div class="col-md-6"><label>Client subnet</label><input name="client_subnet" placeholder="Optional, e.g. 10.0.3.0/24" maxlength="64"><small class="text-body-secondary">Alternative match using the customer's MikroTik-assigned IP.</small></div>
-<div class="col-md-6"><label>Vendo address</label><input name="base_url" placeholder="10.0.3.2" required maxlength="255"><small class="text-body-secondary">IP/host of the vendo controller. You do not need to type http://; PixiePoint adds it when needed.</small></div>
-<div class="col-md-6"><label>Interface</label><input name="interface_name" placeholder="Optional, e.g. bridge-HS" maxlength="128"><small class="text-body-secondary">Secondary identifier when more than one candidate remains.</small></div>
-<div class="col-md-6"><label>Password mode</label><select name="password_mode"><option value="blank">Blank password</option><option value="voucher">Voucher as password</option></select></div>
-<div class="col-md-6"><div class="form-check"><input class="form-check-input" type="checkbox" name="charging_enabled" value="1" id="vendo-charging"><label class="form-check-label" for="vendo-charging">Phone charging</label></div></div><div class="col-md-6"><div class="form-check"><input class="form-check-input" type="checkbox" name="eload_enabled" value="1" id="vendo-eload"><label class="form-check-label" for="vendo-eload">E-load</label></div></div><div class="col-md-6" id="vendo-enabled-wrap" hidden><div class="form-check"><input class="form-check-input" type="checkbox" name="enabled" value="1" id="vendo-enabled"><label class="form-check-label" for="vendo-enabled">Enabled</label></div></div>
-</div></div><div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button><button class="button" type="submit" id="vendo-submit">Add vendo</button></div></form></div></div></div>
-<script>document.getElementById('vendoModal').addEventListener('show.bs.modal',function(event){const b=event.relatedTarget,e=b&&b.dataset.mode==='edit',f=this.querySelector('form');f.reset();f.querySelector('[name="action"]').value=e?'update':'create';f.querySelector('[name="id"]').value=e?b.dataset.id:'0';f.querySelector('[name="name"]').value=e?b.dataset.name:'';f.querySelector('[name="router_id"]').value=e?b.dataset.router:'';f.querySelector('[name="server_ip"]').value=e?b.dataset.serverIp:'';f.querySelector('[name="client_subnet"]').value=e?b.dataset.subnet:'';f.querySelector('[name="base_url"]').value=e?b.dataset.url:'';f.querySelector('[name="interface_name"]').value=e?b.dataset.interface:'';f.querySelector('[name="password_mode"]').value=e?b.dataset.passwordMode:'blank';f.querySelector('[name="charging_enabled"]').checked=e&&b.dataset.charging==='1';f.querySelector('[name="eload_enabled"]').checked=e&&b.dataset.eload==='1';f.querySelector('[name="enabled"]').checked=e?b.dataset.enabled==='1':true;document.getElementById('vendo-enabled-wrap').hidden=!e;document.getElementById('vendoModalTitle').textContent=e?'Edit vendo':'Add vendo';document.getElementById('vendo-submit').textContent=e?'Save changes':'Add vendo';});</script>
-<?php endif;?>
+
+<!-- Existing vendo/controller mappings. -->
+<section class="panel">
+    <h2>Configured vendos</h2>
+    <p class="muted">
+        Server IP is the primary identifier. Client subnet is an optional alternative,
+        while interface is used as a secondary discriminator.
+    </p>
+
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Router</th>
+                    <th>Server IP</th>
+                    <th>Client subnet</th>
+                    <th>Interface</th>
+                    <th>Vendo address</th>
+                    <th>Status</th>
+                    <?php if ($canManageVendos): ?>
+                        <th class="text-end">Action</th>
+                    <?php endif; ?>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($vendos as $v): ?>
+                    <tr>
+                        <td>
+                            <strong><?= e($v['name']) ?></strong>
+                            <?php if (!empty($v['debug_enabled'])): ?>
+                                <div class="small text-warning">Debug enabled</div>
+                            <?php endif; ?>
+                        </td>
+                        <td>
+                            <?= e($v['router_name']) ?>
+                            <div class="small text-body-secondary">
+                                <?= e($v['router_identity']) ?>
+                            </div>
+                        </td>
+                        <td class="code"><?= e($v['server_ip'] ?: 'Not set') ?></td>
+                        <td class="code"><?= e($v['client_subnet'] ?: '—') ?></td>
+                        <td><?= e($v['interface_name'] ?: '—') ?></td>
+                        <td class="code">
+                            <?= e(preg_replace('~^https?://~i', '', $v['base_url'])) ?>
+                        </td>
+                        <td>
+                            <span class="badge <?= $v['enabled'] ? '' : 'off' ?>">
+                                <?= $v['enabled'] ? 'Enabled' : 'Disabled' ?>
+                            </span>
+                        </td>
+
+                        <?php if ($canManageVendos): ?>
+                            <td class="text-end">
+                                <div class="d-inline-flex gap-1">
+                                    <!-- Debug can be toggled without opening the edit form. -->
+                                    <form method="post" class="d-inline">
+                                        <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
+                                        <input type="hidden" name="action" value="toggle_debug">
+                                        <input type="hidden" name="id" value="<?= e($v['id']) ?>">
+                                        <input
+                                            type="hidden"
+                                            name="debug_enabled"
+                                            value="<?= !empty($v['debug_enabled']) ? '0' : '1' ?>"
+                                        >
+                                        <button
+                                            class="btn btn-sm <?= !empty($v['debug_enabled']) ? 'btn-warning' : 'btn-outline-secondary' ?>"
+                                            type="submit"
+                                        >
+                                            Debug: <?= !empty($v['debug_enabled']) ? 'On' : 'Off' ?>
+                                        </button>
+                                    </form>
+
+                                    <!-- Dataset values populate the shared Add/Edit modal below. -->
+                                    <button
+                                        class="btn btn-sm btn-outline-secondary"
+                                        type="button"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#vendoModal"
+                                        data-mode="edit"
+                                        data-id="<?= e($v['id']) ?>"
+                                        data-name="<?= e($v['name']) ?>"
+                                        data-router="<?= e($v['router_id']) ?>"
+                                        data-url="<?= e(preg_replace('~^https?://~i', '', $v['base_url'])) ?>"
+                                        data-server-ip="<?= e($v['server_ip'] ?? '') ?>"
+                                        data-subnet="<?= e($v['client_subnet'] ?? '') ?>"
+                                        data-interface="<?= e($v['interface_name'] ?? '') ?>"
+                                        data-password-mode="<?= e($v['password_mode']) ?>"
+                                        data-charging="<?= $v['charging_enabled'] ? '1' : '0' ?>"
+                                        data-eload="<?= $v['eload_enabled'] ? '1' : '0' ?>"
+                                        data-enabled="<?= $v['enabled'] ? '1' : '0' ?>"
+                                    >
+                                        Edit
+                                    </button>
+                                </div>
+                            </td>
+                        <?php endif; ?>
+                    </tr>
+                <?php endforeach; ?>
+
+                <?php if (!$vendos): ?>
+                    <tr>
+                        <td colspan="<?= $canManageVendos ? 8 : 7 ?>" class="empty">
+                            No vendos configured. Use Add vendo to link your first coin-slot controller.
+                        </td>
+                    </tr>
+                <?php endif; ?>
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<?php if ($canManageVendos): ?>
+    <!-- One modal is reused for both creating and editing a vendo. -->
+    <div
+        class="modal fade"
+        id="vendoModal"
+        tabindex="-1"
+        aria-labelledby="vendoModalTitle"
+        aria-hidden="true"
+    >
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <form method="post">
+                    <div class="modal-header">
+                        <div>
+                            <h2 class="modal-title fs-5 mb-1" id="vendoModalTitle">Add vendo</h2>
+                            <p class="small text-body-secondary mb-0">
+                                Link a coin-slot controller to its MikroTik hotspot.
+                            </p>
+                        </div>
+                        <button
+                            type="button"
+                            class="btn-close"
+                            data-bs-dismiss="modal"
+                            aria-label="Close"
+                        ></button>
+                    </div>
+
+                    <div class="modal-body">
+                        <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
+                        <input type="hidden" name="action" value="create">
+                        <input type="hidden" name="id" value="0">
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label>Name</label>
+                                <input name="name" required maxlength="160">
+                                <small class="text-body-secondary">
+                                    Friendly name of this coin slot.
+                                </small>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label>Router</label>
+                                <select name="router_id" required>
+                                    <option value="">Select router</option>
+                                    <?php foreach ($routers as $r): ?>
+                                        <option value="<?= e($r['id']) ?>">
+                                            <?= e($r['name']) ?> · <?= e($r['identity']) ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                                <small class="text-body-secondary">
+                                    Limits identification to this RouterOS identity.
+                                </small>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label>Server IP</label>
+                                <input
+                                    name="server_ip"
+                                    placeholder="10.0.3.1"
+                                    required
+                                    maxlength="45"
+                                >
+                                <small class="text-body-secondary">
+                                    Primary identifier: MikroTik <code>$(server-address)</code>.
+                                </small>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label>Client subnet</label>
+                                <input
+                                    name="client_subnet"
+                                    placeholder="Optional, e.g. 10.0.3.0/24"
+                                    maxlength="64"
+                                >
+                                <small class="text-body-secondary">
+                                    Alternative match using the customer's MikroTik-assigned IP.
+                                </small>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label>Vendo address</label>
+                                <input
+                                    name="base_url"
+                                    placeholder="10.0.3.2"
+                                    required
+                                    maxlength="255"
+                                >
+                                <small class="text-body-secondary">
+                                    IP/host of the vendo controller. You do not need to type http://;
+                                    PixiePoint adds it when needed.
+                                </small>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label>Interface</label>
+                                <input
+                                    name="interface_name"
+                                    placeholder="Optional, e.g. bridge-HS"
+                                    maxlength="128"
+                                >
+                                <small class="text-body-secondary">
+                                    Secondary identifier when more than one candidate remains.
+                                </small>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label>Password mode</label>
+                                <select name="password_mode">
+                                    <option value="blank">Blank password</option>
+                                    <option value="voucher">Voucher as password</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input
+                                        class="form-check-input"
+                                        type="checkbox"
+                                        name="charging_enabled"
+                                        value="1"
+                                        id="vendo-charging"
+                                    >
+                                    <label class="form-check-label" for="vendo-charging">
+                                        Phone charging
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input
+                                        class="form-check-input"
+                                        type="checkbox"
+                                        name="eload_enabled"
+                                        value="1"
+                                        id="vendo-eload"
+                                    >
+                                    <label class="form-check-label" for="vendo-eload">E-load</label>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6" id="vendo-enabled-wrap" hidden>
+                                <div class="form-check">
+                                    <input
+                                        class="form-check-input"
+                                        type="checkbox"
+                                        name="enabled"
+                                        value="1"
+                                        id="vendo-enabled"
+                                    >
+                                    <label class="form-check-label" for="vendo-enabled">Enabled</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button
+                            type="button"
+                            class="btn btn-outline-secondary"
+                            data-bs-dismiss="modal"
+                        >
+                            Cancel
+                        </button>
+                        <button class="button" type="submit" id="vendo-submit">Add vendo</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Populate the shared modal from the Edit button's data attributes.
+        document.getElementById('vendoModal').addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            const isEdit = button && button.dataset.mode === 'edit';
+            const form = this.querySelector('form');
+
+            form.reset();
+
+            form.querySelector('[name="action"]').value = isEdit ? 'update' : 'create';
+            form.querySelector('[name="id"]').value = isEdit ? button.dataset.id : '0';
+            form.querySelector('[name="name"]').value = isEdit ? button.dataset.name : '';
+            form.querySelector('[name="router_id"]').value = isEdit ? button.dataset.router : '';
+            form.querySelector('[name="server_ip"]').value = isEdit ? button.dataset.serverIp : '';
+            form.querySelector('[name="client_subnet"]').value = isEdit ? button.dataset.subnet : '';
+            form.querySelector('[name="base_url"]').value = isEdit ? button.dataset.url : '';
+            form.querySelector('[name="interface_name"]').value = isEdit
+                ? button.dataset.interface
+                : '';
+            form.querySelector('[name="password_mode"]').value = isEdit
+                ? button.dataset.passwordMode
+                : 'blank';
+
+            form.querySelector('[name="charging_enabled"]').checked =
+                isEdit && button.dataset.charging === '1';
+            form.querySelector('[name="eload_enabled"]').checked =
+                isEdit && button.dataset.eload === '1';
+            form.querySelector('[name="enabled"]').checked = isEdit
+                ? button.dataset.enabled === '1'
+                : true;
+
+            // Enabled/disabled is only meaningful when editing an existing vendo.
+            document.getElementById('vendo-enabled-wrap').hidden = !isEdit;
+            document.getElementById('vendoModalTitle').textContent = isEdit
+                ? 'Edit vendo'
+                : 'Add vendo';
+            document.getElementById('vendo-submit').textContent = isEdit
+                ? 'Save changes'
+                : 'Add vendo';
+        });
+    </script>
+<?php endif; ?>
