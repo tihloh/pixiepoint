@@ -48,11 +48,10 @@ return static function (RouteManager $routes, array $c): void {
     // MikroTik registration and Router Agent API
     // -------------------------------------------------------------------------
 
-    // Called directly by the RouterOS terminal command. Authentication is the
-    // account's unique API key plus the router identity/hardware values read by
-    // the command running on that MikroTik.
+    // Called directly by the RouterOS terminal command. The account API key is
+    // a path parameter so RouterOS never needs a query-string URL.
     $routes
-        ->get('/api/router/register', [$c['router.registration'], 'register'])
+        ->get('/api/router/register/{key}', [$c['router.registration'], 'register'])
         ->name('api.router.register');
 
     $routes
