@@ -2,6 +2,7 @@
 /** @var string $message */
 /** @var array $routers */
 /** @var bool $canManageRouters */
+/** @var bool $canCreateRouters */
 /** @var string $csrf */
 ?>
 
@@ -9,21 +10,9 @@
     <div>
         <h1>Routers</h1>
         <p class="muted">
-            Register MikroTik routers so PixiePoint can recognize hotspot traffic and accounting events.
+            MikroTik routers linked to your PixiePoint account.
         </p>
     </div>
-
-    <?php if ($canManageRouters): ?>
-        <button
-            class="button"
-            type="button"
-            data-bs-toggle="modal"
-            data-bs-target="#routerModal"
-            data-mode="create"
-        >
-            Add router
-        </button>
-    <?php endif; ?>
 </div>
 
 <?= $message ?>
@@ -52,7 +41,7 @@
                 <?php if (!$routers): ?>
                     <tr>
                         <td colspan="<?= $canManageRouters ? 7 : 5 ?>" class="empty">
-                            No routers registered. Use Add router to register your first MikroTik.
+                            No routers linked to this account yet. Register one using the RouterOS command on your dashboard.
                         </td>
                     </tr>
                 <?php endif; ?>
@@ -115,7 +104,6 @@
                                     </a>
                                 <?php endif; ?>
 
-                                <!-- Sends a harmless log command through the Router Agent queue. -->
                                 <form
                                     method="post"
                                     action="/admin/routers/<?= e($router['id']) ?>/test"
@@ -147,7 +135,6 @@
                                     type="button"
                                     data-bs-toggle="modal"
                                     data-bs-target="#routerModal"
-                                    data-mode="edit"
                                     data-id="<?= e($router['id']) ?>"
                                     data-name="<?= e($router['name']) ?>"
                                     data-identity="<?= e($router['identity']) ?>"
@@ -167,7 +154,6 @@
 </section>
 
 <?php if ($canManageRouters): ?>
-    <!-- RouterOS installer command. -->
     <div
         class="modal fade"
         id="routerSetupModal"
@@ -218,7 +204,7 @@
         </div>
     </div>
 
-    <!-- One form is reused for both registering and editing a router. -->
+    <!-- RouterOS identity is displayed but cannot be changed from the web UI. -->
     <div
         class="modal fade"
         id="routerModal"
@@ -231,10 +217,7 @@
                 <form method="post">
                     <div class="modal-header">
                         <div>
-                            <h2 class="modal-title fs-5 mb-1" id="routerModalTitle">Add router</h2>
-                            <p class="small text-body-secondary mb-0">
-                                Tell PixiePoint how to identify this MikroTik.
-                            </p>
+                            <h2 class="modal-title fs-5 mb-1" id="routerModalTitle">Edit router</h2>
                         </div>
                         <button
                             type="button"
@@ -246,24 +229,18 @@
 
                     <div class="modal-body">
                         <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
-                        <input type="hidden" name="action" value="create">
+                        <input type="hidden" name="action" value="update">
                         <input type="hidden" name="id" value="0">
 
                         <div class="form-grid">
                             <div class="field">
                                 <label for="router-name">Display name</label>
                                 <input id="router-name" name="name" required>
-                                <small class="text-body-secondary">
-                                    Friendly name shown in PixiePoint, such as Main Shop Router.
-                                </small>
                             </div>
 
                             <div class="field">
                                 <label for="router-identity">RouterOS identity</label>
-                                <input id="router-identity" name="identity" required>
-                                <small class="text-body-secondary">
-                                    Must exactly match <code>/system identity</code> on the MikroTik.
-                                </small>
+                                <input id="router-identity" readonly>
                             </div>
 
                             <div class="field">
@@ -273,9 +250,6 @@
                                     name="public_host"
                                     placeholder="router.example.com or 10.10.0.2"
                                 >
-                                <small class="text-body-secondary">
-                                    Optional direct address. The outbound PixiePoint agent does not require it.
-                                </small>
                             </div>
 
                             <div class="field">
@@ -285,13 +259,10 @@
                                     name="location"
                                     placeholder="Branch, site or area"
                                 >
-                                <small class="text-body-secondary">
-                                    Optional physical location shown beside the router name.
-                                </small>
                             </div>
                         </div>
 
-                        <div class="form-check mt-2" id="router-enabled-wrap" hidden>
+                        <div class="form-check mt-2">
                             <input
                                 class="form-check-input"
                                 type="checkbox"
@@ -300,9 +271,6 @@
                                 id="router-enabled"
                             >
                             <label class="form-check-label" for="router-enabled">Enabled</label>
-                            <div class="small text-body-secondary">
-                                Disabled routers remain saved but cannot poll PixiePoint.
-                            </div>
                         </div>
                     </div>
 
@@ -314,9 +282,7 @@
                         >
                             Cancel
                         </button>
-                        <button class="button" type="submit" id="router-submit">
-                            Register router
-                        </button>
+                        <button class="button" type="submit">Save changes</button>
                     </div>
                 </form>
             </div>
@@ -324,7 +290,6 @@
     </div>
 
     <script>
-        // Fill the installer modal with the selected router's generated command.
         document.getElementById('routerSetupModal').addEventListener('show.bs.modal', function (event) {
             const button = event.relatedTarget;
             const routerName = button.dataset.router || 'MikroTik';
@@ -333,7 +298,6 @@
             document.getElementById('router-setup-command').value = button.dataset.command || '';
         });
 
-        // Copy the complete RouterOS installer command to the clipboard.
         document.querySelector('[data-copy-router-command]').addEventListener('click', async function () {
             const field = document.getElementById('router-setup-command');
 
@@ -345,31 +309,17 @@
             }, 1200);
         });
 
-        // Populate the shared Add/Edit modal from the selected row.
         document.getElementById('routerModal').addEventListener('show.bs.modal', function (event) {
             const button = event.relatedTarget;
-            const isEdit = button && button.dataset.mode === 'edit';
             const form = this.querySelector('form');
 
             form.reset();
-
-            form.querySelector('[name="action"]').value = isEdit ? 'update' : 'create';
-            form.querySelector('[name="id"]').value = isEdit ? button.dataset.id : '0';
-            form.querySelector('[name="name"]').value = isEdit ? button.dataset.name : '';
-            form.querySelector('[name="identity"]').value = isEdit ? button.dataset.identity : '';
-            form.querySelector('[name="public_host"]').value = isEdit ? button.dataset.host : '';
-            form.querySelector('[name="location"]').value = isEdit ? button.dataset.location : '';
-            form.querySelector('[name="enabled"]').checked = isEdit
-                ? button.dataset.enabled === '1'
-                : true;
-
-            document.getElementById('router-enabled-wrap').hidden = !isEdit;
-            document.getElementById('routerModalTitle').textContent = isEdit
-                ? 'Edit router'
-                : 'Add router';
-            document.getElementById('router-submit').textContent = isEdit
-                ? 'Save changes'
-                : 'Register router';
+            form.querySelector('[name="id"]').value = button.dataset.id;
+            form.querySelector('[name="name"]').value = button.dataset.name;
+            document.getElementById('router-identity').value = button.dataset.identity;
+            form.querySelector('[name="public_host"]').value = button.dataset.host || '';
+            form.querySelector('[name="location"]').value = button.dataset.location || '';
+            form.querySelector('[name="enabled"]').checked = button.dataset.enabled === '1';
         });
     </script>
 <?php endif; ?>
