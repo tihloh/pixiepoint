@@ -42,8 +42,8 @@ $debug = $debug ?? [];
 
                     <small id="compat-health" class="compat-status">
                         <?= $vendos
-                            ? 'Checking the local coin slot…'
-                            : 'No coin slot available for this hotspot' ?>
+                          ? 'Checking the local coin slot…'
+                          : 'No coin slot available for this hotspot' ?>
                     </small>
                 </div>
 
@@ -148,31 +148,39 @@ $debug = $debug ?? [];
                         <div class="compat-debug-grid">
                             <div>
                                 <strong>Local → host</strong>
-                                <pre><?= e(json_encode(
+                                <pre><?= e(
+                                  json_encode(
                                     $debug['raw'] ?? [],
                                     JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES,
-                                )) ?></pre>
+                                  ),
+                                ) ?></pre>
                             </div>
                             <div>
                                 <strong>Host processed</strong>
-                                <pre><?= e(json_encode(
+                                <pre><?= e(
+                                  json_encode(
                                     $debug['processed'] ?? [],
                                     JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES,
-                                )) ?></pre>
+                                  ),
+                                ) ?></pre>
                             </div>
                             <div>
                                 <strong>Validation</strong>
-                                <pre><?= e(json_encode(
+                                <pre><?= e(
+                                  json_encode(
                                     $debug['validationErrors'] ?? [],
                                     JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES,
-                                )) ?></pre>
+                                  ),
+                                ) ?></pre>
                             </div>
                             <div>
                                 <strong>Vendo matching</strong>
-                                <pre><?= e(json_encode(
+                                <pre><?= e(
+                                  json_encode(
                                     $debug['matching'] ?? [],
                                     JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES,
-                                )) ?></pre>
+                                  ),
+                                ) ?></pre>
                             </div>
                         </div>
                     </details>
@@ -188,12 +196,12 @@ $debug = $debug ?? [];
                     // The compatibility JavaScript reads this bootstrap data without
                     // making a second request for the matched vendo list.
                     window.PIXIEPOINT_VENDOS = <?= json_encode(
-                        $vendos,
-                        JSON_UNESCAPED_SLASHES
-                            | JSON_HEX_TAG
-                            | JSON_HEX_AMP
-                            | JSON_HEX_APOS
-                            | JSON_HEX_QUOT,
+                      $vendos,
+                      JSON_UNESCAPED_SLASHES |
+                        JSON_HEX_TAG |
+                        JSON_HEX_AMP |
+                        JSON_HEX_APOS |
+                        JSON_HEX_QUOT,
                     ) ?>;
                 </script>
             </div>

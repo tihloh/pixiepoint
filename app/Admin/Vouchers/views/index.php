@@ -87,7 +87,15 @@
                                 data-data-limit="<?= e($voucher['data_limit_mb'] ?? '') ?>"
                                 data-max-devices="<?= e($voucher['max_devices']) ?>"
                                 data-max-uses="<?= e($voucher['max_uses']) ?>"
-                                data-expires="<?= e($voucher['expires_at'] ? str_replace(' ', 'T', substr((string) $voucher['expires_at'], 0, 16)) : '') ?>"
+                                data-expires="<?= e(
+                                  $voucher['expires_at']
+                                    ? str_replace(
+                                      ' ',
+                                      'T',
+                                      substr((string) $voucher['expires_at'], 0, 16),
+                                    )
+                                    : '',
+                                ) ?>"
                                 data-enabled="<?= $voucher['enabled'] ? '1' : '0' ?>"
                             >
                                 Edit

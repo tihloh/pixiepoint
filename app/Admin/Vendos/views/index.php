@@ -95,7 +95,9 @@
                                             value="<?= !empty($v['debug_enabled']) ? '0' : '1' ?>"
                                         >
                                         <button
-                                            class="btn btn-sm <?= !empty($v['debug_enabled']) ? 'btn-warning' : 'btn-outline-secondary' ?>"
+                                            class="btn btn-sm <?= !empty($v['debug_enabled'])
+                                              ? 'btn-warning'
+                                              : 'btn-outline-secondary' ?>"
                                             type="submit"
                                         >
                                             Debug: <?= !empty($v['debug_enabled']) ? 'On' : 'Off' ?>
@@ -112,7 +114,9 @@
                                         data-id="<?= e($v['id']) ?>"
                                         data-name="<?= e($v['name']) ?>"
                                         data-router="<?= e($v['router_id']) ?>"
-                                        data-url="<?= e(preg_replace('~^https?://~i', '', $v['base_url'])) ?>"
+                                        data-url="<?= e(
+                                          preg_replace('~^https?://~i', '', $v['base_url']),
+                                        ) ?>"
                                         data-server-ip="<?= e($v['server_ip'] ?? '') ?>"
                                         data-subnet="<?= e($v['client_subnet'] ?? '') ?>"
                                         data-interface="<?= e($v['interface_name'] ?? '') ?>"

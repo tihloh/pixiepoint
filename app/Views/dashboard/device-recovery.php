@@ -9,12 +9,10 @@
 
 <?= $message ?>
 
-<?php
-// Nothing to confirm when the request cannot be tied to a current device.
+<?php // Nothing to confirm when the request cannot be tied to a current device.
 if (!$current) {
-    return;
-}
-?>
+  return;
+} ?>
 
 <?php if ($current['user_id'] !== null && (int) $current['user_id'] !== $userId): ?>
     <section class="panel">
@@ -24,12 +22,11 @@ if (!$current) {
     <?php return; ?>
 <?php endif; ?>
 
-<?php
-// The device is already owned by the signed-in account, so no action is needed.
+<?php // The device is already owned by the signed-in account, so no action is needed.
+
 if ($current['user_id'] !== null && (int) $current['user_id'] === $userId) {
-    return;
-}
-?>
+  return;
+} ?>
 
 <section class="panel">
     <h2>Confirm this device</h2>
@@ -46,10 +43,9 @@ if ($current['user_id'] !== null && (int) $current['user_id'] === $userId) {
         <?php foreach ($known as $device): ?>
             <?php
             if ((int) $device['id'] === (int) $current['id']) {
-                continue;
+              continue;
             }
-
-            $label = $device['mac'] ?: ('Device ' . substr((string) $device['uuid'], 0, 8));
+            $label = $device['mac'] ?: 'Device ' . substr((string) $device['uuid'], 0, 8);
             ?>
 
             <form method="post" action="/devices/claim">
