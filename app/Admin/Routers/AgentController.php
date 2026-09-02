@@ -16,7 +16,7 @@ final class AgentController
     public function install(): never
     {
         $router = $this->router();
-        $token = trim((string)($_GET['token'] ?? ''));
+        $token = $this->token();
         $identity = str_replace(['\r','\n','"'], '', (string)$router['identity']);
 
         $script = <<<'ROS'
@@ -26,7 +26,7 @@ final class AgentController
 :local token "__TOKEN__"
 :local baseUrl "https://hs.portalx.win"
 :local scriptName "__pixiepoint_cmd"
-:local pollUrl ($baseUrl . "/api/router/poll?token=" . $token)
+:local pollUrl ($baseUrl . "/api/router/poll/" . $token)
 
 :do {
     :local fetchResult [/tool fetch url=$pollUrl mode=https output=user as-value]
@@ -37,7 +37,7 @@ final class AgentController
         :if ($lineBreak != nil) do={
             :local commandId [:pick $data 0 $lineBreak]
             :local command [:pick $data ($lineBreak + 1) [:len $data]]
-            :local ackBase ($baseUrl . "/api/router/ack?token=" . $token . "&id=" . $commandId . "&status=")
+            :local ackBase ($baseUrl . "/api/router/ack/" . $token . "/" . $commandId . "/")
 
             /system script remove [find name=$scriptName]
             /system script add name=$scriptName source=$command
@@ -89,8 +89,7 @@ ROS;
 
         $id = max(0, (int)($_GET['id'] ?? 0));
         $status = strtolower(trim((string)($_GET['status'] ?? '')));
-        $result = trim((string)($_GET['result'] ?? ''));
-        if ($id < 1 || !$this->queue->acknowledge((int)$router['id'], $id, $status, $result)) {
+        if ($id < 1 || !$this->queue->acknowledge((int)$router['id'], $id, $status, '')) {
             http_response_code(422);
             exit('invalid');
         }
@@ -99,9 +98,14 @@ ROS;
         exit('ok');
     }
 
+    private function token(): string
+    {
+        return trim((string)($_GET['token'] ?? ''));
+    }
+
     private function router(): array
     {
-        $token = trim((string)($_GET['token'] ?? ''));
+        $token = $this->token();
         if ($token === '') {
             http_response_code(401);
             exit('unauthorized');
