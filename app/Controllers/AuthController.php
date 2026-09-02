@@ -28,13 +28,11 @@ final class AuthController
         $error = (string)($_SESSION['login_error'] ?? '');
         unset($_SESSION['login_error']);
 
-        $body = $this->view->render('auth/home', [
+        $this->portal('PixiePoint', 'auth/home', [
             'error' => $error,
-            'googleButton' => $this->googleButton(),
+            'googleEnabled' => $this->google->enabled(),
             'csrf' => csrf_token(),
         ]);
-
-        $this->view->page('PixiePoint', $this->view->portalCard($body));
     }
 
     public function setup(): never
@@ -70,7 +68,10 @@ final class AuthController
             }
         }
 
-        $this->view->page('Initial setup', $this->view->portalCard('<h1>Create platform owner</h1><p class="muted">This one-time account owns the centralized PixiePoint service. All other users register through the normal account flow.</p>' . $error . '<form method="post" class="auth-form"><input type="hidden" name="_csrf" value="' . e(csrf_token()) . '"><div class="field"><label>Name</label><input name="name" required></div><div class="field"><label>Email</label><input name="email" type="email" required></div><div class="field"><label>Password</label><input name="password" type="password" minlength="12" required></div><button class="button full">Create platform owner</button></form>'));
+        $this->portal('Initial setup', 'auth/setup', [
+            'error' => $error,
+            'csrf' => csrf_token(),
+        ]);
     }
 
     public function register(): never
@@ -113,7 +114,11 @@ final class AuthController
             }
         }
 
-        $this->view->page('Create account', $this->view->portalCard('<h1>Create your account</h1><p class="muted">Create a PixiePoint account to keep your points, saved devices and activity together across participating PixiePoint Wi-Fi hotspots.</p>' . $error . $this->googleButton() . '<form method="post" class="auth-form"><input type="hidden" name="_csrf" value="' . e(csrf_token()) . '"><div class="field"><label>Name</label><input name="name" autocomplete="name" required></div><div class="field"><label>Email</label><input name="email" type="email" autocomplete="email" required></div><div class="field"><label>Password</label><input name="password" type="password" minlength="8" autocomplete="new-password" required></div><button class="button full">Create free account</button></form><p class="muted auth-footer">Already registered? <a href="/">Log in</a></p>'));
+        $this->portal('Create account', 'auth/register', [
+            'error' => $error,
+            'googleEnabled' => $this->google->enabled(),
+            'csrf' => csrf_token(),
+        ]);
     }
 
     public function login(): never
@@ -171,6 +176,7 @@ final class AuthController
             $_SESSION['login_error'] = '<div class="alert">Google sign-in was cancelled or could not be completed.</div>';
             redirect('/');
         }
+
         try {
             $id = $this->google->complete((string)($_GET['code'] ?? ''), (string)($_GET['state'] ?? ''));
             $this->google->establishSession($id);
@@ -179,6 +185,11 @@ final class AuthController
             $_SESSION['login_error'] = '<div class="alert">' . e($e->getMessage()) . '</div>';
             redirect('/');
         }
+    }
+
+    private function portal(string $title, string $view, array $data): never
+    {
+        $this->view->page($title, $this->view->portalCard($this->view->render($view, $data)));
     }
 
     private function hasUsers(): bool
@@ -202,25 +213,9 @@ final class AuthController
     private function errors(array $errors): string
     {
         $messages = [];
-        foreach ($errors as $fieldErrors) foreach ((array)$fieldErrors as $message) $messages[] = e($message);
+        foreach ($errors as $fieldErrors) {
+            foreach ((array)$fieldErrors as $message) $messages[] = e($message);
+        }
         return '<div class="alert">' . implode('<br>', $messages ?: ['Please check the form.']) . '</div>';
-    }
-
-    private function googleButton(): string
-    {
-        if (!$this->google->enabled()) return '';
-
-        $googleIcon = '<svg class="google-icon" viewBox="0 0 18 18" aria-hidden="true" focusable="false">'
-            . '<path fill="#4285F4" d="M17.64 9.205c0-.638-.057-1.252-.164-1.841H9v3.482h4.844a4.14 4.14 0 0 1-1.797 2.716v2.258h2.909c1.702-1.567 2.684-3.875 2.684-6.615Z"/>'
-            . '<path fill="#34A853" d="M9 18c2.43 0 4.468-.806 5.956-2.18l-2.91-2.258c-.805.54-1.834.859-3.046.859-2.344 0-4.328-1.585-5.037-3.714H.956v2.332A9 9 0 0 0 9 18Z"/>'
-            . '<path fill="#FBBC05" d="M3.963 10.707A5.41 5.41 0 0 1 3.682 9c0-.592.102-1.167.281-1.707V4.961H.956A9 9 0 0 0 0 9c0 1.453.347 2.828.956 4.039l3.007-2.332Z"/>'
-            . '<path fill="#EA4335" d="M9 3.579c1.322 0 2.507.455 3.44 1.346l2.581-2.582C13.464.892 11.426 0 9 0A9 9 0 0 0 .956 4.961l3.007 2.332C4.672 5.164 6.656 3.579 9 3.579Z"/>'
-            . '</svg>';
-
-        return '<a class="google-button" href="/auth/google">'
-            . $googleIcon
-            . '<span>Continue with Google</span>'
-            . '</a>'
-            . '<div class="auth-divider"><span>or</span></div>';
     }
 }
