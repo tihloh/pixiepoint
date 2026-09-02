@@ -149,37 +149,37 @@ $debug = $debug ?? [];
                             <div>
                                 <strong>Local → host</strong>
                                 <pre><?= e(
-                                  json_encode(
-                                    $debug['raw'] ?? [],
-                                    JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES,
-                                  ),
+                                    json_encode(
+                                        $debug['raw'] ?? [],
+                                        JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES,
+                                    ),
                                 ) ?></pre>
                             </div>
                             <div>
                                 <strong>Host processed</strong>
                                 <pre><?= e(
-                                  json_encode(
-                                    $debug['processed'] ?? [],
-                                    JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES,
-                                  ),
+                                    json_encode(
+                                        $debug['processed'] ?? [],
+                                        JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES,
+                                    ),
                                 ) ?></pre>
                             </div>
                             <div>
                                 <strong>Validation</strong>
                                 <pre><?= e(
-                                  json_encode(
-                                    $debug['validationErrors'] ?? [],
-                                    JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES,
-                                  ),
+                                    json_encode(
+                                        $debug['validationErrors'] ?? [],
+                                        JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES,
+                                    ),
                                 ) ?></pre>
                             </div>
                             <div>
                                 <strong>Vendo matching</strong>
                                 <pre><?= e(
-                                  json_encode(
-                                    $debug['matching'] ?? [],
-                                    JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES,
-                                  ),
+                                    json_encode(
+                                        $debug['matching'] ?? [],
+                                        JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES,
+                                    ),
                                 ) ?></pre>
                             </div>
                         </div>
@@ -196,12 +196,12 @@ $debug = $debug ?? [];
                     // The compatibility JavaScript reads this bootstrap data without
                     // making a second request for the matched vendo list.
                     window.PIXIEPOINT_VENDOS = <?= json_encode(
-                      $vendos,
-                      JSON_UNESCAPED_SLASHES |
-                        JSON_HEX_TAG |
-                        JSON_HEX_AMP |
-                        JSON_HEX_APOS |
-                        JSON_HEX_QUOT,
+                        $vendos,
+                        JSON_UNESCAPED_SLASHES |
+                          JSON_HEX_TAG |
+                          JSON_HEX_AMP |
+                          JSON_HEX_APOS |
+                          JSON_HEX_QUOT,
                     ) ?>;
                 </script>
             </div>

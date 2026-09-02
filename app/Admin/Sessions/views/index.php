@@ -45,7 +45,7 @@
                     <td><?= e(duration_nice((int) $session['uptime_seconds'])) ?></td>
                     <td>
                         <?= e(
-                          bytes_nice((int) $session['bytes_in'] + (int) $session['bytes_out']),
+                            bytes_nice((int) $session['bytes_in'] + (int) $session['bytes_out']),
                         ) ?>
                     </td>
                 </tr>

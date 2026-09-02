@@ -115,7 +115,7 @@
                                         data-name="<?= e($v['name']) ?>"
                                         data-router="<?= e($v['router_id']) ?>"
                                         data-url="<?= e(
-                                          preg_replace('~^https?://~i', '', $v['base_url']),
+                                            preg_replace('~^https?://~i', '', $v['base_url']),
                                         ) ?>"
                                         data-server-ip="<?= e($v['server_ip'] ?? '') ?>"
                                         data-subnet="<?= e($v['client_subnet'] ?? '') ?>"

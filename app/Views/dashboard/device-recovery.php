@@ -12,7 +12,7 @@
 <?php // Nothing to confirm when the request cannot be tied to a current device.
 
 if (!$current) {
-  return;
+    return;
 } ?>
 
 <?php if ($current['user_id'] !== null && (int) $current['user_id'] !== $userId): ?>
@@ -26,7 +26,7 @@ if (!$current) {
 <?php // The device is already owned by the signed-in account, so no action is needed.
 
 if ($current['user_id'] !== null && (int) $current['user_id'] === $userId) {
-  return;
+    return;
 } ?>
 
 <section class="panel">
@@ -44,7 +44,7 @@ if ($current['user_id'] !== null && (int) $current['user_id'] === $userId) {
         <?php foreach ($known as $device): ?>
             <?php
             if ((int) $device['id'] === (int) $current['id']) {
-              continue;
+                continue;
             }
             $label = $device['mac'] ?: 'Device ' . substr((string) $device['uuid'], 0, 8);
             ?>
