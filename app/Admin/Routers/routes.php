@@ -45,8 +45,15 @@ return static function (RouteManager $routes, array $c): void {
         ->middleware('prefab.access');
 
     // -------------------------------------------------------------------------
-    // MikroTik Router Agent API
+    // MikroTik registration and Router Agent API
     // -------------------------------------------------------------------------
+
+    // Called directly by the RouterOS terminal command. Authentication is the
+    // account's unique API key plus the router identity/hardware values read by
+    // the command running on that MikroTik.
+    $routes
+        ->get('/api/router/register', [$c['router.registration'], 'register'])
+        ->name('api.router.register');
 
     $routes
         ->get('/api/router/install/{token}', [$c['router.agent'], 'install'])
