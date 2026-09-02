@@ -9,6 +9,13 @@ use PixiePoint\App\Services\AuthContext;
 use PixiePoint\App\Services\View;
 use Tihloh\Prefab\Logs\Services\LogManager;
 
+/**
+ * Shared helpers for feature-local admin controllers.
+ *
+ * Feature controllers keep their own business logic while inheriting the small
+ * amount of common rendering, auditing, and validation plumbing used by admin
+ * pages.
+ */
 abstract class FeatureController
 {
     public function __construct(
@@ -16,11 +23,25 @@ abstract class FeatureController
         protected AuthContext $auth,
         protected View $view,
         protected LogManager $logs,
-    ) {}
+    ) {
+    }
 
-    protected function page(string $title, string $viewFile, array $data = []): never
-    {
-        $this->view->page($title, $this->view->renderFile($viewFile, $data), true, $this->auth->navigation());
+    /**
+     * Renders a feature-local admin view inside the management layout.
+     */
+    protected function page(
+        string $title,
+        string $viewFile,
+        array $data = [],
+    ): never {
+        $content = $this->view->renderFile($viewFile, $data);
+
+        $this->view->page(
+            $title,
+            $content,
+            true,
+            $this->auth->navigation(),
+        );
     }
 
     protected function isPost(): bool
@@ -28,8 +49,16 @@ abstract class FeatureController
         return strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST';
     }
 
-    protected function audit(string $action, string $subjectType, int|string|null $subjectId, string $message, array $metadata = []): void
-    {
+    /**
+     * Writes a structured Prefab audit event using the current account as actor.
+     */
+    protected function audit(
+        string $action,
+        string $subjectType,
+        int|string|null $subjectId,
+        string $message,
+        array $metadata = [],
+    ): void {
         $this->logs->record([
             'action' => $action,
             'subject_type' => $subjectType,
@@ -42,12 +71,21 @@ abstract class FeatureController
         ]);
     }
 
+    /**
+     * Converts Prefab Input validation errors into one compact alert.
+     */
     protected function errors(array $errors): string
     {
         $messages = [];
+
         foreach ($errors as $fieldErrors) {
-            foreach ((array)$fieldErrors as $message) $messages[] = e($message);
+            foreach ((array) $fieldErrors as $message) {
+                $messages[] = e($message);
+            }
         }
-        return '<div class="alert">' . implode('<br>', $messages ?: ['Please check the form.']) . '</div>';
+
+        return '<div class="alert">'
+            . implode('<br>', $messages ?: ['Please check the form.'])
+            . '</div>';
     }
 }
