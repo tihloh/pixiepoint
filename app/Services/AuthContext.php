@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace PixiePoint\App\Services;
 
+use PDO;
 use PixiePoint\App\Models\PermissionUser;
 use Tihloh\Prefab\Auth\Services\AuthManager;
 use Tihloh\Prefab\Permissions\Services\PermissionManager;
@@ -11,10 +12,64 @@ use Tihloh\Prefab\Users\Services\UserManager;
 
 final class AuthContext
 {
+    /**
+     * Router-team roles provide operational access without changing the user's
+     * platform-wide Prefab groups. The actual records are still scoped by the
+     * routers assigned to that user.
+     */
+    private const ROUTER_ROLE_PERMISSIONS = [
+        'owner' => [
+            'routers.view',
+            'routers.manage',
+            'vendos.view',
+            'vendos.manage',
+            'vouchers.view',
+            'vouchers.manage',
+            'devices.view',
+            'sessions.view',
+            'sales.view',
+            'logs.view',
+        ],
+        'manager' => [
+            'routers.view',
+            'routers.manage',
+            'vendos.view',
+            'vendos.manage',
+            'vouchers.view',
+            'vouchers.manage',
+            'devices.view',
+            'sessions.view',
+            'sales.view',
+            'logs.view',
+        ],
+        'operator' => [
+            'routers.view',
+            'routers.manage',
+            'vendos.view',
+            'vendos.manage',
+            'vouchers.view',
+            'vouchers.manage',
+            'devices.view',
+            'sessions.view',
+            'sales.view',
+            'logs.view',
+        ],
+        'viewer' => [
+            'routers.view',
+            'vendos.view',
+            'vouchers.view',
+            'devices.view',
+            'sessions.view',
+            'sales.view',
+            'logs.view',
+        ],
+    ];
+
     public function __construct(
         private UserManager $users,
         private AuthManager $auth,
         private PermissionManager $permissions,
+        private PDO $db,
     ) {
     }
 
@@ -29,6 +84,7 @@ final class AuthContext
         if ($id === null) {
             return null;
         }
+
         $user = $this->users->find($id);
 
         return $user && $user->active ? $user->toArray() : null;
@@ -39,6 +95,7 @@ final class AuthContext
         if (!$this->auth->check()) {
             redirect('/login');
         }
+
         $user = $this->user();
         if (!$user) {
             redirect('/logout');
@@ -59,15 +116,17 @@ final class AuthContext
             return false;
         }
 
-        // The owner bypass is intentional: platform ownership is a separate
-        // security boundary, while all delegated access uses Prefab Permissions.
+        // Platform ownership remains the system-wide bypass.
         if (($user['platform_role'] ?? '') === 'platform_owner') {
             return true;
         }
 
         $groupIds = $this->users->groups()->groupIdsForUser($user['id']);
+        if ($this->permissions->can(new PermissionUser($user['id'], $groupIds), $permission)) {
+            return true;
+        }
 
-        return $this->permissions->can(new PermissionUser($user['id'], $groupIds), $permission);
+        return $this->routerTeamCan((int) $user['id'], $permission);
     }
 
     public function requirePermission(string $permission, View $view): array
@@ -77,7 +136,13 @@ final class AuthContext
             http_response_code(403);
             $view->page(
                 'Access denied',
-                $view->portalCard('<h1>Access denied</h1><p class="muted">Your account does not have <span class="code">' . e($permission) . '</span>.</p><a class="button full" href="/dashboard">Back to dashboard</a>'),
+                $view->portalCard(
+                    '<h1>Access denied</h1>'
+                    . '<p class="muted">Your account does not have <span class="code">'
+                    . e($permission)
+                    . '</span>.</p>'
+                    . '<a class="button full" href="/dashboard">Back to dashboard</a>',
+                ),
             );
         }
 
@@ -96,5 +161,28 @@ final class AuthContext
             'sales' => $this->can('sales.view'),
             'logs' => $this->can('logs.view'),
         ];
+    }
+
+    private function routerTeamCan(int $userId, string $permission): bool
+    {
+        // Older databases create router_members lazily through RouterAccess.
+        // If it does not exist yet, there is simply no delegated router access.
+        try {
+            $stmt = $this->db->prepare(
+                'SELECT DISTINCT role FROM router_members WHERE user_id=?',
+            );
+            $stmt->execute([$userId]);
+            $roles = $stmt->fetchAll(PDO::FETCH_COLUMN);
+        } catch (\Throwable) {
+            return false;
+        }
+
+        foreach ($roles as $role) {
+            if (in_array($permission, self::ROUTER_ROLE_PERMISSIONS[(string) $role] ?? [], true)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
