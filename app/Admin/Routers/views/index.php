@@ -35,6 +35,10 @@
                 <td><?= e($router['last_seen_at'] ?: 'Never') ?></td>
                 <?php if ($canManageRouters): ?>
                 <td class="text-end text-nowrap">
+                    <form method="post" action="/admin/routers/<?= e($router['id']) ?>/test" class="d-inline">
+                        <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
+                        <button class="btn btn-sm btn-outline-success" type="submit" <?= $router['enabled'] ? '' : 'disabled' ?>>Send test</button>
+                    </form>
                     <button class="btn btn-sm btn-outline-primary" type="button" data-bs-toggle="modal" data-bs-target="#routerSetupModal" data-router="<?= e($router['name']) ?>" data-command="<?= e($setupCommand) ?>">Setup</button>
                     <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="modal" data-bs-target="#routerModal" data-mode="edit" data-id="<?= e($router['id']) ?>" data-name="<?= e($router['name']) ?>" data-identity="<?= e($router['identity']) ?>" data-host="<?= e($router['public_host'] ?? '') ?>" data-location="<?= e($router['location'] ?? '') ?>" data-enabled="<?= $router['enabled'] ? '1' : '0' ?>">Edit</button>
                 </td>
