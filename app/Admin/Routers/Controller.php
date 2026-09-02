@@ -24,10 +24,18 @@ final class Controller extends FeatureController
 
         if ($this->isPost()) {
             require_csrf();
-            $action = (string) ($_POST['action'] ?? 'create');
+            $action = (string) ($_POST['action'] ?? '');
+
+            // Router creation is intentionally not available from the web UI.
+            // A MikroTik must claim itself through the account-specific RouterOS
+            // registration command shown on the dashboard.
+            if ($action !== 'update') {
+                $_SESSION['admin_flash'] = '<div class="alert">Register new routers from the RouterOS Terminal command on your dashboard.</div>';
+                redirect('/admin/routers');
+            }
+
             $result = Input::fromRequest()->process([
                 'name' => 'trim|required|string|max:160',
-                'identity' => 'trim|required|string|max:160',
                 'public_host' => 'trim|null_if_empty|nullable|string|max:255',
                 'location' => 'trim|null_if_empty|nullable|string|max:255',
                 'enabled' => 'default:0|integer|min:0|max:1',
@@ -39,56 +47,31 @@ final class Controller extends FeatureController
                 $data = $result->validated();
 
                 try {
-                    if ($action === 'update') {
-                        $id = max(0, (int) ($_POST['id'] ?? 0));
-                        if ($id < 1 || !$access->canManage($id, $userId, $platformOwner)) {
-                            throw new RuntimeException('Router not found or access denied.');
-                        }
-
-                        $stmt = $this->db->prepare(
-                            'UPDATE routers SET name=?,identity=?,public_host=?,location=?,enabled=? WHERE id=?',
-                        );
-                        $stmt->execute([
-                            $data['name'],
-                            $data['identity'],
-                            $data['public_host'] ?? null,
-                            $data['location'] ?? null,
-                            (int) ($data['enabled'] ?? 0),
-                            $id,
-                        ]);
-
-                        $this->audit(
-                            'router.updated',
-                            'router',
-                            $id,
-                            'MikroTik router was updated.',
-                            ['identity' => $data['identity']],
-                        );
-                        $message = '<div class="alert ok">Router updated.</div>';
-                    } else {
-                        $stmt = $this->db->prepare(
-                            'INSERT INTO routers(name,identity,public_host,location,api_key) VALUES(?,?,?,?,?)',
-                        );
-                        $stmt->execute([
-                            $data['name'],
-                            $data['identity'],
-                            $data['public_host'] ?? null,
-                            $data['location'] ?? null,
-                            bin2hex(random_bytes(24)),
-                        ]);
-
-                        $id = (int) $this->db->lastInsertId();
-                        $access->addOwner($id, $userId);
-
-                        $this->audit(
-                            'router.created',
-                            'router',
-                            $id,
-                            'MikroTik router was registered.',
-                            ['identity' => $data['identity']],
-                        );
-                        $message = '<div class="alert ok">Router registered.</div>';
+                    $id = max(0, (int) ($_POST['id'] ?? 0));
+                    if ($id < 1 || !$access->canManage($id, $userId, $platformOwner)) {
+                        throw new RuntimeException('Router not found or access denied.');
                     }
+
+                    // RouterOS identity is immutable in the web UI. It is the
+                    // unique identity that was proven during RouterOS registration.
+                    $stmt = $this->db->prepare(
+                        'UPDATE routers SET name=?,public_host=?,location=?,enabled=? WHERE id=?',
+                    );
+                    $stmt->execute([
+                        $data['name'],
+                        $data['public_host'] ?? null,
+                        $data['location'] ?? null,
+                        (int) ($data['enabled'] ?? 0),
+                        $id,
+                    ]);
+
+                    $this->audit(
+                        'router.updated',
+                        'router',
+                        $id,
+                        'MikroTik router was updated.',
+                    );
+                    $message = '<div class="alert ok">Router updated.</div>';
                 } catch (Throwable $e) {
                     $message = '<div class="alert">The router could not be saved. '
                         . e($e->getMessage())
@@ -129,6 +112,7 @@ final class Controller extends FeatureController
             'message' => $message,
             'routers' => $routers,
             'canManageRouters' => $this->auth->can('routers.manage'),
+            'canCreateRouters' => false,
             'csrf' => csrf_token(),
         ]);
     }
