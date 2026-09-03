@@ -1,0 +1,35 @@
+/* Management surfaces use clear card boundaries instead of flat page sections. */
+main .panel {
+  margin-top: 0;
+  color: var(--bs-body-color);
+  background: rgba(14, 29, 49, 0.96);
+  border: 1px solid var(--pixie-line);
+  border-radius: 1rem;
+  box-shadow: 0 0.35rem 1.1rem rgba(0, 0, 0, 0.18);
+}
+
+main .card-header,
+main .card-footer {
+  background: rgba(255, 255, 255, 0.025);
+  border-color: var(--pixie-line);
+}
+
+main .card-body {
+  background: transparent;
+}
+
+main .card .table > :not(caption) > * > * {
+  padding: 0.8rem 1rem;
+}
+
+main .card > .table-responsive > .table thead th,
+main .panel > .table-responsive > .table thead th {
+  background: rgba(255, 255, 255, 0.025);
+}
+
+@media (min-width: 992px) {
+  main .card,
+  main .panel {
+    --admin-card-gutter: 0px;
+  }
+}
