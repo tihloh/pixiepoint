@@ -11,4 +11,11 @@ return static function (RouteManager $routes, array $c): void {
         ->auth()
         ->permission('users.view')
         ->middleware('prefab.access');
+
+    $routes
+        ->matchMethods(['GET', 'POST'], '/admin/users/{id}/edit', [$c['admin.users'], 'edit'])
+        ->name('admin.users.edit')
+        ->auth()
+        ->permission('users.manage')
+        ->middleware('prefab.access');
 };
