@@ -6,6 +6,7 @@ namespace PixiePoint\App;
 
 use PixiePoint\App\Admin\Devices\Controller as DevicesController;
 use PixiePoint\App\Admin\Logs\Controller as LogsController;
+use PixiePoint\App\Admin\Permissions\Controller as PermissionsController;
 use PixiePoint\App\Admin\Routers\AgentController as RouterAgentController;
 use PixiePoint\App\Admin\Routers\CommandQueue as RouterCommandQueue;
 use PixiePoint\App\Admin\Routers\Controller as RoutersController;
@@ -13,6 +14,7 @@ use PixiePoint\App\Admin\Routers\RegistrationController as RouterRegistrationCon
 use PixiePoint\App\Admin\Routers\TeamController as RouterTeamController;
 use PixiePoint\App\Admin\Sales\Controller as SalesController;
 use PixiePoint\App\Admin\Sessions\Controller as SessionsController;
+use PixiePoint\App\Admin\Users\Controller as UsersController;
 use PixiePoint\App\Admin\Vendos\Api as VendoApi;
 use PixiePoint\App\Admin\Vendos\Controller as VendosController;
 use PixiePoint\App\Admin\Vendos\HotspotController as VendoHotspotController;
@@ -95,6 +97,19 @@ final class Application
                 $app->db,
                 $networkDevices,
                 $points,
+            ),
+            'admin.users' => new UsersController(
+                $app->db,
+                $auth,
+                $view,
+                $logs,
+            ),
+            'admin.permissions' => new PermissionsController(
+                $app->db,
+                $auth,
+                $view,
+                $logs,
+                $prefab['permissions'],
             ),
             'admin.routers' => new RoutersController(
                 $app->db,
