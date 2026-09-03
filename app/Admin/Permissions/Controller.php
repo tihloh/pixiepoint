@@ -20,6 +20,22 @@ final class Controller extends FeatureController
         parent::__construct($db, $auth, $view, $logs);
     }
 
+    public function users(): never
+    {
+        $this->auth->requireAccount();
+
+        $users = $this->db
+            ->query(
+                'SELECT id,name,email,active,platform_role '
+                . 'FROM users ORDER BY name,email,id',
+            )
+            ->fetchAll();
+
+        $this->page('Permissions', __DIR__ . '/views/users.php', [
+            'users' => $users,
+        ]);
+    }
+
     public function index(string $id): never
     {
         $this->auth->requireAccount();
