@@ -8,6 +8,12 @@ use PixiePoint\App\Admin\Shared\FeatureController;
 use RuntimeException;
 use Tihloh\Prefab\Permissions\Services\PermissionManager;
 
+/**
+ * User-specific access management backed by Prefab Permissions.
+ *
+ * Permissions are edited from the Users feature instead of being presented as
+ * a separate top-level administration area.
+ */
 final class Controller extends FeatureController
 {
     public function __construct(
@@ -18,22 +24,6 @@ final class Controller extends FeatureController
         private PermissionManager $permissions,
     ) {
         parent::__construct($db, $auth, $view, $logs);
-    }
-
-    public function users(): never
-    {
-        $this->auth->requireAccount();
-
-        $users = $this->db
-            ->query(
-                'SELECT id,name,email,active,platform_role '
-                . 'FROM users ORDER BY name,email,id',
-            )
-            ->fetchAll();
-
-        $this->page('Permissions', __DIR__ . '/views/users.php', [
-            'users' => $users,
-        ]);
     }
 
     public function index(string $id): never
@@ -81,14 +71,14 @@ final class Controller extends FeatureController
                 $_SESSION['admin_flash'] = '<div class="alert">' . e($e->getMessage()) . '</div>';
             }
 
-            redirect('/admin/permissions/' . $userId);
+            redirect('/admin/users/' . $userId);
         }
 
         $groupIds = $this->usersGroupIds($userId);
         $resolved = $this->permissions->resolvedFor($userId, $groupIds);
         $overrides = $this->permissions->overridesFor('user', $userId);
 
-        $this->page('Permissions', __DIR__ . '/views/index.php', [
+        $this->page('Manage user', __DIR__ . '/views/index.php', [
             'user' => $user,
             'definitions' => $this->permissions->definitions(),
             'resolved' => $resolved,
@@ -114,6 +104,10 @@ final class Controller extends FeatureController
         return $user;
     }
 
+    /**
+     * Supplies Prefab Permissions with the user's Prefab group memberships so
+     * effective access keeps the normal user -> group -> default resolution.
+     */
     private function usersGroupIds(int $userId): array
     {
         try {
