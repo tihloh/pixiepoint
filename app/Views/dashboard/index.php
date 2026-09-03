@@ -6,6 +6,8 @@
 /** @var string $deviceRecovery */
 /** @var bool $hasManagement */
 /** @var string $routerRegistrationCommand */
+
+$isRouterOwner = ($user['platform_role'] ?? 'member') === 'pisowifi_owner';
 ?>
 
 <div class="heading">
@@ -25,30 +27,18 @@
     <?php endforeach; ?>
 </section>
 
-<section class="panel">
-    <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
-        <div>
-            <h2>Register a MikroTik</h2>
-            <p class="muted mb-0">
-                Run this command in the RouterOS Terminal of the MikroTik you want to claim.
-            </p>
-        </div>
-        <button class="btn btn-outline-secondary" type="button" data-copy-router-registration>
-            Copy command
+<?php if (!$isRouterOwner): ?>
+    <div class="text-end mb-3">
+        <button
+            class="btn btn-link btn-sm text-body-secondary"
+            type="button"
+            data-bs-toggle="modal"
+            data-bs-target="#register-router-modal"
+        >
+            Own a PisoWiFi? Register your MikroTik
         </button>
     </div>
-
-    <textarea
-        id="router-registration-command"
-        class="form-control font-monospace mt-3"
-        rows="6"
-        readonly
-    ><?= e($routerRegistrationCommand) ?></textarea>
-
-    <p class="small text-body-secondary mt-2 mb-0">
-        The command reads the RouterOS identity and hardware serial. Registration fails if either is already claimed.
-    </p>
-</section>
+<?php endif; ?>
 
 <?= $deviceRecovery ?>
 
@@ -89,15 +79,52 @@
     </table>
 </section>
 
-<script>
-    document.querySelector('[data-copy-router-registration]').addEventListener('click', async function () {
-        const command = document.getElementById('router-registration-command').value;
+<?php if (!$isRouterOwner): ?>
+    <div class="modal fade" id="register-router-modal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 class="modal-title fs-5">Register your MikroTik</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
 
-        await navigator.clipboard.writeText(command);
-        this.textContent = 'Copied';
+                <div class="modal-body">
+                    <p class="mb-3">
+                        Run this command in the RouterOS Terminal of the MikroTik you own.
+                    </p>
 
-        setTimeout(() => {
-            this.textContent = 'Copy command';
-        }, 1200);
-    });
-</script>
+                    <textarea
+                        id="router-registration-command"
+                        class="form-control font-monospace"
+                        rows="6"
+                        readonly
+                    ><?= e($routerRegistrationCommand) ?></textarea>
+                </div>
+
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" type="button" data-bs-dismiss="modal">
+                        Close
+                    </button>
+                    <button class="btn btn-primary" type="button" data-copy-router-registration>
+                        Copy command
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const copyRouterRegistration = document.querySelector('[data-copy-router-registration]');
+
+        copyRouterRegistration?.addEventListener('click', async function () {
+            const command = document.getElementById('router-registration-command').value;
+
+            await navigator.clipboard.writeText(command);
+            this.textContent = 'Copied';
+
+            setTimeout(() => {
+                this.textContent = 'Copy command';
+            }, 1200);
+        });
+    </script>
+<?php endif; ?>
