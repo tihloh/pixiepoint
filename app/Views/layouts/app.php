@@ -77,7 +77,7 @@
                         <?php endif; ?>
 
                         <?php if ($access['permissions'] ?? false): ?>
-                            <a class="nav-link" href="/admin/users">Permissions</a>
+                            <a class="nav-link" href="/admin/permissions">Permissions</a>
                         <?php endif; ?>
 
                         <?php if ($access['logs'] ?? false): ?>
