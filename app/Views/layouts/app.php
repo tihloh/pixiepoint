@@ -76,10 +76,6 @@
                             <a class="nav-link" href="/admin/sales">Sales</a>
                         <?php endif; ?>
 
-                        <?php if ($access['permissions'] ?? false): ?>
-                            <a class="nav-link" href="/admin/permissions">Permissions</a>
-                        <?php endif; ?>
-
                         <?php if ($access['logs'] ?? false): ?>
                             <a class="nav-link" href="/admin/logs">Logs</a>
                         <?php endif; ?>
