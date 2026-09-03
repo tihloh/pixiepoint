@@ -6,8 +6,8 @@
 
 <?= $message ?>
 
-<section class="panel p-0 overflow-hidden">
-    <div class="d-flex justify-content-between align-items-center px-4 py-3 border-bottom">
+<div class="card overflow-hidden">
+    <div class="card-header d-flex justify-content-between align-items-center px-4 py-3">
         <div class="d-flex align-items-center gap-3">
             <a class="btn btn-sm btn-link text-decoration-none" href="/admin/users">Users</a>
             <h1 class="h4 mb-0">Groups</h1>
@@ -17,9 +17,18 @@
 
     <div class="table-responsive">
         <table class="table align-middle mb-0">
-            <thead><tr><th>Name</th><th>Description</th><th>Users</th><th class="text-end">Actions</th></tr></thead>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Description</th>
+                    <th>Users</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
             <tbody>
-                <?php if (!$groups): ?><tr><td colspan="4" class="empty">No groups found.</td></tr><?php endif; ?>
+                <?php if (!$groups): ?>
+                    <tr><td colspan="4" class="empty">No groups found.</td></tr>
+                <?php endif; ?>
                 <?php foreach ($groups as $group): ?>
                     <tr>
                         <td><strong><?= e($group->name) ?></strong></td>
@@ -39,16 +48,33 @@
             </tbody>
         </table>
     </div>
-</section>
+</div>
 
 <div class="modal fade" id="groupModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog"><div class="modal-content"><form method="post">
-        <div class="modal-header"><h2 class="modal-title fs-5">Add Group</h2><button class="btn-close" type="button" data-bs-dismiss="modal" aria-label="Close"></button></div>
-        <div class="modal-body">
-            <input type="hidden" name="_csrf" value="<?= e($csrf) ?>"><input type="hidden" name="action" value="create">
-            <div class="mb-3"><label class="form-label" for="group-name">Group Name</label><input class="form-control" id="group-name" name="name" required></div>
-            <div><label class="form-label" for="group-description">Description</label><input class="form-control" id="group-description" name="description"></div>
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post">
+                <div class="modal-header">
+                    <h2 class="modal-title fs-5">Add Group</h2>
+                    <button class="btn-close" type="button" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
+                    <input type="hidden" name="action" value="create">
+                    <div class="mb-3">
+                        <label class="form-label" for="group-name">Group Name</label>
+                        <input class="form-control" id="group-name" name="name" required>
+                    </div>
+                    <div>
+                        <label class="form-label" for="group-description">Description</label>
+                        <input class="form-control" id="group-description" name="description">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-outline-secondary" type="button" data-bs-dismiss="modal">Cancel</button>
+                    <button class="button" type="submit">Add Group</button>
+                </div>
+            </form>
         </div>
-        <div class="modal-footer"><button class="btn btn-outline-secondary" type="button" data-bs-dismiss="modal">Cancel</button><button class="button" type="submit">Add Group</button></div>
-    </form></div></div>
+    </div>
 </div>
