@@ -9,8 +9,8 @@
 
 <?= $message ?>
 
-<section class="panel p-0 overflow-hidden">
-    <div class="d-flex justify-content-between align-items-center px-4 py-3 border-bottom">
+<div class="card overflow-hidden">
+    <div class="card-header d-flex justify-content-between align-items-center px-4 py-3">
         <div class="d-flex align-items-center gap-3">
             <h1 class="h4 mb-0">Users</h1>
             <?php if ($canManageGroups): ?>
@@ -52,33 +52,56 @@
                                         <?= e(strtoupper(substr((string) $user['name'], 0, 1))) ?>
                                     </div>
                                 <?php endif; ?>
-                                <div><strong><?= e($user['name']) ?></strong><div class="small text-body-secondary"><?= e($user['email']) ?></div></div>
+                                <div>
+                                    <strong><?= e($user['name']) ?></strong>
+                                    <div class="small text-body-secondary"><?= e($user['email']) ?></div>
+                                </div>
                             </div>
                         </td>
                         <td><span class="badge off"><?= e(ucwords(str_replace('_', ' ', (string) ($user['platform_role'] ?? 'member')))) ?></span></td>
                         <td><span class="badge <?= !empty($user['active']) ? '' : 'off' ?>"><?= !empty($user['active']) ? 'Active' : 'Disabled' ?></span></td>
                         <td><?= e($user['created_at'] ?? '') ?></td>
                         <td class="text-end text-nowrap">
-                            <?php if ($canManage): ?><a class="btn btn-sm btn-outline-secondary" href="/admin/users/<?= e($user['id']) ?>/edit">Edit</a><?php endif; ?>
-                            <?php if ($canManagePermissions): ?><a class="btn btn-sm btn-outline-primary" href="/admin/users/<?= e($user['id']) ?>/permissions">Permissions</a><?php endif; ?>
+                            <?php if ($canManage): ?>
+                                <a class="btn btn-sm btn-outline-secondary" href="/admin/users/<?= e($user['id']) ?>/edit">Edit</a>
+                            <?php endif; ?>
+                            <?php if ($canManagePermissions): ?>
+                                <a class="btn btn-sm btn-outline-primary" href="/admin/users/<?= e($user['id']) ?>/permissions">Permissions</a>
+                            <?php endif; ?>
                         </td>
                     </tr>
                 <?php endforeach; ?>
             </tbody>
         </table>
     </div>
-</section>
+</div>
 
 <?php if ($canManage): ?>
 <div class="modal fade" id="addUserModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog"><div class="modal-content"><form method="post">
-        <div class="modal-header"><h2 class="modal-title fs-5">Add User</h2><button class="btn-close" type="button" data-bs-dismiss="modal" aria-label="Close"></button></div>
-        <div class="modal-body">
-            <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
-            <div class="mb-3"><label class="form-label" for="new-user-name">Name</label><input class="form-control" id="new-user-name" name="name" required></div>
-            <div><label class="form-label" for="new-user-email">Email</label><input class="form-control" id="new-user-email" name="email" type="email" required></div>
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post">
+                <div class="modal-header">
+                    <h2 class="modal-title fs-5">Add User</h2>
+                    <button class="btn-close" type="button" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
+                    <div class="mb-3">
+                        <label class="form-label" for="new-user-name">Name</label>
+                        <input class="form-control" id="new-user-name" name="name" required>
+                    </div>
+                    <div>
+                        <label class="form-label" for="new-user-email">Email</label>
+                        <input class="form-control" id="new-user-email" name="email" type="email" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-outline-secondary" type="button" data-bs-dismiss="modal">Cancel</button>
+                    <button class="button" type="submit">Add User</button>
+                </div>
+            </form>
         </div>
-        <div class="modal-footer"><button class="btn btn-outline-secondary" type="button" data-bs-dismiss="modal">Cancel</button><button class="button" type="submit">Add User</button></div>
-    </form></div></div>
+    </div>
 </div>
 <?php endif; ?>
