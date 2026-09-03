@@ -6,7 +6,6 @@
 <div class="heading">
     <div>
         <h1>Users</h1>
-        <p class="muted">PixiePoint accounts.</p>
     </div>
 </div>
 
@@ -39,7 +38,7 @@
                             <strong><?= e($user['name']) ?></strong>
                             <div class="small text-body-secondary"><?= e($user['email']) ?></div>
                         </td>
-                        <td><?= e(str_replace('_', ' ', (string) $user['platform_role'])) ?></td>
+                        <td><?= e(ucwords(str_replace('_', ' ', (string) $user['platform_role']))) ?></td>
                         <td>
                             <span class="badge <?= $user['active'] ? '' : 'off' ?>">
                                 <?= $user['active'] ? 'Active' : 'Disabled' ?>
@@ -50,9 +49,9 @@
                             <td class="text-end">
                                 <a
                                     class="btn btn-sm btn-outline-secondary"
-                                    href="/admin/permissions/<?= e($user['id']) ?>"
+                                    href="/admin/users/<?= e($user['id']) ?>"
                                 >
-                                    Permissions
+                                    Manage
                                 </a>
                             </td>
                         <?php endif; ?>
