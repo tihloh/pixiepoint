@@ -163,6 +163,8 @@ final class AuthContext
     public function navigation(): array
     {
         return [
+            'users' => $this->can('users.view'),
+            'permissions' => $this->can('permissions.manage'),
             'routers' => $this->can('routers.view') || $this->can('routers.manage'),
             'vendos' => $this->can('vendos.view') || $this->can('vendos.manage'),
             'vouchers' => $this->can('vouchers.view') || $this->can('vouchers.manage'),
