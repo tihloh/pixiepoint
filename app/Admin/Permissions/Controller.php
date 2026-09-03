@@ -52,6 +52,10 @@ final class Controller extends FeatureController
             $value = (string) ($_POST['value'] ?? 'inherit');
 
             try {
+                if (($user['platform_role'] ?? '') === 'platform_owner') {
+                    throw new RuntimeException('Platform owner always has full access.');
+                }
+
                 if (!$this->permissions->defined($permission)) {
                     throw new RuntimeException('Unknown permission.');
                 }
