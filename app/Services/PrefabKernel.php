@@ -16,73 +16,38 @@ use Tihloh\Prefab\Users\Services\UserManager;
 
 final class PrefabKernel
 {
-    /**
-     * @return array{
-     *   users: UserManager,
-     *   auth: AuthManager,
-     *   permissions: PermissionManager,
-     *   logs: LogManager,
-     *   routes: RouteManager
-     * }
-     */
     public static function boot(PDO $db, string $root): array
     {
         PrefabConfig::set([
             'database' => $db,
             'modules' => [
-                'permissions' => [
-                    'definitions' => $root . '/config/permissions.php',
-                    'table' => 'prefab_subject_permissions',
-                ],
-                'logs' => [
-                    'table' => 'prefab_logs',
-                ],
+                'permissions' => ['definitions' => $root . '/config/permissions.php', 'table' => 'prefab_subject_permissions'],
+                'logs' => ['table' => 'prefab_logs'],
             ],
         ]);
 
-        // Logs first so Users/Auth/Permissions can auto-discover audit logging.
         $logs = new LogManager(['database' => $db]);
         $logs->prefabConfigure();
 
         $map = new UserMap(
-            table: 'users',
-            id: 'id',
-            name: 'name',
-            email: 'email',
-            active: 'active',
+            table: 'users', id: 'id', name: 'name', email: 'email', active: 'active',
             attributes: [
                 'password_hash' => 'password_hash',
                 'platform_role' => 'platform_role',
                 'points' => 'points',
+                'account_api_key' => 'account_api_key',
                 'google_sub' => 'google_sub',
                 'avatar_url' => 'avatar_url',
             ],
-            allowCreate: true,
-            allowUpdate: true,
-            allowDelete: false,
+            allowCreate: true, allowUpdate: true, allowDelete: false,
         );
 
-        // Let Prefab Users own its database-backed provider configuration so its
-        // native prefab_groups/prefab_user_groups provider is available too.
-        $users = new UserManager([
-            'database' => $db,
-            'map' => $map,
-            'factory' => new AppUserFactory(),
-        ]);
+        $users = new UserManager(['database' => $db, 'map' => $map, 'factory' => new AppUserFactory()]);
         $users->prefabConfigure();
-
-        $auth = new AuthManager();
-        $auth->prefabConfigure();
-
-        $permissions = new PermissionManager([
-            'database' => $db,
-            'definitions' => $root . '/config/permissions.php',
-            'table' => 'prefab_subject_permissions',
-        ]);
+        $auth = new AuthManager(); $auth->prefabConfigure();
+        $permissions = new PermissionManager(['database' => $db, 'definitions' => $root . '/config/permissions.php', 'table' => 'prefab_subject_permissions']);
         $permissions->prefabConfigure();
-
         $routes = new RouteManager();
-
         return compact('users', 'auth', 'permissions', 'logs', 'routes');
     }
 }
