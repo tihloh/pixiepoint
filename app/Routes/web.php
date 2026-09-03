@@ -136,7 +136,10 @@ return static function (RouteManager $routes, array $c): void {
     // Each admin feature owns its routes next to its controller and views.
     $adminRoot = dirname(__DIR__) . '/Admin';
 
-    foreach (['Routers', 'Vendos', 'Vouchers', 'Devices', 'Sessions', 'Sales', 'Logs'] as $feature) {
+    foreach (
+        ['Users', 'Permissions', 'Routers', 'Vendos', 'Vouchers', 'Devices', 'Sessions', 'Sales', 'Logs']
+        as $feature
+    ) {
         (require $adminRoot . '/' . $feature . '/routes.php')($routes, $c);
     }
 };
