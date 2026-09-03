@@ -41,33 +41,12 @@
                 <?php if (!$routers): ?>
                     <tr>
                         <td colspan="<?= $canManageRouters ? 7 : 5 ?>" class="empty">
-                            No routers linked to this account yet. Register one using the RouterOS command on your dashboard.
+                            No routers linked to this account yet.
                         </td>
                     </tr>
                 <?php endif; ?>
 
                 <?php foreach ($routers as $router): ?>
-                    <?php
-                    // The setup command is generated per router because its agent key is unique.
-                    $setupUrl =
-                        'https://hs.portalx.win/api/router/install/' .
-                        rawurlencode((string) $router['api_key']);
-
-                    $setupCommand =
-                        '/tool fetch url="' .
-                        $setupUrl .
-                        '" mode=https dst-path="PixiePointAgent.rsc"; ' .
-                        '/system scheduler remove [find name="pixiepoint-agent"]; ' .
-                        '/system script remove [find name="pixiepoint-agent"]; ' .
-                        '/system script add name="pixiepoint-agent" ' .
-                        'source=[/file get [find name="PixiePointAgent.rsc"] contents] ' .
-                        'policy=read,write,test; ' .
-                        '/system scheduler add name="pixiepoint-agent" interval=5s ' .
-                        'start-time=startup on-event="/system script run pixiepoint-agent" ' .
-                        'policy=read,write,test; ' .
-                        '/file remove [find name="PixiePointAgent.rsc"]';
-                    ?>
-
                     <tr>
                         <td>
                             <strong><?= e($router['name']) ?></strong>
@@ -120,17 +99,6 @@
                                 </form>
 
                                 <button
-                                    class="btn btn-sm btn-outline-primary"
-                                    type="button"
-                                    data-bs-toggle="modal"
-                                    data-bs-target="#routerSetupModal"
-                                    data-router="<?= e($router['name']) ?>"
-                                    data-command="<?= e($setupCommand) ?>"
-                                >
-                                    Setup
-                                </button>
-
-                                <button
                                     class="btn btn-sm btn-outline-secondary"
                                     type="button"
                                     data-bs-toggle="modal"
@@ -154,56 +122,6 @@
 </section>
 
 <?php if ($canManageRouters): ?>
-    <div
-        class="modal fade"
-        id="routerSetupModal"
-        tabindex="-1"
-        aria-labelledby="routerSetupModalTitle"
-        aria-hidden="true"
-    >
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <div>
-                        <h2 class="modal-title fs-5 mb-1" id="routerSetupModalTitle">
-                            Setup MikroTik
-                        </h2>
-                        <p class="small text-body-secondary mb-0">
-                            Paste this once in the MikroTik Terminal. PixiePoint installs the agent and one 5-second scheduler.
-                        </p>
-                    </div>
-                    <button
-                        type="button"
-                        class="btn-close"
-                        data-bs-dismiss="modal"
-                        aria-label="Close"
-                    ></button>
-                </div>
-
-                <div class="modal-body">
-                    <label class="form-label" for="router-setup-command">Terminal command</label>
-                    <textarea
-                        id="router-setup-command"
-                        class="form-control font-monospace"
-                        rows="8"
-                        readonly
-                    ></textarea>
-                </div>
-
-                <div class="modal-footer">
-                    <button
-                        type="button"
-                        class="btn btn-outline-secondary"
-                        data-copy-router-command
-                    >
-                        Copy command
-                    </button>
-                    <button type="button" class="button" data-bs-dismiss="modal">Done</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- RouterOS identity is displayed but cannot be changed from the web UI. -->
     <div
         class="modal fade"
@@ -290,25 +208,6 @@
     </div>
 
     <script>
-        document.getElementById('routerSetupModal').addEventListener('show.bs.modal', function (event) {
-            const button = event.relatedTarget;
-            const routerName = button.dataset.router || 'MikroTik';
-
-            document.getElementById('routerSetupModalTitle').textContent = 'Setup ' + routerName;
-            document.getElementById('router-setup-command').value = button.dataset.command || '';
-        });
-
-        document.querySelector('[data-copy-router-command]').addEventListener('click', async function () {
-            const field = document.getElementById('router-setup-command');
-
-            await navigator.clipboard.writeText(field.value);
-            this.textContent = 'Copied';
-
-            setTimeout(() => {
-                this.textContent = 'Copy command';
-            }, 1200);
-        });
-
         document.getElementById('routerModal').addEventListener('show.bs.modal', function (event) {
             const button = event.relatedTarget;
             const form = this.querySelector('form');
