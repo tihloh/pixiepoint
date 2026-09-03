@@ -9,6 +9,6 @@ return static function (RouteManager $routes, array $c): void {
         ->matchMethods(['GET', 'POST'], '/admin/users/{id}', [$c['admin.permissions'], 'index'])
         ->name('admin.users.manage')
         ->auth()
-        ->permission('permissions.manage')
+        ->permission('users.view')
         ->middleware('prefab.access');
 };
