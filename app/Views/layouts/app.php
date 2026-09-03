@@ -21,6 +21,7 @@
         crossorigin="anonymous"
     >
     <link rel="stylesheet" href="/assets/app.css?v=<?= e($cssVersion) ?>">
+    <link rel="stylesheet" href="/assets/admin.css?v=<?= e($cssVersion) ?>">
 </head>
 <body>
     <?php if ($dashboard): ?>
