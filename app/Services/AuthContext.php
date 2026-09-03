@@ -116,17 +116,12 @@ final class AuthContext
             return false;
         }
 
-        // Platform ownership remains the system-wide bypass.
         if (($user['platform_role'] ?? '') === 'platform_owner') {
             return true;
         }
 
         $userId = (int) $user['id'];
 
-        // Router access is always resource-scoped. A normal account may open
-        // the Routers page only when at least one router is actually linked to
-        // that account through router_members. Global Prefab permissions do not
-        // grant visibility to unrelated routers.
         if (in_array($permission, ['routers.view', 'routers.manage'], true)) {
             return $this->routerTeamCan($userId, $permission);
         }
@@ -164,6 +159,7 @@ final class AuthContext
     {
         return [
             'users' => $this->can('users.view'),
+            'groups' => $this->can('groups.manage'),
             'permissions' => $this->can('permissions.manage'),
             'routers' => $this->can('routers.view') || $this->can('routers.manage'),
             'vendos' => $this->can('vendos.view') || $this->can('vendos.manage'),
@@ -177,8 +173,6 @@ final class AuthContext
 
     private function routerTeamCan(int $userId, string $permission): bool
     {
-        // Older databases create router_members lazily through RouterAccess.
-        // If it does not exist yet, there is simply no delegated router access.
         try {
             $stmt = $this->db->prepare(
                 'SELECT DISTINCT role FROM router_members WHERE user_id=?',
