@@ -6,14 +6,13 @@ use Tihloh\Prefab\Routes\RouteManager;
 
 return static function (RouteManager $routes, array $c): void {
     $routes
-        ->matchMethods(['GET', 'POST'], '/profile', [$c['admin.permissions'], 'profile'])
-        ->name('profile')
+        ->matchMethods(
+            ['GET', 'POST'],
+            '/admin/users/{id}/permissions',
+            [$c['admin.permissions'], 'index'],
+        )
+        ->name('admin.users.permissions')
         ->auth()
-        ->middleware('prefab.access');
-
-    $routes
-        ->matchMethods(['GET', 'POST'], '/admin/users/{id}', [$c['admin.permissions'], 'index'])
-        ->name('admin.users.manage')
-        ->auth()
+        ->permission('permissions.manage')
         ->middleware('prefab.access');
 };
