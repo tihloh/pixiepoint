@@ -11,35 +11,53 @@ $isPlatformOwner = ($user['platform_role'] ?? '') === 'platform_owner';
 
 <div class="heading">
     <div>
-        <h1>Permissions</h1>
-        <p class="muted"><?= e($user['name']) ?> · <?= e($user['email']) ?></p>
+        <h1><?= e($user['name']) ?></h1>
+        <p class="muted"><?= e($user['email']) ?></p>
     </div>
-    <a class="btn btn-outline-secondary" href="/admin/users">Back to users</a>
+    <a class="btn btn-outline-secondary" href="/admin/users">Back</a>
 </div>
 
 <?= $message ?>
 
-<?php if ($isPlatformOwner): ?>
-    <div class="alert alert-success">Platform owner has full platform access.</div>
-<?php endif; ?>
+<section class="panel mb-4">
+    <div class="row g-3">
+        <div class="col-md-6">
+            <div class="small text-body-secondary">Role</div>
+            <strong><?= e(ucwords(str_replace('_', ' ', (string) $user['platform_role']))) ?></strong>
+        </div>
+        <div class="col-md-6">
+            <div class="small text-body-secondary">Status</div>
+            <span class="badge <?= $user['active'] ? '' : 'off' ?>">
+                <?= $user['active'] ? 'Active' : 'Disabled' ?>
+            </span>
+        </div>
+    </div>
+</section>
 
 <section class="panel">
+    <div class="d-flex justify-content-between align-items-center gap-3 mb-3">
+        <h2 class="mb-0">Permissions</h2>
+        <?php if ($isPlatformOwner): ?>
+            <span class="badge">Full access</span>
+        <?php endif; ?>
+    </div>
+
     <div class="table-responsive">
         <table class="table align-middle mb-0">
             <thead>
                 <tr>
                     <th>Permission</th>
-                    <th>Current</th>
-                    <th>Source</th>
-                    <th class="text-end">Override</th>
+                    <th>Access</th>
+                    <th>From</th>
+                    <?php if (!$isPlatformOwner): ?>
+                        <th class="text-end">Override</th>
+                    <?php endif; ?>
                 </tr>
             </thead>
             <tbody>
                 <?php foreach ($definitions as $permission => $definition): ?>
                     <?php
                     $result = $resolved[$permission] ?? null;
-                    $allowed = $isPlatformOwner || ($result?->allowed ?? false);
-                    $source = $isPlatformOwner ? 'platform owner' : ($result?->source ?? 'default');
                     $override = array_key_exists($permission, $overrides)
                         ? ($overrides[$permission] ? 'allow' : 'deny')
                         : 'inherit';
@@ -52,27 +70,34 @@ $isPlatformOwner = ($user['platform_role'] ?? '') === 'platform_owner';
                             </div>
                         </td>
                         <td>
-                            <span class="badge <?= $allowed ? '' : 'off' ?>">
-                                <?= $allowed ? 'Allowed' : 'Denied' ?>
-                            </span>
-                        </td>
-                        <td><?= e($source) ?></td>
-                        <td class="text-end">
                             <?php if ($isPlatformOwner): ?>
-                                <span class="text-body-secondary">Fixed</span>
+                                <span class="badge">Allowed</span>
                             <?php else: ?>
+                                <span class="badge <?= ($result?->allowed ?? false) ? '' : 'off' ?>">
+                                    <?= ($result?->allowed ?? false) ? 'Allowed' : 'Denied' ?>
+                                </span>
+                            <?php endif; ?>
+                        </td>
+                        <td><?= $isPlatformOwner ? 'Platform owner' : e($result?->source ?? 'default') ?></td>
+
+                        <?php if (!$isPlatformOwner): ?>
+                            <td class="text-end">
                                 <form method="post" class="d-inline-flex gap-2 align-items-center">
                                     <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
                                     <input type="hidden" name="permission" value="<?= e($permission) ?>">
-                                    <select class="form-select form-select-sm" name="value">
+                                    <select
+                                        class="form-select form-select-sm"
+                                        name="value"
+                                        aria-label="Permission override"
+                                    >
                                         <option value="inherit" <?= $override === 'inherit' ? 'selected' : '' ?>>Inherit</option>
                                         <option value="allow" <?= $override === 'allow' ? 'selected' : '' ?>>Allow</option>
                                         <option value="deny" <?= $override === 'deny' ? 'selected' : '' ?>>Deny</option>
                                     </select>
                                     <button class="btn btn-sm btn-primary" type="submit">Save</button>
                                 </form>
-                            <?php endif; ?>
-                        </td>
+                            </td>
+                        <?php endif; ?>
                     </tr>
                 <?php endforeach; ?>
             </tbody>
