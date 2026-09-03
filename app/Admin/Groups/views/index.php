@@ -1,14 +1,93 @@
 <?php
-/** @var array $groups */ /** @var object|null $selected */ /** @var array $definitions */ /** @var array $overrides */ /** @var string $message */ /** @var string $csrf */
+/** @var array $groups */
+/** @var string $message */
+/** @var string $csrf */
 ?>
-<div class="heading"><div><h1>Groups</h1></div><div class="d-flex gap-2"><a class="btn btn-outline-secondary" href="/admin/users">Users</a><button class="button" type="button" data-bs-toggle="modal" data-bs-target="#groupModal">Add group</button></div></div>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div class="d-flex align-items-center gap-3">
+        <a class="btn btn-sm btn-link text-decoration-none" href="/admin/users">Users</a>
+        <h1 class="h4 mb-0">Groups</h1>
+    </div>
+
+    <button class="button" type="button" data-bs-toggle="modal" data-bs-target="#groupModal">
+        Add Group
+    </button>
+</div>
+
 <?= $message ?>
-<div class="row g-4 align-items-start">
-<div class="col-lg-4"><section class="panel"><div class="list-group list-group-flush">
-<?php if (!$groups): ?><div class="text-body-secondary">No groups yet.</div><?php endif; ?>
-<?php foreach ($groups as $group): ?><a class="list-group-item list-group-item-action d-flex justify-content-between align-items-center <?= $selected && (string)$selected->id === (string)$group->id ? 'active' : '' ?>" href="/admin/groups/<?= e($group->id) ?>"><span><strong><?= e($group->name) ?></strong><?php if ($group->description): ?><small class="d-block opacity-75"><?= e($group->description) ?></small><?php endif; ?></span><span class="badge rounded-pill"><?= e($group->usersCount) ?></span></a><?php endforeach; ?>
-</div></section></div>
-<div class="col-lg-8">
-<?php if ($selected): ?><form method="post"><input type="hidden" name="_csrf" value="<?= e($csrf) ?>"><input type="hidden" name="action" value="save"><section class="panel mb-3"><div class="row g-3"><div class="col-md-5"><label class="form-label">Group name</label><input class="form-control" name="name" value="<?= e($selected->name) ?>" required></div><div class="col-md-7"><label class="form-label">Description</label><input class="form-control" name="description" value="<?= e($selected->description ?? '') ?>"></div></div></section><section class="panel"><h2 class="h5 mb-3">Permissions</h2><div class="table-responsive"><table class="table align-middle mb-0"><thead><tr><th>Permission</th><th style="width:180px">Group rule</th></tr></thead><tbody><?php foreach ($definitions as $permission => $definition): $value=array_key_exists($permission,$overrides)?($overrides[$permission]?'allow':'deny'):'inherit'; ?><tr><td><strong><?= e($definition['name'] ?? $permission) ?></strong><div class="small text-body-secondary"><?= e($permission) ?></div></td><td><select class="form-select form-select-sm" name="permissions[<?= e($permission) ?>]"><option value="inherit" <?= $value==='inherit'?'selected':'' ?>>Inherit</option><option value="allow" <?= $value==='allow'?'selected':'' ?>>Allow</option><option value="deny" <?= $value==='deny'?'selected':'' ?>>Deny</option></select></td></tr><?php endforeach; ?></tbody></table></div></section><div class="d-flex justify-content-end mt-3"><button class="button" type="submit">Save changes</button></div></form><?php else: ?><section class="panel text-body-secondary">Select a group to manage it.</section><?php endif; ?>
-</div></div>
-<div class="modal fade" id="groupModal" tabindex="-1" aria-hidden="true"><div class="modal-dialog"><div class="modal-content"><form method="post" action="/admin/groups"><div class="modal-header"><h2 class="modal-title fs-5">Add group</h2><button class="btn-close" type="button" data-bs-dismiss="modal"></button></div><div class="modal-body"><input type="hidden" name="_csrf" value="<?= e($csrf) ?>"><input type="hidden" name="action" value="create"><div class="mb-3"><label class="form-label">Name</label><input class="form-control" name="name" required></div><div><label class="form-label">Description</label><input class="form-control" name="description"></div></div><div class="modal-footer"><button class="btn btn-outline-secondary" type="button" data-bs-dismiss="modal">Cancel</button><button class="button" type="submit">Add group</button></div></form></div></div></div>
+
+<section class="panel p-0 overflow-hidden">
+    <div class="table-responsive">
+        <table class="table align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Description</th>
+                    <th>Users</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php if (!$groups): ?>
+                    <tr>
+                        <td colspan="4" class="empty">No groups found.</td>
+                    </tr>
+                <?php endif; ?>
+
+                <?php foreach ($groups as $group): ?>
+                    <tr>
+                        <td><strong><?= e($group->name) ?></strong></td>
+                        <td><?= e($group->description ?? '') ?></td>
+                        <td><span class="badge off"><?= e($group->usersCount) ?></span></td>
+                        <td class="text-end text-nowrap">
+                            <a
+                                class="btn btn-sm btn-outline-secondary"
+                                href="/admin/groups/<?= e($group->id) ?>/edit"
+                            >
+                                Edit
+                            </a>
+                            <form method="post" class="d-inline" onsubmit="return confirm('Delete this group?')">
+                                <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
+                                <input type="hidden" name="action" value="delete">
+                                <input type="hidden" name="id" value="<?= e($group->id) ?>">
+                                <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<div class="modal fade" id="groupModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post">
+                <div class="modal-header">
+                    <h2 class="modal-title fs-5">Add Group</h2>
+                    <button class="btn-close" type="button" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
+                    <input type="hidden" name="action" value="create">
+
+                    <div class="mb-3">
+                        <label class="form-label" for="group-name">Group Name</label>
+                        <input class="form-control" id="group-name" name="name" required>
+                    </div>
+
+                    <div>
+                        <label class="form-label" for="group-description">Description</label>
+                        <input class="form-control" id="group-description" name="description">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-outline-secondary" type="button" data-bs-dismiss="modal">Cancel</button>
+                    <button class="button" type="submit">Add Group</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
