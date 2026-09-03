@@ -48,6 +48,10 @@
                     <div class="navbar-nav ms-auto align-items-lg-center gap-lg-1 py-2 py-lg-0">
                         <a class="nav-link" href="/dashboard">Dashboard</a>
 
+                        <?php if ($access['users'] ?? false): ?>
+                            <a class="nav-link" href="/admin/users">Users</a>
+                        <?php endif; ?>
+
                         <?php if ($access['routers'] ?? false): ?>
                             <a class="nav-link" href="/admin/routers">Routers</a>
                         <?php endif; ?>
@@ -70,6 +74,10 @@
 
                         <?php if ($access['sales'] ?? false): ?>
                             <a class="nav-link" href="/admin/sales">Sales</a>
+                        <?php endif; ?>
+
+                        <?php if ($access['permissions'] ?? false): ?>
+                            <a class="nav-link" href="/admin/users">Permissions</a>
                         <?php endif; ?>
 
                         <?php if ($access['logs'] ?? false): ?>
