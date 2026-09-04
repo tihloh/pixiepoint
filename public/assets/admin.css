@@ -1,4 +1,29 @@
 /* Admin-specific PixiePoint surfaces. Bootstrap 5.3 handles components and spacing. */
+.pixie-sidebar {
+  --bs-offcanvas-width: 240px;
+  width: 240px;
+  flex: 0 0 240px;
+  background: rgba(7, 17, 31, 0.96);
+  border-color: var(--pixie-line) !important;
+}
+
+.pixie-sidebar .offcanvas-body { min-height: 100%; }
+.pixie-sidebar .nav-link { color: var(--bs-secondary-color); }
+.pixie-sidebar .nav-link:hover { color: var(--bs-body-color); }
+.pixie-sidebar .nav-link.active {
+  color: #fff;
+  background: rgba(var(--bs-primary-rgb), 0.18);
+}
+.nav-group-label {
+  padding: .25rem .75rem;
+  color: var(--bs-secondary-color);
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.pixie-content { min-width: 0; max-width: 1440px; }
+
 main .panel {
   overflow: hidden;
   background: rgba(14, 29, 49, 0.96);
@@ -6,38 +31,14 @@ main .panel {
   border-radius: var(--bs-border-radius-lg);
   box-shadow: 0 0.25rem 0.9rem rgba(0, 0, 0, 0.16);
 }
+main .panel > h2, main .panel > p { padding-inline: 1rem; }
+main .panel > h2 { margin: 0; padding-top: 1rem; font-size: 1.05rem; }
+main .panel > h2 + .muted { margin-bottom: .75rem; }
+main .table { margin-bottom: 0; }
+main .table thead th { color: var(--bs-secondary-color); background: rgba(255,255,255,.025); font-size: .8rem; white-space: nowrap; }
+main .table tbody tr:last-child > * { border-bottom-width: 0; }
+main .empty { color: var(--bs-secondary-color); text-align: center; }
 
-main .panel > h2,
-main .panel > p {
-  padding-inline: 1rem;
-}
-
-main .panel > h2 {
-  margin: 0;
-  padding-top: 1rem;
-  font-size: 1.05rem;
-}
-
-main .panel > h2 + .muted {
-  margin-bottom: 0.75rem;
-}
-
-main .table {
-  margin-bottom: 0;
-}
-
-main .table thead th {
-  color: var(--bs-secondary-color);
-  background: rgba(255, 255, 255, 0.025);
-  font-size: 0.8rem;
-  white-space: nowrap;
-}
-
-main .table tbody tr:last-child > * {
-  border-bottom-width: 0;
-}
-
-main .empty {
-  color: var(--bs-secondary-color);
-  text-align: center;
+@media (min-width: 992px) {
+  .pixie-sidebar { position: sticky; top: 0; height: 100vh; }
 }
