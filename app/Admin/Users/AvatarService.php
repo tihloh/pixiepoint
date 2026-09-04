@@ -5,13 +5,14 @@ declare(strict_types=1);
 namespace PixiePoint\App\Admin\Users;
 
 use RuntimeException;
+use Tihloh\Prefab\Files\FileManager;
 
 /**
  * Stores only processed profile pictures generated from the client crop tool.
  */
 final class AvatarService
 {
-    public function __construct(private string $root)
+    public function __construct(private FileManager $files)
     {
     }
 
@@ -62,7 +63,7 @@ final class AvatarService
             $height,
         );
 
-        $directory = $this->root . '/public/uploads/avatars';
+        $directory = sys_get_temp_dir();
         if (!is_dir($directory) && !mkdir($directory, 0775, true) && !is_dir($directory)) {
             \imagedestroy($source);
             \imagedestroy($output);
@@ -81,7 +82,12 @@ final class AvatarService
         \imagedestroy($source);
         \imagedestroy($output);
 
-        return '/uploads/avatars/' . $filename;
+        try {
+            $stored = $this->files->putFile($path, 'avatars/' . $filename, 'public');
+            return $stored->url() ?? '/uploads/' . $stored->path();
+        } finally {
+            @unlink($path);
+        }
     }
 
     /**
