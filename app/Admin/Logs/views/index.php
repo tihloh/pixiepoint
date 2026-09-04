@@ -12,26 +12,26 @@
 <section class="panel">
     <h2>Recent activity</h2>
 
-    <table>
-        <thead>
-            <tr>
-                <th>Event</th>
-                <th>Time</th>
-            </tr>
-        </thead>
-        <tbody>
-            <?php if (!$logs): ?>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead>
                 <tr>
-                    <td colspan="2" class="empty">No activity recorded yet.</td>
+                    <th>Event</th>
+                    <th>Time</th>
                 </tr>
-            <?php endif; ?>
+            </thead>
+            <tbody>
+                <?php if (!$logs): ?>
+                    <tr><td colspan="2" class="empty">No activity recorded yet.</td></tr>
+                <?php endif; ?>
 
-            <?php foreach ($logs as $log): ?>
-                <tr>
-                    <td><?= e($log['event'] ?? '—') ?></td>
-                    <td><?= e($log['created_at'] ?? '—') ?></td>
-                </tr>
-            <?php endforeach; ?>
-        </tbody>
-    </table>
+                <?php foreach ($logs as $log): ?>
+                    <tr>
+                        <td><?= e($log['event'] ?? '—') ?></td>
+                        <td class="text-nowrap"><?= e($log['created_at'] ?? '—') ?></td>
+                    </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+    </div>
 </section>
