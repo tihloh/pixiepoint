@@ -1,15 +1,76 @@
-/* Management surfaces use clear card boundaries instead of flat page sections. */
-main .panel {
+/* Compact, consistent admin surfaces based on the Routers page. */
+main .heading {
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+main .heading h1 {
+  margin-bottom: 0.2rem;
+  font-size: 1.55rem;
+}
+
+main .heading .muted {
+  font-size: 0.92rem;
+}
+
+main .panel,
+main .admin-card {
   margin-top: 0;
+  overflow: hidden;
   color: var(--bs-body-color);
   background: rgba(14, 29, 49, 0.96);
   border: 1px solid var(--pixie-line);
-  border-radius: 1rem;
-  box-shadow: 0 0.35rem 1.1rem rgba(0, 0, 0, 0.18);
+  border-radius: 0.9rem;
+  box-shadow: 0 0.25rem 0.9rem rgba(0, 0, 0, 0.16);
+}
+
+main .panel > h2,
+main .panel > p,
+main .admin-card-header {
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+main .panel > h2 {
+  margin: 0;
+  padding-top: 0.9rem;
+  padding-bottom: 0.35rem;
+  font-size: 1.05rem;
+}
+
+main .panel > h2 + .muted {
+  margin: 0;
+  padding-bottom: 0.8rem;
+  font-size: 0.88rem;
+}
+
+main .panel > h2 + .table-responsive {
+  margin-top: 0.45rem;
+}
+
+main .admin-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  min-height: 52px;
+  padding-top: 0.7rem;
+  padding-bottom: 0.7rem;
+  border-bottom: 1px solid var(--pixie-line);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+main .admin-card-header h1,
+main .admin-card-header h2 {
+  margin: 0;
+  font-size: 1.05rem;
 }
 
 main .card-header,
-main .card-footer {
+main .card-footer,
+main .modal-header,
+main .modal-footer {
   background: rgba(255, 255, 255, 0.025);
   border-color: var(--pixie-line);
 }
@@ -18,18 +79,116 @@ main .card-body {
   background: transparent;
 }
 
-main .card .table > :not(caption) > * > * {
+main .table {
+  margin-bottom: 0;
+  font-size: 0.9rem;
+}
+
+main .table > :not(caption) > * > * {
+  padding: 0.62rem 0.8rem;
+  vertical-align: middle;
+}
+
+main .table thead th {
+  padding-top: 0.55rem;
+  padding-bottom: 0.55rem;
+  color: #b8c7d9;
+  background: rgba(255, 255, 255, 0.025);
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.025em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+main .table tbody tr:last-child > * {
+  border-bottom-width: 0;
+}
+
+main .table tbody tr:hover > * {
+  background: rgba(255, 255, 255, 0.018);
+}
+
+main .empty {
+  padding: 1.5rem 1rem !important;
+  color: var(--bs-secondary-color);
+  text-align: center;
+}
+
+main .btn-sm {
+  min-height: 32px;
+  padding: 0.3rem 0.62rem;
+  border-radius: 0.55rem;
+  font-size: 0.82rem;
+}
+
+main .button {
+  min-height: 36px;
+  padding: 0.42rem 0.8rem;
+  border-radius: 0.6rem;
+  font-size: 0.88rem;
+}
+
+main .badge {
+  padding: 0.34rem 0.52rem;
+  font-size: 0.74rem;
+}
+
+main .modal-header,
+main .modal-footer {
   padding: 0.8rem 1rem;
 }
 
-main .card > .table-responsive > .table thead th,
-main .panel > .table-responsive > .table thead th {
-  background: rgba(255, 255, 255, 0.025);
+main .modal-body {
+  padding: 1rem;
 }
 
-@media (min-width: 992px) {
-  main .card,
-  main .panel {
-    --admin-card-gutter: 0px;
+main .modal-body .row.g-3 {
+  --bs-gutter-y: 0.8rem;
+}
+
+main .form-control,
+main .form-select,
+main .field input,
+main .field select,
+main .field textarea,
+main input:not([type='checkbox']):not([type='radio']):not([type='hidden']),
+main select,
+main textarea {
+  min-height: 40px;
+  padding: 0.45rem 0.65rem;
+  border-radius: 0.6rem;
+}
+
+main label,
+main .form-label,
+main .field label {
+  margin-bottom: 0.28rem;
+  font-size: 0.85rem;
+}
+
+main .form-grid {
+  gap: 0.8rem 1rem;
+}
+
+main .metric {
+  min-height: 74px;
+  padding: 0.8rem 0.9rem;
+}
+
+main .metric strong {
+  margin-top: 0.15rem;
+  font-size: 1.25rem;
+}
+
+@media (max-width: 767.98px) {
+  main .heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  main .heading > .button,
+  main .heading > .btn {
+    width: 100%;
   }
 }
