@@ -8,7 +8,6 @@ use PDO;
 use PixiePoint\AppUserFactory;
 use Tihloh\Prefab\Auth\Services\AuthManager;
 use Tihloh\Prefab\Files\FileManager;
-use Tihloh\Prefab\Files\FileManager;
 use Tihloh\Prefab\Logs\Services\LogManager;
 use Tihloh\Prefab\Permissions\Services\PermissionManager;
 use Tihloh\Prefab\PrefabConfig;
