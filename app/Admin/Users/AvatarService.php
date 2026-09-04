@@ -5,14 +5,13 @@ declare(strict_types=1);
 namespace PixiePoint\App\Admin\Users;
 
 use RuntimeException;
-use Tihloh\Prefab\Files\FileManager;
 
 /**
  * Stores only processed profile pictures generated from the client crop tool.
  */
 final class AvatarService
 {
-    public function __construct(private FileManager $files)
+    public function __construct(private string $root)
     {
     }
 
@@ -63,7 +62,7 @@ final class AvatarService
             $height,
         );
 
-        $directory = sys_get_temp_dir();
+        $directory = $this->root . '/public/uploads/avatars';
         if (!is_dir($directory) && !mkdir($directory, 0775, true) && !is_dir($directory)) {
             \imagedestroy($source);
             \imagedestroy($output);
@@ -82,19 +81,9 @@ final class AvatarService
         \imagedestroy($source);
         \imagedestroy($output);
 
-        try {
-            $stored = $this->files->putFile($path, 'avatars/' . $filename, 'public');
-            return $stored->url() ?? '/uploads/' . $stored->path();
-        } finally {
-            @unlink($path);
-        }
+        return '/uploads/avatars/' . $filename;
     }
 
-    /**
-     * Avatar processing requires the GD extension built into the PixiePoint
-     * PHP image. Check it explicitly so an old/unrebuilt container produces a
-     * useful message instead of a PHP fatal error.
-     */
     private function requireImageProcessing(): void
     {
         if (
