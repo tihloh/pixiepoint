@@ -32,11 +32,8 @@ $active = static fn (string $href): string => $path === $href || ($href !== '/da
         <aside class="offcanvas-lg offcanvas-start border-end pixie-sidebar" tabindex="-1" id="pixiepoint-sidebar" aria-labelledby="pixiepoint-sidebar-label">
             <div class="offcanvas-header border-bottom d-lg-none"><h5 class="offcanvas-title" id="pixiepoint-sidebar-label"><?= $name ?></h5><button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#pixiepoint-sidebar" aria-label="Close"></button></div>
             <div class="offcanvas-body d-flex flex-column p-3">
-                <a class="d-none d-lg-flex align-items-center gap-2 text-decoration-none text-body fw-bold fs-5 mb-4 px-2" href="/dashboard"><span class="logo">P</span><span><?= $name ?></span></a>
+                <a class="d-none d-lg-flex flex-column align-items-center text-decoration-none text-body fw-bold mb-4 px-2 pixie-brand" href="/dashboard"><span class="logo pixie-brand-logo">P</span><span class="mt-2"><?= $name ?></span></a>
                 <nav class="nav nav-pills flex-column gap-1">
-                    <div class="nav-group-label">Overview</div>
-                    <a class="nav-link<?= $active('/dashboard') ?>" href="/dashboard">Dashboard</a>
-
                     <?php if (($access['routers'] ?? false) || ($access['vendos'] ?? false) || ($access['vouchers'] ?? false)): ?>
                         <div class="nav-group-label mt-3">Wi-Fi</div>
                         <?php if ($access['routers'] ?? false): ?><a class="nav-link<?= $active('/admin/routers') ?>" href="/admin/routers">Routers</a><?php endif; ?>
