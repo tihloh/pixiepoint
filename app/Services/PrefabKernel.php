@@ -7,6 +7,7 @@ namespace PixiePoint\App\Services;
 use PDO;
 use PixiePoint\AppUserFactory;
 use Tihloh\Prefab\Auth\Services\AuthManager;
+use Tihloh\Prefab\Files\FileManager;
 use Tihloh\Prefab\Logs\Services\LogManager;
 use Tihloh\Prefab\Permissions\Services\PermissionManager;
 use Tihloh\Prefab\PrefabConfig;
@@ -48,6 +49,16 @@ final class PrefabKernel
         $permissions = new PermissionManager(['database' => $db, 'definitions' => $root . '/config/permissions.php', 'table' => 'prefab_subject_permissions']);
         $permissions->prefabConfigure();
         $routes = new RouteManager();
-        return compact('users', 'auth', 'permissions', 'logs', 'routes');
+        $files = new FileManager([
+            'default' => 'public',
+            'disks' => [
+                'public' => [
+                    'driver' => 'local',
+                    'root' => $root . '/public/uploads',
+                    'url' => '/uploads',
+                ],
+            ],
+        ]);
+        return compact('users', 'auth', 'permissions', 'logs', 'routes', 'files');
     }
 }
