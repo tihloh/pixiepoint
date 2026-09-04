@@ -115,11 +115,18 @@ main .empty {
   text-align: center;
 }
 
+/* Keep Bootstrap buttons as the component base; only compact their sizing. */
 main .btn-sm {
+  --bs-btn-padding-y: 0.3rem;
+  --bs-btn-padding-x: 0.62rem;
+  --bs-btn-font-size: 0.82rem;
+  --bs-btn-border-radius: 0.55rem;
   min-height: 32px;
-  padding: 0.3rem 0.62rem;
-  border-radius: 0.55rem;
-  font-size: 0.82rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.25;
+  vertical-align: middle;
 }
 
 main .button {
@@ -127,6 +134,10 @@ main .button {
   padding: 0.42rem 0.8rem;
   border-radius: 0.6rem;
   font-size: 0.88rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.25;
 }
 
 main .badge {
