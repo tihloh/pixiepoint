@@ -6,7 +6,6 @@ namespace PixiePoint\App\Admin\Routers;
 
 use PixiePoint\App\Admin\Shared\FeatureController;
 use PixiePoint\App\Admin\Shared\RouterAccess;
-use PixiePoint\App\Services\BusinessName;
 use RuntimeException;
 use Throwable;
 use Tihloh\Prefab\Input\Input;
@@ -19,7 +18,6 @@ final class Controller extends FeatureController
         $userId = (int) $user['id'];
         $platformOwner = $this->auth->isPlatformOwner();
         $access = new RouterAccess($this->db);
-        $businessNames = new BusinessName($this->db);
 
         $message = (string) ($_SESSION['admin_flash'] ?? '');
         unset($_SESSION['admin_flash']);
@@ -55,7 +53,6 @@ final class Controller extends FeatureController
                 'name' => 'trim|required|string|max:160',
                 'public_host' => 'trim|null_if_empty|nullable|string|max:255',
                 'location' => 'trim|null_if_empty|nullable|string|max:255',
-                'business_name' => 'trim|null_if_empty|nullable|string|max:255',
                 'enabled' => 'default:0|integer|min:0|max:1',
             ]);
 
@@ -71,13 +68,12 @@ final class Controller extends FeatureController
                     }
 
                     $stmt = $this->db->prepare(
-                        'UPDATE routers SET name=?,public_host=?,location=?,business_name=?,enabled=? WHERE id=?',
+                        'UPDATE routers SET name=?,public_host=?,location=?,enabled=? WHERE id=?',
                     );
                     $stmt->execute([
                         $data['name'],
                         $data['public_host'] ?? null,
                         $data['location'] ?? null,
-                        $data['business_name'] ?? null,
                         (int) ($data['enabled'] ?? 0),
                         $id,
                     ]);
@@ -122,7 +118,6 @@ final class Controller extends FeatureController
                 $userId,
                 $platformOwner,
             );
-            $router['business_name'] = $businessNames->router((int) $router['id']);
         }
         unset($router);
 
@@ -142,7 +137,6 @@ final class Controller extends FeatureController
         $routerId = max(0, (int) $id);
         $platformOwner = $this->auth->isPlatformOwner();
         $access = new RouterAccess($this->db);
-        $businessNames = new BusinessName($this->db);
 
         if ($routerId < 1 || !$access->canManage($routerId, $userId, $platformOwner)) {
             $_SESSION['admin_flash'] = '<div class="alert">Router not found or access denied.</div>';
@@ -168,7 +162,6 @@ final class Controller extends FeatureController
                 'name' => 'trim|required|string|max:160',
                 'public_host' => 'trim|null_if_empty|nullable|string|max:255',
                 'location' => 'trim|null_if_empty|nullable|string|max:255',
-                'business_name' => 'trim|null_if_empty|nullable|string|max:255',
                 'enabled' => 'default:0|integer|min:0|max:1',
             ]);
 
@@ -179,13 +172,12 @@ final class Controller extends FeatureController
 
                 try {
                     $stmt = $this->db->prepare(
-                        'UPDATE routers SET name=?,public_host=?,location=?,business_name=?,enabled=? WHERE id=?',
+                        'UPDATE routers SET name=?,public_host=?,location=?,enabled=? WHERE id=?',
                     );
                     $stmt->execute([
                         $data['name'],
                         $data['public_host'] ?? null,
                         $data['location'] ?? null,
-                        $data['business_name'] ?? null,
                         (int) ($data['enabled'] ?? 0),
                         $routerId,
                     ]);
@@ -205,8 +197,6 @@ final class Controller extends FeatureController
                 }
             }
         }
-
-        $router['business_name'] = $businessNames->router($routerId);
 
         $this->page('Router Settings', __DIR__ . '/views/settings.php', [
             'router' => $router,
@@ -279,8 +269,6 @@ final class Controller extends FeatureController
             $stmt->execute([$routerId]);
             $recentSessions = $stmt->fetchAll();
         }
-
-        $router['business_name'] = (new BusinessName($this->db))->router($routerId);
 
         $this->page('Router Dashboard', __DIR__ . '/views/dashboard.php', [
             'router' => $router,
