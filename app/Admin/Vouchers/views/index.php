@@ -1,5 +1,6 @@
 <?php
 /** @var string $message */
+/** @var array $router */
 /** @var array $vouchers */
 /** @var string $csrf */
 ?>
@@ -7,7 +8,12 @@
 <div class="heading">
     <div>
         <h1>Access vouchers</h1>
-        <p class="muted">Create and manage Wi-Fi access codes.</p>
+        <p class="muted">Create and manage Wi-Fi access codes for this router.</p>
+        <div class="small text-body-secondary mt-2">
+            Router:
+            <span class="fw-semibold text-body"><?= e($router['name']) ?></span>
+            <span class="code ms-1"><?= e($router['identity']) ?></span>
+        </div>
     </div>
 
     <button
@@ -42,7 +48,7 @@
             <tbody>
                 <?php if (!$vouchers): ?>
                     <tr>
-                        <td colspan="7" class="empty">No vouchers created.</td>
+                        <td colspan="7" class="empty">No vouchers created for this router.</td>
                     </tr>
                 <?php endif; ?>
 
@@ -73,7 +79,6 @@
                             </span>
                         </td>
                         <td class="text-end">
-                            <!-- Values are passed to the shared create/edit modal through data attributes. -->
                             <button
                                 class="btn btn-sm btn-outline-secondary"
                                 type="button"
