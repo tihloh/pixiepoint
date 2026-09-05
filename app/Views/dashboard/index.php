@@ -33,6 +33,8 @@ $isRouterOwner = ($user['platform_role'] ?? 'member') === 'pisowifi_owner';
             class="btn btn-link btn-sm text-body-secondary"
             type="button"
             id="register-router-button"
+            data-bs-toggle="modal"
+            data-bs-target="#register-router-modal"
         >
             Own a PisoWiFi? Register your MikroTik
         </button>
@@ -114,16 +116,6 @@ $isRouterOwner = ($user['platform_role'] ?? 'member') === 'pisowifi_owner';
 
     <script>
         $(function () {
-            $('#register-router-button').on('click', function () {
-                const modal = $('#register-router-modal')[0];
-
-                if (!modal || !window.bootstrap?.Modal) {
-                    return;
-                }
-
-                window.bootstrap.Modal.getOrCreateInstance(modal).show();
-            });
-
             $('[data-copy-router-registration]').on('click', async function () {
                 const command = $('#router-registration-command').val();
 
