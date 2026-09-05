@@ -27,65 +27,42 @@ final class DashboardController
     }
 
     /**
-     * Builds the dashboard using only metrics the current account may see.
+     * Builds a consolidated dashboard across the account's accessible routers.
      */
     public function index(): never
     {
         $user = $this->auth->requireAccount();
         $userId = (int) $user['id'];
-
-        $deviceStmt = $this->db->prepare(
-            'SELECT COUNT(*) FROM devices '
-            . 'WHERE user_id = ? AND merged_into_device_id IS NULL',
-        );
-        $deviceStmt->execute([$userId]);
-
-        $sessionStmt = $this->db->prepare(
-            'SELECT COUNT(*) FROM sessions WHERE user_id = ?',
-        );
-        $sessionStmt->execute([$userId]);
+        $platformOwner = $this->auth->isPlatformOwner();
+        $routerIds = $this->accessibleRouterIds($userId, $platformOwner);
 
         $metrics = [
             'Points' => $this->points->balanceForDevice(0, $userId),
-            'My devices' => (int) $deviceStmt->fetchColumn(),
-            'My sessions' => (int) $sessionStmt->fetchColumn(),
         ];
 
-        // Router metrics are scoped to the account's actual router memberships.
-        // Platform owners retain the system-wide view.
-        if ($this->auth->isPlatformOwner()) {
-            $metrics['Routers'] = (int) $this->db
-                ->query('SELECT COUNT(*) FROM routers WHERE enabled = 1')
-                ->fetchColumn();
-        } else {
-            $routerCountStmt = $this->db->prepare(
-                'SELECT COUNT(*) '
-                . 'FROM routers r '
-                . 'JOIN router_members rm ON rm.router_id=r.id '
-                . 'WHERE rm.user_id=? AND r.enabled=1',
-            );
-            $routerCountStmt->execute([$userId]);
-            $routerCount = (int) $routerCountStmt->fetchColumn();
+        if ($this->auth->can('routers.view')) {
+            $metrics['Routers'] = count($routerIds);
+        }
 
-            if ($routerCount > 0) {
-                $metrics['Routers'] = $routerCount;
-            }
+        if ($this->auth->can('vendos.view')) {
+            $metrics['Vendos'] = $this->countForRouters('vendos', $routerIds);
+        }
+
+        if ($this->auth->can('vouchers.view')) {
+            $metrics['Vouchers'] = $this->countForRouters('vouchers', $routerIds);
+        }
+
+        if ($this->auth->can('devices.view')) {
+            $metrics['Devices'] = $this->deviceCountForRouters($routerIds);
         }
 
         if ($this->auth->can('sessions.view')) {
-            if ($this->auth->isPlatformOwner()) {
-                $metrics['Active sessions'] = (int) $this->db
-                    ->query("SELECT COUNT(*) FROM sessions WHERE status = 'active'")
-                    ->fetchColumn();
-            } else {
-                $activeStmt = $this->db->prepare(
-                    "SELECT COUNT(DISTINCT s.id) FROM sessions s "
-                    . 'JOIN router_members rm ON rm.router_id=s.router_id '
-                    . "WHERE rm.user_id=? AND s.status='active'",
-                );
-                $activeStmt->execute([$userId]);
-                $metrics['Active sessions'] = (int) $activeStmt->fetchColumn();
-            }
+            $metrics['Sessions'] = $this->countForRouters('sessions', $routerIds);
+            $metrics['Active sessions'] = $this->countForRouters('sessions', $routerIds, "status='active'");
+        }
+
+        if ($this->auth->can('sales.view')) {
+            $metrics['Sales today'] = $this->salesTodayForRouters($routerIds);
         }
 
         if ($this->auth->can('users.view')) {
@@ -94,22 +71,13 @@ final class DashboardController
                 ->fetchColumn();
         }
 
-        $recentStmt = $this->db->prepare(
-            'SELECT s.*, d.mac, r.name AS router_name '
-            . 'FROM sessions s '
-            . 'LEFT JOIN devices d ON d.id = s.device_id '
-            . 'LEFT JOIN routers r ON r.id = s.router_id '
-            . 'WHERE s.user_id = ? '
-            . 'ORDER BY s.updated_at DESC '
-            . 'LIMIT 8',
-        );
-        $recentStmt->execute([$userId]);
+        $recentSessions = $this->recentSessionsForRouters($routerIds);
 
         $content = $this->view->render('dashboard/index', [
             'user' => $user,
             'role' => $this->accountRole($user),
             'metrics' => $metrics,
-            'sessions' => $recentStmt->fetchAll(),
+            'sessions' => $recentSessions,
             'deviceRecovery' => $this->deviceRecoveryView($userId),
             'hasManagement' => array_filter($this->auth->navigation()) !== [],
             'routerRegistrationCommand' => $this->routerRegistrationCommand($userId),
@@ -215,6 +183,107 @@ final class DashboardController
             . 'dst-path="PixiePointRegister.rsc"; '
             . '/import file-name="PixiePointRegister.rsc"; '
             . '/file remove [find name="PixiePointRegister.rsc"]';
+    }
+
+    /**
+     * Returns active router IDs accessible to the current account.
+     * Platform owners see every active router; other users see their memberships.
+     */
+    private function accessibleRouterIds(int $userId, bool $platformOwner): array
+    {
+        if ($platformOwner) {
+            return array_map(
+                'intval',
+                $this->db->query('SELECT id FROM routers WHERE enabled=1 ORDER BY id')->fetchAll(PDO::FETCH_COLUMN),
+            );
+        }
+
+        $stmt = $this->db->prepare(
+            'SELECT r.id
+             FROM routers r
+             JOIN router_members rm ON rm.router_id=r.id
+             WHERE r.enabled=1 AND rm.user_id=?
+             ORDER BY r.id',
+        );
+        $stmt->execute([$userId]);
+
+        return array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN));
+    }
+
+    private function countForRouters(string $table, array $routerIds, string $condition = ''): int
+    {
+        if ($routerIds === []) {
+            return 0;
+        }
+
+        $placeholders = implode(',', array_fill(0, count($routerIds), '?'));
+        $sql = 'SELECT COUNT(*) FROM ' . $table . ' WHERE router_id IN (' . $placeholders . ')';
+        if ($condition !== '') {
+            $sql .= ' AND ' . $condition;
+        }
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($routerIds);
+
+        return (int) $stmt->fetchColumn();
+    }
+
+    private function deviceCountForRouters(array $routerIds): int
+    {
+        if ($routerIds === []) {
+            return 0;
+        }
+
+        $placeholders = implode(',', array_fill(0, count($routerIds), '?'));
+        $sql = 'SELECT COUNT(DISTINCT device_id) FROM ('
+            . 'SELECT s.device_id FROM sessions s '
+            . 'WHERE s.router_id IN (' . $placeholders . ') AND s.device_id IS NOT NULL '
+            . 'UNION '
+            . 'SELECT e.device_id FROM router_login_events e '
+            . 'WHERE e.router_id IN (' . $placeholders . ') AND e.device_id IS NOT NULL'
+            . ') router_devices';
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([...$routerIds, ...$routerIds]);
+
+        return (int) $stmt->fetchColumn();
+    }
+
+    private function salesTodayForRouters(array $routerIds): float
+    {
+        if ($routerIds === []) {
+            return 0.0;
+        }
+
+        $placeholders = implode(',', array_fill(0, count($routerIds), '?'));
+        $stmt = $this->db->prepare(
+            "SELECT COALESCE(SUM(amount_pesos),0)
+             FROM router_login_events
+             WHERE router_id IN ($placeholders) AND created_at >= CURDATE()",
+        );
+        $stmt->execute($routerIds);
+
+        return (float) $stmt->fetchColumn();
+    }
+
+    private function recentSessionsForRouters(array $routerIds): array
+    {
+        if ($routerIds === []) {
+            return [];
+        }
+
+        $placeholders = implode(',', array_fill(0, count($routerIds), '?'));
+        $stmt = $this->db->prepare(
+            'SELECT s.*,d.mac,r.name AS router_name '
+            . 'FROM sessions s '
+            . 'LEFT JOIN devices d ON d.id=s.device_id '
+            . 'LEFT JOIN routers r ON r.id=s.router_id '
+            . "WHERE s.router_id IN ($placeholders) "
+            . 'ORDER BY s.updated_at DESC LIMIT 8',
+        );
+        $stmt->execute($routerIds);
+
+        return $stmt->fetchAll();
     }
 
     private function accountRole(array $user): string
