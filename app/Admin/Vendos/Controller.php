@@ -22,54 +22,43 @@ final class Controller extends FeatureController
         $message = (string) ($_SESSION['admin_flash'] ?? '');
         unset($_SESSION['admin_flash']);
 
+        $selectedRouterId = max(0, (int) ($_SESSION['pixiepoint_selected_router_id'] ?? 0));
+        if ($selectedRouterId < 1) {
+            redirect('/admin/routers');
+        }
+
+        if (!$access->canView($selectedRouterId, $userId, $platformOwner)) {
+            unset($_SESSION['pixiepoint_selected_router_id']);
+            redirect('/admin/routers');
+        }
+
         if ($this->isPost()) {
             require_csrf();
             $action = (string) ($_POST['action'] ?? 'create');
 
             if ($action === 'toggle_debug') {
-                $message = $this->toggleDebug($access, $userId, $platformOwner);
+                $message = $this->toggleDebug($access, $userId, $platformOwner, $selectedRouterId);
             } else {
-                $message = $this->saveVendo($access, $userId, $platformOwner, $action);
+                $message = $this->saveVendo($access, $userId, $platformOwner, $action, $selectedRouterId);
             }
 
             $_SESSION['admin_flash'] = $message;
             redirect('/admin/vendos');
         }
 
-        if ($platformOwner) {
-            $vendos = $this->db->query(
-                'SELECT v.*,r.name router_name,r.identity router_identity
-                 FROM vendos v
-                 JOIN routers r ON r.id=v.router_id
-                 ORDER BY v.created_at DESC',
-            )->fetchAll();
+        $stmt = $this->db->prepare(
+            'SELECT v.*,r.name router_name,r.identity router_identity
+             FROM vendos v
+             JOIN routers r ON r.id=v.router_id
+             WHERE v.router_id=?
+             ORDER BY v.created_at DESC',
+        );
+        $stmt->execute([$selectedRouterId]);
+        $vendos = $stmt->fetchAll();
 
-            $routers = $this->db->query(
-                'SELECT id,name,identity FROM routers WHERE enabled=1 ORDER BY name',
-            )->fetchAll();
-        } else {
-            $stmt = $this->db->prepare(
-                'SELECT v.*,r.name router_name,r.identity router_identity,rm.role team_role
-                 FROM vendos v
-                 JOIN routers r ON r.id=v.router_id
-                 JOIN router_members rm ON rm.router_id=v.router_id
-                 WHERE rm.user_id=?
-                 ORDER BY v.created_at DESC',
-            );
-            $stmt->execute([$userId]);
-            $vendos = $stmt->fetchAll();
-
-            $stmt = $this->db->prepare(
-                'SELECT r.id,r.name,r.identity
-                 FROM routers r
-                 JOIN router_members rm ON rm.router_id=r.id
-                 WHERE r.enabled=1 AND rm.user_id=?
-                   AND rm.role IN (\'owner\',\'manager\',\'operator\')
-                 ORDER BY r.name',
-            );
-            $stmt->execute([$userId]);
-            $routers = $stmt->fetchAll();
-        }
+        $routers = $this->db->query(
+            'SELECT id,name,identity FROM routers WHERE enabled=1 AND id=' . $selectedRouterId,
+        )->fetchAll();
 
         $this->page('Vendos', __DIR__ . '/views/index.php', [
             'message' => $message,
@@ -81,13 +70,21 @@ final class Controller extends FeatureController
         ]);
     }
 
-    private function toggleDebug(RouterAccess $access, int $userId, bool $platformOwner): string
-    {
+    private function toggleDebug(
+        RouterAccess $access,
+        int $userId,
+        bool $platformOwner,
+        int $selectedRouterId,
+    ): string {
         $id = max(0, (int) ($_POST['id'] ?? 0));
         $enabled = (string) ($_POST['debug_enabled'] ?? '0') === '1';
 
         $vendo = $this->findVendo($id);
-        if (!$vendo || !$access->canManage((int) $vendo['router_id'], $userId, $platformOwner)) {
+        if (
+            !$vendo
+            || (int) $vendo['router_id'] !== $selectedRouterId
+            || !$access->canManage((int) $vendo['router_id'], $userId, $platformOwner)
+        ) {
             return '<div class="alert">Vendo not found or access denied.</div>';
         }
 
@@ -113,6 +110,7 @@ final class Controller extends FeatureController
         int $userId,
         bool $platformOwner,
         string $action,
+        int $selectedRouterId,
     ): string {
         $result = Input::fromRequest()->process([
             'name' => 'trim|required|string|max:160',
@@ -137,6 +135,9 @@ final class Controller extends FeatureController
         $subnet = trim((string) ($data['client_subnet'] ?? ''));
         $baseUrl = $this->normalizeBaseUrl((string) $data['base_url']);
 
+        if ($routerId !== $selectedRouterId) {
+            return '<div class="alert">Select the router before managing its vendos.</div>';
+        }
         if ($baseUrl === null) {
             return '<div class="alert">Vendo address must be a valid IP address, hostname, or http:// / https:// URL.</div>';
         }
@@ -163,7 +164,11 @@ final class Controller extends FeatureController
             if ($action === 'update') {
                 $id = max(0, (int) ($_POST['id'] ?? 0));
                 $existing = $this->findVendo($id);
-                if (!$existing || !$access->canManage((int) $existing['router_id'], $userId, $platformOwner)) {
+                if (
+                    !$existing
+                    || (int) $existing['router_id'] !== $selectedRouterId
+                    || !$access->canManage((int) $existing['router_id'], $userId, $platformOwner)
+                ) {
                     throw new RuntimeException('Vendo not found or access denied.');
                 }
 
