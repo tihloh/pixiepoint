@@ -2,11 +2,11 @@
 /** @var string $message */
 /** @var array $vendos */
 /** @var array $routers */
+/** @var string $routerBusinessName */
 /** @var bool $canManageVendos */
 /** @var string $csrf */
 ?>
 
-<!-- Page heading and primary action. -->
 <div class="heading">
     <div>
         <h1>Vendos</h1>
@@ -30,12 +30,11 @@
 
 <?= $message ?>
 
-<!-- Existing vendo/controller mappings. -->
 <section class="panel">
     <h2>Configured vendos</h2>
     <p class="muted">
-        Server IP is the primary identifier. Client subnet is an optional alternative,
-        while interface is used as a secondary discriminator.
+        Wi-Fi name inherits the selected router's effective name when its template is blank.
+        Router name: <strong><?= e($routerBusinessName) ?></strong>
     </p>
 
     <div class="table-responsive">
@@ -43,6 +42,7 @@
             <thead>
                 <tr>
                     <th>Name</th>
+                    <th>Wi-Fi name</th>
                     <th>Router</th>
                     <th>Server IP</th>
                     <th>Client subnet</th>
@@ -62,6 +62,12 @@
                             <?php if (!empty($v['debug_enabled'])): ?>
                                 <div class="small text-warning">Debug enabled</div>
                             <?php endif; ?>
+                        </td>
+                        <td>
+                            <strong><?= e($v['business_name']) ?></strong>
+                            <div class="small text-body-secondary">
+                                <?= e($v['business_name_template'] ?: 'Inherited') ?>
+                            </div>
                         </td>
                         <td>
                             <?= e($v['router_name']) ?>
@@ -84,7 +90,6 @@
                         <?php if ($canManageVendos): ?>
                             <td class="text-end">
                                 <div class="d-inline-flex gap-1">
-                                    <!-- Debug can be toggled without opening the edit form. -->
                                     <form method="post" class="d-inline">
                                         <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
                                         <input type="hidden" name="action" value="toggle_debug">
@@ -104,7 +109,6 @@
                                         </button>
                                     </form>
 
-                                    <!-- Dataset values populate the shared Add/Edit modal below. -->
                                     <button
                                         class="btn btn-sm btn-outline-secondary"
                                         type="button"
@@ -113,6 +117,7 @@
                                         data-mode="edit"
                                         data-id="<?= e($v['id']) ?>"
                                         data-name="<?= e($v['name']) ?>"
+                                        data-business-name-template="<?= e($v['business_name_template'] ?? '') ?>"
                                         data-router="<?= e($v['router_id']) ?>"
                                         data-url="<?= e(
                                             preg_replace('~^https?://~i', '', $v['base_url']),
@@ -135,7 +140,7 @@
 
                 <?php if (!$vendos): ?>
                     <tr>
-                        <td colspan="<?= $canManageVendos ? 8 : 7 ?>" class="empty">
+                        <td colspan="<?= $canManageVendos ? 9 : 8 ?>" class="empty">
                             No vendos configured. Use Add vendo to link your first coin-slot controller.
                         </td>
                     </tr>
@@ -146,7 +151,6 @@
 </section>
 
 <?php if ($canManageVendos): ?>
-    <!-- One modal is reused for both creating and editing a vendo. -->
     <div
         class="modal fade"
         id="vendoModal"
@@ -198,6 +202,18 @@
                                 </select>
                                 <small class="text-body-secondary">
                                     Limits identification to this RouterOS identity.
+                                </small>
+                            </div>
+
+                            <div class="col-12">
+                                <label>Business / Wi-Fi name template</label>
+                                <input
+                                    name="business_name_template"
+                                    maxlength="255"
+                                    placeholder="Leave blank to inherit: {parent} - Main"
+                                >
+                                <small class="text-body-secondary">
+                                    Blank inherits the router's effective name. Use <code>{parent}</code> to extend it.
                                 </small>
                             </div>
 
@@ -269,9 +285,7 @@
                                         value="1"
                                         id="vendo-charging"
                                     >
-                                    <label class="form-check-label" for="vendo-charging">
-                                        Phone charging
-                                    </label>
+                                    <label class="form-check-label" for="vendo-charging">Phone charging</label>
                                 </div>
                             </div>
 
@@ -319,7 +333,6 @@
     </div>
 
     <script>
-        // Populate the shared modal from the Edit button's data attributes.
         document.getElementById('vendoModal').addEventListener('show.bs.modal', function (event) {
             const button = event.relatedTarget;
             const isEdit = button && button.dataset.mode === 'edit';
@@ -330,6 +343,9 @@
             form.querySelector('[name="action"]').value = isEdit ? 'update' : 'create';
             form.querySelector('[name="id"]').value = isEdit ? button.dataset.id : '0';
             form.querySelector('[name="name"]').value = isEdit ? button.dataset.name : '';
+            form.querySelector('[name="business_name_template"]').value = isEdit
+                ? button.dataset.businessNameTemplate
+                : '';
             form.querySelector('[name="router_id"]').value = isEdit ? button.dataset.router : '';
             form.querySelector('[name="server_ip"]').value = isEdit ? button.dataset.serverIp : '';
             form.querySelector('[name="client_subnet"]').value = isEdit ? button.dataset.subnet : '';
@@ -340,7 +356,6 @@
             form.querySelector('[name="password_mode"]').value = isEdit
                 ? button.dataset.passwordMode
                 : 'blank';
-
             form.querySelector('[name="charging_enabled"]').checked =
                 isEdit && button.dataset.charging === '1';
             form.querySelector('[name="eload_enabled"]').checked =
@@ -349,7 +364,6 @@
                 ? button.dataset.enabled === '1'
                 : true;
 
-            // Enabled/disabled is only meaningful when editing an existing vendo.
             document.getElementById('vendo-enabled-wrap').hidden = !isEdit;
             document.getElementById('vendoModalTitle').textContent = isEdit
                 ? 'Edit vendo'
