@@ -29,7 +29,6 @@ use PixiePoint\App\Controllers\HotspotController;
 use PixiePoint\App\Models\Router as RouterModel;
 use PixiePoint\App\Profile\Controller as ProfileController;
 use PixiePoint\App\Services\AuthContext;
-use PixiePoint\App\Services\BusinessName;
 use PixiePoint\App\Services\DeviceIdentity;
 use PixiePoint\App\Services\GoogleOAuth;
 use PixiePoint\App\Services\NetworkDeviceIdentity;
@@ -60,7 +59,6 @@ final class Application
         $devices = new DeviceIdentity($app->db);
         $networkDevices = new NetworkDeviceIdentity($app->db);
         $points = new PointWallet($app->db);
-        $businessNames = new BusinessName($app->db);
         $logs = $prefab['logs'];
         $routes = $prefab['routes'];
         $vendoApi = new VendoApi($app->db);
@@ -87,7 +85,6 @@ final class Application
                 $view,
                 $prefab['users'],
                 $avatars,
-                $businessNames,
             ),
             'hotspot' => new HotspotController(
                 $app->db,
