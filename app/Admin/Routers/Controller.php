@@ -158,7 +158,15 @@ final class Controller extends FeatureController
         $metricQueries = [
             'vendos' => ['Vendos', 'vendos', 'SELECT COUNT(*) FROM vendos WHERE router_id=?'],
             'vouchers' => ['Vouchers', 'vouchers', 'SELECT COUNT(*) FROM vouchers WHERE router_id=?'],
-            'devices' => ['Devices', 'devices', 'SELECT COUNT(*) FROM devices WHERE router_id=?'],
+            'devices' => [
+                'Devices',
+                'devices',
+                'SELECT COUNT(DISTINCT device_id) FROM (
+                    SELECT device_id FROM sessions WHERE router_id=? AND device_id IS NOT NULL
+                    UNION
+                    SELECT device_id FROM router_login_events WHERE router_id=? AND device_id IS NOT NULL
+                ) router_devices',
+            ],
             'sessions' => ['Sessions', 'sessions', 'SELECT COUNT(*) FROM sessions WHERE router_id=?'],
             'sales' => [
                 'Sales today',
@@ -173,7 +181,7 @@ final class Controller extends FeatureController
             }
 
             $stmt = $this->db->prepare($sql);
-            $stmt->execute([$routerId]);
+            $stmt->execute(substr_count($sql, '?') === 2 ? [$routerId, $routerId] : [$routerId]);
             $metrics[$key] = ['label' => $label, 'value' => $stmt->fetchColumn()];
         }
 
