@@ -66,6 +66,12 @@ final class Controller extends FeatureController
                             throw new RuntimeException('Voucher code is required when editing.');
                         }
 
+                        $check = $this->db->prepare('SELECT id FROM vouchers WHERE id=? AND router_id=? LIMIT 1');
+                        $check->execute([$id, $routerId]);
+                        if (!$check->fetchColumn()) {
+                            throw new RuntimeException('Voucher not found or does not belong to the selected router.');
+                        }
+
                         $stmt = $this->db->prepare(
                             'UPDATE vouchers
                              SET code=?,label=?,duration_minutes=?,data_limit_mb=?,max_devices=?,max_uses=?,expires_at=?,enabled=?
@@ -83,10 +89,6 @@ final class Controller extends FeatureController
                             $id,
                             $routerId,
                         ]);
-
-                        if ($stmt->rowCount() < 1) {
-                            throw new RuntimeException('Voucher not found or does not belong to the selected router.');
-                        }
 
                         $this->audit(
                             'voucher.updated',
