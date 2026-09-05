@@ -10,7 +10,7 @@
 }
 
 .pixie-sidebar .offcanvas-body {
-  min-height: 100%;
+  min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
 }
@@ -73,10 +73,13 @@ main .empty { color: var(--bs-secondary-color); text-align: center; }
     top: 0;
     align-self: flex-start;
     height: 100vh;
+    min-height: 100vh;
+    overflow: hidden;
   }
 
   .pixie-sidebar .offcanvas-body {
-    height: 100vh;
+    height: 100%;
+    min-height: 0;
   }
 
   .pixie-content {
