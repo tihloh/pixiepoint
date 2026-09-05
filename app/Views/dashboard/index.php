@@ -114,24 +114,32 @@ $isRouterOwner = ($user['platform_role'] ?? 'member') === 'pisowifi_owner';
     </div>
 
     <script>
-        const copyRouterRegistration = document.querySelector('[data-copy-router-registration]');
+        const initRouterRegistrationModal = () => {
+            const copyRouterRegistration = document.querySelector('[data-copy-router-registration]');
 
-        copyRouterRegistration?.addEventListener('click', async function () {
-            const command = document.getElementById('router-registration-command').value;
+            copyRouterRegistration?.addEventListener('click', async function () {
+                const command = document.getElementById('router-registration-command').value;
 
-            await navigator.clipboard.writeText(command);
-            this.textContent = 'Copied';
+                await navigator.clipboard.writeText(command);
+                this.textContent = 'Copied';
 
-            setTimeout(() => {
-                this.textContent = 'Copy command';
-            }, 1200);
-        });
+                setTimeout(() => {
+                    this.textContent = 'Copy command';
+                }, 1200);
+            });
 
-        if (new URLSearchParams(window.location.search).get('register') === '1') {
-            const modal = document.getElementById('register-router-modal');
-            if (modal) {
-                bootstrap.Modal.getOrCreateInstance(modal).show();
+            if (new URLSearchParams(window.location.search).get('register') === '1') {
+                const modal = document.getElementById('register-router-modal');
+                if (modal && window.bootstrap?.Modal) {
+                    window.bootstrap.Modal.getOrCreateInstance(modal).show();
+                }
             }
+        };
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initRouterRegistrationModal, {once: true});
+        } else {
+            initRouterRegistrationModal();
         }
     </script>
 <?php endif; ?>
