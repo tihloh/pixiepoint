@@ -24,6 +24,20 @@ return static function (RouteManager $routes, array $c): void {
         ->middleware('prefab.access');
 
     $routes
+        ->get('/admin/routers/{id}/settings', [$c['admin.routers'], 'settings'])
+        ->name('admin.routers.settings')
+        ->auth()
+        ->permission('routers.manage')
+        ->middleware('prefab.access');
+
+    $routes
+        ->post('/admin/routers/{id}/settings', [$c['admin.routers'], 'settings'])
+        ->name('admin.routers.settings.save')
+        ->auth()
+        ->permission('routers.manage')
+        ->middleware('prefab.access');
+
+    $routes
         ->get('/admin/routers/{id}', [$c['admin.routers'], 'dashboard'])
         ->name('admin.routers.dashboard')
         ->auth()
