@@ -7,7 +7,7 @@
 /** @var string $cssVersion */
 $path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
 $active = static fn (string $href): string => $path === $href || ($href !== '/dashboard' && str_starts_with($path, $href . '/')) ? ' active' : '';
-$sidebarUser = $dashboard ? ($this->auth->user() ?? []) : [];
+$sidebarUser = $dashboard ? (is_array($GLOBALS['pixiepoint_sidebar_user'] ?? null) ? $GLOBALS['pixiepoint_sidebar_user'] : []) : [];
 $sidebarName = trim((string) ($sidebarUser['name'] ?? '')) ?: 'User';
 $sidebarRole = match ((string) ($sidebarUser['platform_role'] ?? 'member')) {
     'platform_owner' => 'Platform owner',
