@@ -27,7 +27,7 @@
             <a class="btn btn-outline-secondary" href="/admin/routers/<?= e($router['id']) ?>/team">Team</a>
         <?php endif; ?>
         <?php if ($canManageRouters): ?>
-            <a class="btn btn-outline-secondary" href="/admin/routers">Router settings</a>
+            <a class="btn btn-outline-secondary" href="/admin/routers/<?= e($router['id']) ?>/settings">Router settings</a>
         <?php endif; ?>
     </div>
 </div>
