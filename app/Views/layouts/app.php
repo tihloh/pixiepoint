@@ -45,25 +45,30 @@ $sidebarInitial = strtoupper(substr($sidebarName, 0, 1));
                 <a class="d-none d-lg-flex flex-column align-items-center text-decoration-none text-body fw-bold mb-4 px-2 pixie-brand" href="/dashboard"><span class="logo pixie-brand-logo">P</span><span class="mt-2"><?= $name ?></span></a>
 
                 <nav class="nav nav-pills flex-column gap-1">
-                    <?php if (($access['routers'] ?? false) || ($access['vendos'] ?? false) || ($access['vouchers'] ?? false)): ?>
-                        <div class="nav-group-label mt-3">Wi-Fi</div>
+                    <?php if (($access['routers'] ?? false) || ($access['vendos'] ?? false) || ($access['vouchers'] ?? false) || ($access['devices'] ?? false) || ($access['sessions'] ?? false)): ?>
+                        <div class="nav-group-label mt-3">Network</div>
                         <?php if ($access['routers'] ?? false): ?><a class="nav-link<?= $active('/admin/routers') ?>" href="/admin/routers">Routers</a><?php endif; ?>
                         <?php if ($access['vendos'] ?? false): ?><a class="nav-link<?= $active('/admin/vendos') ?>" href="/admin/vendos">Vendos</a><?php endif; ?>
                         <?php if ($access['vouchers'] ?? false): ?><a class="nav-link<?= $active('/admin/vouchers') ?>" href="/admin/vouchers">Vouchers</a><?php endif; ?>
+                        <?php if ($access['devices'] ?? false): ?><a class="nav-link<?= $active('/admin/devices') ?>" href="/admin/devices">Devices</a><?php endif; ?>
+                        <?php if ($access['sessions'] ?? false): ?><a class="nav-link<?= $active('/admin/sessions') ?>" href="/admin/sessions">Sessions</a><?php endif; ?>
                     <?php endif; ?>
 
-                    <?php if (($access['users'] ?? false) || ($access['groups'] ?? false) || ($access['devices'] ?? false)): ?>
-                        <div class="nav-group-label mt-3">Access</div>
+                    <?php if ($access['sales'] ?? false): ?>
+                        <div class="nav-group-label mt-3">Sales</div>
+                        <a class="nav-link<?= $active('/admin/sales') ?>" href="/admin/sales">Sales</a>
+                    <?php endif; ?>
+
+                    <?php if (($access['users'] ?? false) || ($access['groups'] ?? false) || ($access['permissions'] ?? false)): ?>
+                        <div class="nav-group-label mt-3">Users &amp; Access</div>
                         <?php if ($access['users'] ?? false): ?><a class="nav-link<?= $active('/admin/users') ?>" href="/admin/users">Users</a><?php endif; ?>
                         <?php if ($access['groups'] ?? false): ?><a class="nav-link<?= $active('/admin/groups') ?>" href="/admin/groups">Groups</a><?php endif; ?>
-                        <?php if ($access['devices'] ?? false): ?><a class="nav-link<?= $active('/admin/devices') ?>" href="/admin/devices">Devices</a><?php endif; ?>
+                        <?php if ($access['permissions'] ?? false): ?><a class="nav-link<?= $active('/admin/permissions') ?>" href="/admin/permissions">Permissions</a><?php endif; ?>
                     <?php endif; ?>
 
-                    <?php if (($access['sessions'] ?? false) || ($access['sales'] ?? false) || ($access['logs'] ?? false)): ?>
-                        <div class="nav-group-label mt-3">Activity</div>
-                        <?php if ($access['sessions'] ?? false): ?><a class="nav-link<?= $active('/admin/sessions') ?>" href="/admin/sessions">Sessions</a><?php endif; ?>
-                        <?php if ($access['sales'] ?? false): ?><a class="nav-link<?= $active('/admin/sales') ?>" href="/admin/sales">Sales</a><?php endif; ?>
-                        <?php if ($access['logs'] ?? false): ?><a class="nav-link<?= $active('/admin/logs') ?>" href="/admin/logs">Logs</a><?php endif; ?>
+                    <?php if ($access['logs'] ?? false): ?>
+                        <div class="nav-group-label mt-3">System</div>
+                        <a class="nav-link<?= $active('/admin/logs') ?>" href="/admin/logs">Logs</a>
                     <?php endif; ?>
                 </nav>
 
