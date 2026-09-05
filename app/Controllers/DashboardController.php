@@ -32,6 +32,10 @@ final class DashboardController
     public function index(): never
     {
         $user = $this->auth->requireAccount();
+
+        // Dashboard is the global level. Clear the entire lower selection context.
+        unset($_SESSION['pixiepoint_selected_router_id'], $_SESSION['pixiepoint_selected_vendo_id']);
+
         $userId = (int) $user['id'];
         $platformOwner = $this->auth->isPlatformOwner();
         $routerIds = $this->accessibleRouterIds($userId, $platformOwner);
