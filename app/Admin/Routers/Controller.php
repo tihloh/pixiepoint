@@ -22,13 +22,33 @@ final class Controller extends FeatureController
         $message = (string) ($_SESSION['admin_flash'] ?? '');
         unset($_SESSION['admin_flash']);
 
+        $selectId = max(0, (int) ($_GET['select'] ?? 0));
+        if ($selectId > 0) {
+            if (!$access->canView($selectId, $userId, $platformOwner)) {
+                $_SESSION['admin_flash'] = '<div class="alert">Router not found or access denied.</div>';
+                redirect('/admin/routers');
+            }
+
+            $stmt = $this->db->prepare('SELECT id FROM routers WHERE id=? AND enabled=1 LIMIT 1');
+            $stmt->execute([$selectId]);
+            if (!$stmt->fetchColumn()) {
+                $_SESSION['admin_flash'] = '<div class="alert">Router is unavailable.</div>';
+                redirect('/admin/routers');
+            }
+
+            $_SESSION['pixiepoint_selected_router_id'] = $selectId;
+
+            $return = (string) ($_GET['return'] ?? '/admin/vendos');
+            if ($return === '' || !str_starts_with($return, '/') || !preg_match('#^/(?:admin|dashboard)(?:/|$)#', $return)) {
+                $return = '/admin/vendos';
+            }
+            redirect($return);
+        }
+
         if ($this->isPost()) {
             require_csrf();
             $action = (string) ($_POST['action'] ?? '');
 
-            // Router creation is intentionally not available from the web UI.
-            // A MikroTik must claim itself through the account-specific RouterOS
-            // registration command shown on the dashboard.
             if ($action !== 'update') {
                 $_SESSION['admin_flash'] = '<div class="alert">Register new routers from the RouterOS Terminal command on your dashboard.</div>';
                 redirect('/admin/routers');
@@ -52,8 +72,6 @@ final class Controller extends FeatureController
                         throw new RuntimeException('Router not found or access denied.');
                     }
 
-                    // RouterOS identity is immutable in the web UI. It is the
-                    // unique identity that was proven during RouterOS registration.
                     $stmt = $this->db->prepare(
                         'UPDATE routers SET name=?,public_host=?,location=?,enabled=? WHERE id=?',
                     );
