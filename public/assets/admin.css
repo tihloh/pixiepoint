@@ -22,6 +22,40 @@
 }
 
 .pixie-brand { line-height: 1.15; }
+
+.pixie-user-card {
+  border: 1px solid transparent;
+  background: rgba(255,255,255,.035);
+  transition: background-color .15s ease, border-color .15s ease;
+}
+
+.pixie-user-card:hover,
+.pixie-user-card.active {
+  color: var(--bs-body-color) !important;
+  background: rgba(var(--bs-primary-rgb), .10);
+  border-color: rgba(var(--bs-primary-rgb), .18);
+}
+
+.pixie-user-avatar {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  object-fit: cover;
+  border-radius: 50%;
+  background: rgba(var(--bs-primary-rgb), .16);
+  border: 1px solid var(--pixie-line);
+}
+
+.pixie-user-avatar-fallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 700;
+}
+
+.pixie-user-card .text-body-secondary { font-size: .76rem; }
+
 .pixie-sidebar .nav-link {
   color: var(--bs-secondary-color);
   padding-block: clamp(.3rem, 1.1vh, .6rem);
