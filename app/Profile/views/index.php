@@ -1,5 +1,6 @@
 <?php
 /** @var array $user */
+/** @var string $businessName */
 /** @var string $message */
 /** @var string $csrf */
 ?>
@@ -61,7 +62,7 @@
                         >
                     </div>
 
-                    <div class="mb-4">
+                    <div class="mb-3">
                         <label class="form-label" for="profile-email">Email</label>
                         <input
                             class="form-control"
@@ -73,8 +74,26 @@
                         >
                     </div>
 
-                    <div class="d-flex justify-content-end pt-3 border-top">
-                        <button class="button" type="submit">Save Profile</button>
+                    <div class="mb-4">
+                        <label class="form-label" for="profile-business-name">Business / Wi-Fi name</label>
+                        <input
+                            class="form-control"
+                            id="profile-business-name"
+                            name="business_name_template"
+                            value="<?= e($user['business_name_template'] ?? '') ?>"
+                            maxlength="255"
+                            placeholder="Example: Juan's Wi-Fi"
+                        >
+                        <div class="form-text">
+                            Owner-level name. Router and Vendo names inherit this when their own template is blank.
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center gap-3 pt-3 border-top">
+                        <div class="small text-body-secondary text-truncate">
+                            Effective name: <strong><?= e($businessName) ?></strong>
+                        </div>
+                        <button class="button flex-shrink-0" type="submit">Save Profile</button>
                     </div>
                 </form>
             </div>
