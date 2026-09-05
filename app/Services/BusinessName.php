@@ -8,6 +8,8 @@ use PDO;
 
 final class BusinessName
 {
+    private static bool $schemaReady = false;
+
     public function __construct(private PDO $db)
     {
         $this->ensureSchema();
@@ -79,6 +81,10 @@ final class BusinessName
 
     private function ensureSchema(): void
     {
+        if (self::$schemaReady) {
+            return;
+        }
+
         $this->db->exec(
             "ALTER TABLE users ADD COLUMN IF NOT EXISTS business_name_template VARCHAR(255) NULL AFTER points",
         );
@@ -88,5 +94,7 @@ final class BusinessName
         $this->db->exec(
             "ALTER TABLE vendos ADD COLUMN IF NOT EXISTS business_name_template VARCHAR(255) NULL AFTER name",
         );
+
+        self::$schemaReady = true;
     }
 }
