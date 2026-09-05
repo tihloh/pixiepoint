@@ -71,7 +71,7 @@ final class Controller extends FeatureController
                     }
 
                     $stmt = $this->db->prepare(
-                        'UPDATE routers SET name=?,public_host=?,location=?,business_name_template=?,enabled=? WHERE id=?',
+                        'UPDATE routers SET name=?,public_host=?,location=?,business_name=?,enabled=? WHERE id=?',
                     );
                     $stmt->execute([
                         $data['name'],
@@ -179,7 +179,7 @@ final class Controller extends FeatureController
 
                 try {
                     $stmt = $this->db->prepare(
-                        'UPDATE routers SET name=?,public_host=?,location=?,business_name_template=?,enabled=? WHERE id=?',
+                        'UPDATE routers SET name=?,public_host=?,location=?,business_name=?,enabled=? WHERE id=?',
                     );
                     $stmt->execute([
                         $data['name'],
