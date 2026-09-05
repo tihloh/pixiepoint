@@ -6,6 +6,7 @@ namespace PixiePoint\App\Admin\Vendos;
 
 use PixiePoint\App\Admin\Shared\FeatureController;
 use PixiePoint\App\Admin\Shared\RouterAccess;
+use PixiePoint\App\Services\BusinessName;
 use RuntimeException;
 use Throwable;
 use Tihloh\Prefab\Input\Input;
@@ -18,6 +19,7 @@ final class Controller extends FeatureController
         $userId = (int) $user['id'];
         $platformOwner = $this->auth->isPlatformOwner();
         $access = new RouterAccess($this->db);
+        $businessNames = new BusinessName($this->db);
 
         $message = (string) ($_SESSION['admin_flash'] ?? '');
         unset($_SESSION['admin_flash']);
@@ -55,15 +57,22 @@ final class Controller extends FeatureController
         );
         $stmt->execute([$selectedRouterId]);
         $vendos = $stmt->fetchAll();
+        foreach ($vendos as &$vendo) {
+            $vendo['business_name'] = $businessNames->vendo((int) $vendo['id']);
+        }
+        unset($vendo);
 
         $routers = $this->db->query(
             'SELECT id,name,identity FROM routers WHERE enabled=1 AND id=' . $selectedRouterId,
         )->fetchAll();
 
+        $routerBusinessName = $businessNames->router($selectedRouterId);
+
         $this->page('Vendos', __DIR__ . '/views/index.php', [
             'message' => $message,
             'vendos' => $vendos,
             'routers' => $routers,
+            'routerBusinessName' => $routerBusinessName,
             'canManageVendos' => $this->auth->can('vendos.manage'),
             'isPlatformOwner' => $platformOwner,
             'csrf' => csrf_token(),
@@ -114,6 +123,7 @@ final class Controller extends FeatureController
     ): string {
         $result = Input::fromRequest()->process([
             'name' => 'trim|required|string|max:160',
+            'business_name_template' => 'trim|null_if_empty|nullable|string|max:255',
             'router_id' => 'required|integer|min:1',
             'base_url' => 'trim|required|string|max:255',
             'server_ip' => 'trim|required|string|max:45',
@@ -174,12 +184,13 @@ final class Controller extends FeatureController
 
                 $stmt = $this->db->prepare(
                     'UPDATE vendos
-                     SET router_id=?,name=?,base_url=?,server_ip=?,client_subnet=?,interface_name=?,password_mode=?,charging_enabled=?,eload_enabled=?,enabled=?
+                     SET router_id=?,name=?,business_name_template=?,base_url=?,server_ip=?,client_subnet=?,interface_name=?,password_mode=?,charging_enabled=?,eload_enabled=?,enabled=?
                      WHERE id=?',
                 );
                 $stmt->execute([
                     $routerId,
                     $data['name'],
+                    $data['business_name_template'] ?? null,
                     $baseUrl,
                     $serverIp,
                     $subnet ?: null,
@@ -203,12 +214,13 @@ final class Controller extends FeatureController
             }
 
             $stmt = $this->db->prepare(
-                'INSERT INTO vendos(owner_user_id,router_id,name,base_url,server_ip,client_subnet,interface_name,password_mode,charging_enabled,eload_enabled)
-                 VALUES(NULL,?,?,?,?,?,?,?,?,?)',
+                'INSERT INTO vendos(owner_user_id,router_id,name,business_name_template,base_url,server_ip,client_subnet,interface_name,password_mode,charging_enabled,eload_enabled)
+                 VALUES(NULL,?,?,?,?,?,?,?,?,?,?)',
             );
             $stmt->execute([
                 $routerId,
                 $data['name'],
+                $data['business_name_template'] ?? null,
                 $baseUrl,
                 $serverIp,
                 $subnet ?: null,
