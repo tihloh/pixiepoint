@@ -24,7 +24,7 @@
         <table class="table align-middle">
             <thead>
                 <tr>
-                    <th>Router</th>
+                    <th>Router / Wi-Fi name</th>
                     <th>Identity</th>
                     <th>Address</th>
                     <?php if ($canManageRouters): ?>
@@ -152,8 +152,11 @@
 
                         <div class="form-grid">
                             <div class="field">
-                                <label for="router-name">Display name</label>
+                                <label for="router-name">Router / Wi-Fi name</label>
                                 <input id="router-name" name="name" required>
+                                <small class="text-body-secondary">
+                                    Used as the router display name and top-level Wi-Fi/business name.
+                                </small>
                             </div>
 
                             <div class="field">
