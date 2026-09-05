@@ -55,7 +55,7 @@ final class AgentController
             :local ackBase ($baseUrl . "/api/router/ack/" . $token . "/" . $commandId . "/")
 
             /system script remove [find name=$scriptName]
-            /system script add name=$scriptName source=$command
+            /system script add name=$scriptName source=$command policy=ftp,read,write,test
 
             :do {
                 /system script run $scriptName
