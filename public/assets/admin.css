@@ -3,7 +3,9 @@
   --bs-offcanvas-width: 260px;
   width: 260px;
   flex: 0 0 260px;
-  background: #07111f;
+  background:
+    linear-gradient(180deg, rgba(124, 92, 255, 0.08), transparent 180px),
+    #07111f;
   border-color: var(--pixie-line) !important;
 }
 
