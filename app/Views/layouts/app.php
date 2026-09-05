@@ -51,37 +51,35 @@ $sidebarReturn = preg_match('#^/(?:admin|dashboard)(?:/|$)#', $path) ? $path : '
                     <?php if ($access['routers'] ?? false): ?>
                         <div class="nav-group-label mt-3">Network</div>
 
-                        <?php if ($sidebarRouters): ?>
-                            <form method="get" action="/admin/routers" class="px-2 pt-1 pb-2" id="sidebar-router-form">
-                                <input type="hidden" name="return" value="<?= e($sidebarReturn) ?>">
-                                <label class="visually-hidden" for="sidebar-router-select">Select router</label>
-                                <select class="form-select form-select-sm" id="sidebar-router-select" name="select" onchange="this.form.submit()">
-                                    <?php foreach ($sidebarRouters as $router): ?>
-                                        <option value="<?= e($router['id']) ?>" <?= $selectedRouter && (int) $selectedRouter['id'] === (int) $router['id'] ? 'selected' : '' ?>>
-                                            <?= e($router['name']) ?> · <?= e($router['identity']) ?>
-                                        </option>
-                                    <?php endforeach; ?>
-                                    <option value="__add__">＋ Add new router</option>
-                                </select>
-                                <?php if ($selectedRouter): ?>
-                                    <div class="small text-body-secondary mt-1 text-truncate" title="<?= e($selectedRouter['identity']) ?>">
-                                        <?= e($selectedRouter['identity']) ?>
-                                    </div>
-                                <?php endif; ?>
-                            </form>
-
+                        <form method="get" action="/admin/routers" class="px-2 pt-1 pb-2" id="sidebar-router-form">
+                            <input type="hidden" name="return" value="<?= e($sidebarReturn) ?>">
+                            <label class="visually-hidden" for="sidebar-router-select">Select router</label>
+                            <select class="form-select form-select-sm" id="sidebar-router-select" name="select" onchange="this.form.submit()">
+                                <?php foreach ($sidebarRouters as $router): ?>
+                                    <option value="<?= e($router['id']) ?>" <?= $selectedRouter && (int) $selectedRouter['id'] === (int) $router['id'] ? 'selected' : '' ?>>
+                                        <?= e($router['name']) ?> · <?= e($router['identity']) ?>
+                                    </option>
+                                <?php endforeach; ?>
+                                <option value="__add__">＋ Add new router</option>
+                            </select>
                             <?php if ($selectedRouter): ?>
-                                <div class="nav-group-label mt-2">Management</div>
-                                <?php if ($access['vendos'] ?? false): ?><a class="nav-link<?= $active('/admin/vendos') ?>" href="/admin/vendos">Vendos</a><?php endif; ?>
-                                <?php if ($access['vouchers'] ?? false): ?><a class="nav-link<?= $active('/admin/vouchers') ?>" href="/admin/vouchers">Vouchers</a><?php endif; ?>
-                                <?php if ($access['devices'] ?? false): ?><a class="nav-link<?= $active('/admin/devices') ?>" href="/admin/devices">Devices</a><?php endif; ?>
-                                <?php if ($access['sessions'] ?? false): ?><a class="nav-link<?= $active('/admin/sessions') ?>" href="/admin/sessions">Sessions</a><?php endif; ?>
-                                <?php if ($access['sales'] ?? false): ?><a class="nav-link<?= $active('/admin/sales') ?>" href="/admin/sales">Sales</a><?php endif; ?>
-                            <?php else: ?>
-                                <div class="small text-body-secondary px-2 py-2">Select a router to access its Vendos, Vouchers, Devices, Sessions and Sales.</div>
+                                <div class="small text-body-secondary mt-1 text-truncate" title="<?= e($selectedRouter['identity']) ?>">
+                                    <?= e($selectedRouter['identity']) ?>
+                                </div>
                             <?php endif; ?>
+                        </form>
+
+                        <?php if ($selectedRouter): ?>
+                            <div class="nav-group-label mt-2">Management</div>
+                            <?php if ($access['vendos'] ?? false): ?><a class="nav-link<?= $active('/admin/vendos') ?>" href="/admin/vendos">Vendos</a><?php endif; ?>
+                            <?php if ($access['vouchers'] ?? false): ?><a class="nav-link<?= $active('/admin/vouchers') ?>" href="/admin/vouchers">Vouchers</a><?php endif; ?>
+                            <?php if ($access['devices'] ?? false): ?><a class="nav-link<?= $active('/admin/devices') ?>" href="/admin/devices">Devices</a><?php endif; ?>
+                            <?php if ($access['sessions'] ?? false): ?><a class="nav-link<?= $active('/admin/sessions') ?>" href="/admin/sessions">Sessions</a><?php endif; ?>
+                            <?php if ($access['sales'] ?? false): ?><a class="nav-link<?= $active('/admin/sales') ?>" href="/admin/sales">Sales</a><?php endif; ?>
                         <?php else: ?>
-                            <div class="small text-body-secondary px-2 py-2">No routers are assigned to your account.</div>
+                            <div class="small text-body-secondary px-2 py-2">
+                                <?= $sidebarRouters ? 'Select a router to access its Vendos, Vouchers, Devices, Sessions and Sales.' : 'No routers are assigned to your account.' ?>
+                            </div>
                         <?php endif; ?>
                     <?php endif; ?>
 
@@ -127,7 +125,7 @@ $sidebarReturn = preg_match('#^/(?:admin|dashboard)(?:/|$)#', $path) ? $path : '
 <?php else: ?>
     <main class="portal container-fluid"><?= $content ?></main>
 <?php endif; ?>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwxH9JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
 <script>
     const routerSelect = document.getElementById('sidebar-router-select');
     routerSelect?.addEventListener('change', function () {
