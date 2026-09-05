@@ -118,36 +118,8 @@ final class AuthContext
             unset($_SESSION['pixiepoint_selected_router_id'], $_SESSION['pixiepoint_selected_vendo_id']);
         }
 
-        $vendos = [];
-        $selectedVendo = null;
-        if ($selectedRouter) {
-            $stmt = $this->db->prepare(
-                'SELECT id,name,enabled
-                 FROM vendos
-                 WHERE router_id=?
-                 ORDER BY name',
-            );
-            $stmt->execute([(int) $selectedRouter['id']]);
-            $vendos = $stmt->fetchAll();
-
-            $selectedVendoId = max(0, (int) ($_SESSION['pixiepoint_selected_vendo_id'] ?? 0));
-            if ($selectedVendoId > 0) {
-                foreach ($vendos as $vendo) {
-                    if ((int) $vendo['id'] === $selectedVendoId) {
-                        $selectedVendo = $vendo;
-                        break;
-                    }
-                }
-            }
-            if (!$selectedVendo) {
-                unset($_SESSION['pixiepoint_selected_vendo_id']);
-            }
-        }
-
         $GLOBALS['pixiepoint_sidebar_routers'] = $routers;
         $GLOBALS['pixiepoint_selected_router'] = $selectedRouter;
-        $GLOBALS['pixiepoint_sidebar_vendos'] = $vendos;
-        $GLOBALS['pixiepoint_selected_vendo'] = $selectedVendo;
 
         return [
             'users' => $this->can('users.view'),
@@ -160,7 +132,6 @@ final class AuthContext
             'sales' => $this->can('sales.view'),
             'logs' => $this->can('logs.view'),
             'router_selected' => $selectedRouter !== null,
-            'vendo_selected' => $selectedVendo !== null,
         ];
     }
 
