@@ -1,12 +1,16 @@
 <?php
 /** @var array $summary */
 /** @var array $events */
+/** @var array $router */
 ?>
 
 <div class="heading">
     <div>
         <h1>Vendo sales</h1>
-        <p class="muted">Sales, extensions and points from your vendos.</p>
+        <p class="muted">
+            Sales, extensions and points from <strong><?= e($router['name']) ?></strong>
+            <span class="text-body-secondary">· <?= e($router['identity']) ?></span>
+        </p>
     </div>
 </div>
 
