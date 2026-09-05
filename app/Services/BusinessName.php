@@ -86,11 +86,10 @@ final class BusinessName
     private function ownerRouterId(int $userId): ?int
     {
         $stmt = $this->db->prepare(
-            "SELECT rm.router_id
-             FROM router_members rm
-             JOIN routers r ON r.id=rm.router_id
-             WHERE rm.user_id=? AND rm.role='owner' AND r.enabled=1
-             ORDER BY rm.router_id
+            "SELECT router_id
+             FROM router_members
+             WHERE user_id=? AND role='owner'
+             ORDER BY router_id
              LIMIT 1",
         );
         $stmt->execute([$userId]);
