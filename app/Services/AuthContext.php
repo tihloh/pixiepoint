@@ -121,7 +121,6 @@ final class AuthContext
         return [
             'users' => $this->can('users.view'),
             'groups' => $this->can('groups.manage'),
-            'permissions' => $this->can('permissions.manage'),
             'routers' => $this->can('routers.view') || $this->can('routers.manage'),
             'vendos' => $this->can('vendos.view') || $this->can('vendos.manage'),
             'vouchers' => $this->can('vouchers.view') || $this->can('vouchers.manage'),
