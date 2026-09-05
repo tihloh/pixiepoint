@@ -71,17 +71,16 @@
             </div>
 
             <div class="field" style="grid-column:1/-1">
-                <label for="router-business-name">Business / Wi-Fi name template</label>
+                <label for="router-business-name">Business / Wi-Fi name</label>
                 <input
                     id="router-business-name"
-                    name="business_name_template"
-                    value="<?= e($router['business_name_template'] ?? '') ?>"
+                    name="business_name"
+                    value="<?= e($router['business_name'] ?? '') ?>"
                     maxlength="255"
-                    placeholder="Leave blank to inherit: {parent} - Downtown"
+                    placeholder="Example: Juan's Wi-Fi"
                 >
                 <small class="text-body-secondary">
-                    Leave blank to inherit the owner's effective name. Use <code>{parent}</code> to extend it.
-                    Current effective name: <strong><?= e($router['business_name']) ?></strong>
+                    This is the top-level Wi-Fi/business name for this router. It can be the same on multiple routers.
                 </small>
             </div>
         </div>
