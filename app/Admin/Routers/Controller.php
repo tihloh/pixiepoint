@@ -274,7 +274,7 @@ final class Controller extends FeatureController
             'router' => $router,
             'metrics' => $metrics,
             'recentSessions' => $recentSessions,
-            'canManageRouters' => $this->auth->can('routers.manage'),
+            'canManageRouter' => $access->canManage($routerId, $userId, $platformOwner),
             'canManageTeam' => $access->canManageTeam($routerId, $userId, $platformOwner),
             'canViewSales' => $this->auth->can('sales.view'),
             'csrf' => csrf_token(),
