@@ -53,6 +53,7 @@ $sidebarReturn = preg_match('#^/(?:admin|dashboard)(?:/|$)#', $path) ? ($path . 
                 <nav class="nav nav-pills flex-column gap-1">
                     <div class="nav-group-label">Overview</div>
                     <a class="nav-link<?= $active('/dashboard') ?>" href="/dashboard">Dashboard</a>
+                    <?php if ($access['sales'] ?? false): ?><a class="nav-link<?= $active('/admin/sales') ?>" href="/admin/sales">Sales</a><?php endif; ?>
 
                     <?php if ($isOverview): ?>
                         <?php if ($access['routers'] ?? false): ?>
@@ -87,7 +88,6 @@ $sidebarReturn = preg_match('#^/(?:admin|dashboard)(?:/|$)#', $path) ? ($path . 
                             <?php if ($access['vouchers'] ?? false): ?><a class="nav-link<?= $active('/admin/vouchers') ?>" href="/admin/vouchers">Vouchers</a><?php endif; ?>
                             <?php if ($access['devices'] ?? false): ?><a class="nav-link<?= $active('/admin/devices') ?>" href="/admin/devices">Devices</a><?php endif; ?>
                             <?php if ($access['sessions'] ?? false): ?><a class="nav-link<?= $active('/admin/sessions') ?>" href="/admin/sessions">Sessions</a><?php endif; ?>
-                            <?php if ($access['sales'] ?? false): ?><a class="nav-link<?= $active('/admin/sales') ?>" href="/admin/sales">Sales</a><?php endif; ?>
                         <?php endif; ?>
                     <?php endif; ?>
 
