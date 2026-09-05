@@ -184,7 +184,7 @@ final class Controller extends FeatureController
 
                 $stmt = $this->db->prepare(
                     'UPDATE vendos
-                     SET router_id=?,name=?,business_name_template=?,base_url=?,server_ip=?,client_subnet=?,interface_name=?,password_mode=?,charging_enabled=?,eload_enabled=?,enabled=?
+                     SET router_id=?,name=?,business_name=?,base_url=?,server_ip=?,client_subnet=?,interface_name=?,password_mode=?,charging_enabled=?,eload_enabled=?,enabled=?
                      WHERE id=?',
                 );
                 $stmt->execute([
@@ -214,7 +214,7 @@ final class Controller extends FeatureController
             }
 
             $stmt = $this->db->prepare(
-                'INSERT INTO vendos(owner_user_id,router_id,name,business_name_template,base_url,server_ip,client_subnet,interface_name,password_mode,charging_enabled,eload_enabled)
+                'INSERT INTO vendos(owner_user_id,router_id,name,business_name,base_url,server_ip,client_subnet,interface_name,password_mode,charging_enabled,eload_enabled)
                  VALUES(NULL,?,?,?,?,?,?,?,?,?,?)',
             );
             $stmt->execute([
