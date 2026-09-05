@@ -26,6 +26,7 @@ final class Controller
     {
         $actor = $this->auth->requireAccount();
         $userId = (int) $actor['id'];
+        $canUseBusinessName = $this->auth->isPlatformOwner() || $this->businessNames->isCertifiedOwner($userId);
         $message = (string) ($_SESSION['profile_flash'] ?? '');
         unset($_SESSION['profile_flash']);
 
@@ -41,13 +42,22 @@ final class Controller
                 } else {
                     $name = trim((string) ($_POST['name'] ?? ''));
                     $email = strtolower(trim((string) ($_POST['email'] ?? '')));
-                    $businessNameTemplate = trim((string) ($_POST['business_name_template'] ?? ''));
 
                     if ($name === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
                         throw new RuntimeException('Enter a name and valid email address.');
                     }
-                    if (mb_strlen($businessNameTemplate) > 255) {
-                        throw new RuntimeException('Business name template is too long.');
+
+                    $data = [
+                        'name' => $name,
+                        'email' => $email,
+                    ];
+
+                    if ($canUseBusinessName) {
+                        $businessNameTemplate = trim((string) ($_POST['business_name_template'] ?? ''));
+                        if (mb_strlen($businessNameTemplate) > 255) {
+                            throw new RuntimeException('Business name template is too long.');
+                        }
+                        $data['business_name_template'] = $businessNameTemplate ?: null;
                     }
 
                     $existing = $this->users->findByEmail($email);
@@ -55,11 +65,7 @@ final class Controller
                         throw new RuntimeException('That email address is already in use.');
                     }
 
-                    $this->users->update($userId, [
-                        'name' => $name,
-                        'email' => $email,
-                        'business_name_template' => $businessNameTemplate ?: null,
-                    ], $this->context());
+                    $this->users->update($userId, $data, $this->context());
                 }
 
                 $_SESSION['profile_flash'] = '<div class="alert ok">Profile updated.</div>';
@@ -74,6 +80,7 @@ final class Controller
         $content = $this->view->renderFile(__DIR__ . '/views/index.php', [
             'user' => $user,
             'businessName' => $this->businessNames->owner($userId),
+            'canUseBusinessName' => $canUseBusinessName,
             'message' => $message,
             'csrf' => csrf_token(),
         ]);
