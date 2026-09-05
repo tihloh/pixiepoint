@@ -37,6 +37,7 @@ final class Controller extends FeatureController
             }
 
             $_SESSION['pixiepoint_selected_router_id'] = $selectId;
+            unset($_SESSION['pixiepoint_selected_vendo_id']);
             redirect('/admin/routers/' . $selectId);
         }
 
@@ -228,6 +229,7 @@ final class Controller extends FeatureController
         }
 
         $_SESSION['pixiepoint_selected_router_id'] = $routerId;
+        unset($_SESSION['pixiepoint_selected_vendo_id']);
 
         $metrics = [];
         $metricQueries = [
