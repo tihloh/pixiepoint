@@ -6,7 +6,6 @@ namespace PixiePoint\App\Profile;
 
 use PixiePoint\App\Admin\Users\AvatarService;
 use PixiePoint\App\Services\AuthContext;
-use PixiePoint\App\Services\BusinessName;
 use PixiePoint\App\Services\View;
 use RuntimeException;
 use Tihloh\Prefab\Users\Services\UserManager;
@@ -18,7 +17,6 @@ final class Controller
         private View $view,
         private UserManager $users,
         private AvatarService $avatars,
-        private BusinessName $businessNames,
     ) {
     }
 
@@ -26,7 +24,6 @@ final class Controller
     {
         $actor = $this->auth->requireAccount();
         $userId = (int) $actor['id'];
-        $canUseBusinessName = $this->auth->isPlatformOwner() || $this->businessNames->isCertifiedOwner($userId);
         $message = (string) ($_SESSION['profile_flash'] ?? '');
         unset($_SESSION['profile_flash']);
 
@@ -47,25 +44,15 @@ final class Controller
                         throw new RuntimeException('Enter a name and valid email address.');
                     }
 
-                    $data = [
-                        'name' => $name,
-                        'email' => $email,
-                    ];
-
-                    if ($canUseBusinessName) {
-                        $businessNameTemplate = trim((string) ($_POST['business_name_template'] ?? ''));
-                        if (mb_strlen($businessNameTemplate) > 255) {
-                            throw new RuntimeException('Business name template is too long.');
-                        }
-                        $data['business_name_template'] = $businessNameTemplate ?: null;
-                    }
-
                     $existing = $this->users->findByEmail($email);
                     if ($existing && (int) $existing->id !== $userId) {
                         throw new RuntimeException('That email address is already in use.');
                     }
 
-                    $this->users->update($userId, $data, $this->context());
+                    $this->users->update($userId, [
+                        'name' => $name,
+                        'email' => $email,
+                    ], $this->context());
                 }
 
                 $_SESSION['profile_flash'] = '<div class="alert ok">Profile updated.</div>';
@@ -79,8 +66,6 @@ final class Controller
         $user = $this->users->find($userId)?->toArray() ?? [];
         $content = $this->view->renderFile(__DIR__ . '/views/index.php', [
             'user' => $user,
-            'businessName' => $this->businessNames->owner($userId),
-            'canUseBusinessName' => $canUseBusinessName,
             'message' => $message,
             'csrf' => csrf_token(),
         ]);
