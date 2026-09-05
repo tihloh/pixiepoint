@@ -90,7 +90,7 @@ final class AuthContext
             $userId = (int) ($user['id'] ?? 0);
             if (($user['platform_role'] ?? '') === 'platform_owner') {
                 $routers = $this->db->query(
-                    'SELECT id,name,identity FROM routers WHERE enabled=1 ORDER BY name'
+                    'SELECT id,name,identity FROM routers WHERE enabled=1 ORDER BY name',
                 )->fetchAll();
             } else {
                 $stmt = $this->db->prepare(
@@ -98,25 +98,56 @@ final class AuthContext
                      FROM routers r
                      JOIN router_members rm ON rm.router_id=r.id
                      WHERE r.enabled=1 AND rm.user_id=?
-                     ORDER BY r.name'
+                     ORDER BY r.name',
                 );
                 $stmt->execute([$userId]);
                 $routers = $stmt->fetchAll();
             }
         }
 
-        $selectedId = max(0, (int) ($_SESSION['pixiepoint_selected_router_id'] ?? 0));
+        $selectedRouterId = max(0, (int) ($_SESSION['pixiepoint_selected_router_id'] ?? 0));
         $selectedRouter = null;
         foreach ($routers as $router) {
-            if ((int) $router['id'] === $selectedId) {
+            if ((int) $router['id'] === $selectedRouterId) {
                 $selectedRouter = $router;
                 break;
             }
         }
-        if (!$selectedRouter) unset($_SESSION['pixiepoint_selected_router_id']);
+
+        if (!$selectedRouter) {
+            unset($_SESSION['pixiepoint_selected_router_id'], $_SESSION['pixiepoint_selected_vendo_id']);
+        }
+
+        $vendos = [];
+        $selectedVendo = null;
+        if ($selectedRouter) {
+            $stmt = $this->db->prepare(
+                'SELECT id,name,enabled
+                 FROM vendos
+                 WHERE router_id=?
+                 ORDER BY name',
+            );
+            $stmt->execute([(int) $selectedRouter['id']]);
+            $vendos = $stmt->fetchAll();
+
+            $selectedVendoId = max(0, (int) ($_SESSION['pixiepoint_selected_vendo_id'] ?? 0));
+            if ($selectedVendoId > 0) {
+                foreach ($vendos as $vendo) {
+                    if ((int) $vendo['id'] === $selectedVendoId) {
+                        $selectedVendo = $vendo;
+                        break;
+                    }
+                }
+            }
+            if (!$selectedVendo) {
+                unset($_SESSION['pixiepoint_selected_vendo_id']);
+            }
+        }
 
         $GLOBALS['pixiepoint_sidebar_routers'] = $routers;
         $GLOBALS['pixiepoint_selected_router'] = $selectedRouter;
+        $GLOBALS['pixiepoint_sidebar_vendos'] = $vendos;
+        $GLOBALS['pixiepoint_selected_vendo'] = $selectedVendo;
 
         return [
             'users' => $this->can('users.view'),
@@ -128,6 +159,8 @@ final class AuthContext
             'sessions' => $this->can('sessions.view'),
             'sales' => $this->can('sales.view'),
             'logs' => $this->can('logs.view'),
+            'router_selected' => $selectedRouter !== null,
+            'vendo_selected' => $selectedVendo !== null,
         ];
     }
 
