@@ -44,21 +44,6 @@ $sidebarInitial = strtoupper(substr($sidebarName, 0, 1));
             <div class="offcanvas-body d-flex flex-column p-3">
                 <a class="d-none d-lg-flex flex-column align-items-center text-decoration-none text-body fw-bold mb-4 px-2 pixie-brand" href="/dashboard"><span class="logo pixie-brand-logo">P</span><span class="mt-2"><?= $name ?></span></a>
 
-                <a href="/profile" class="d-flex align-items-center gap-3 p-2 rounded-3 text-decoration-none text-body pixie-user-card<?= $active('/profile') ?>" aria-label="Open profile">
-                    <?php if ($sidebarAvatar !== ''): ?>
-                        <img src="<?= e($sidebarAvatar) ?>" alt="" class="pixie-user-avatar">
-                    <?php else: ?>
-                        <span class="pixie-user-avatar pixie-user-avatar-fallback" aria-hidden="true"><?= e($sidebarInitial) ?></span>
-                    <?php endif; ?>
-                    <span class="min-w-0 flex-grow-1">
-                        <span class="d-block fw-semibold text-truncate"><?= e($sidebarName) ?></span>
-                        <span class="d-block text-body-secondary small text-truncate"><?= e($sidebarRole) ?></span>
-                        <?php if ($sidebarPoints !== null): ?>
-                            <span class="d-block small mt-1"><span aria-hidden="true">★</span> <?= e(number_format($sidebarPoints)) ?> points</span>
-                        <?php endif; ?>
-                    </span>
-                </a>
-
                 <nav class="nav nav-pills flex-column gap-1">
                     <?php if (($access['routers'] ?? false) || ($access['vendos'] ?? false) || ($access['vouchers'] ?? false)): ?>
                         <div class="nav-group-label mt-3">Wi-Fi</div>
@@ -81,10 +66,29 @@ $sidebarInitial = strtoupper(substr($sidebarName, 0, 1));
                         <?php if ($access['logs'] ?? false): ?><a class="nav-link<?= $active('/admin/logs') ?>" href="/admin/logs">Logs</a><?php endif; ?>
                     <?php endif; ?>
                 </nav>
-                <nav class="nav nav-pills flex-column gap-1 mt-auto pt-4 border-top">
-                    <a class="nav-link<?= $active('/profile') ?>" href="/profile">Profile</a>
-                    <a class="nav-link" href="/logout">Log out</a>
-                </nav>
+
+                <div class="card border-0 rounded-3 mt-auto pt-3 pixie-user-card">
+                    <div class="card-body p-3">
+                        <div class="d-flex align-items-center gap-3">
+                            <?php if ($sidebarAvatar !== ''): ?>
+                                <img src="<?= e($sidebarAvatar) ?>" alt="" class="pixie-user-avatar">
+                            <?php else: ?>
+                                <span class="pixie-user-avatar pixie-user-avatar-fallback" aria-hidden="true"><?= e($sidebarInitial) ?></span>
+                            <?php endif; ?>
+                            <div class="min-w-0 flex-grow-1">
+                                <div class="fw-semibold text-truncate"><?= e($sidebarName) ?></div>
+                                <div class="text-body-secondary small text-truncate"><?= e($sidebarRole) ?></div>
+                                <?php if ($sidebarPoints !== null): ?>
+                                    <div class="small mt-1"><span aria-hidden="true">★</span> <?= e(number_format($sidebarPoints)) ?> points</div>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                        <div class="d-grid grid-template-columns-1fr-1fr gap-2 mt-3">
+                            <a class="btn btn-outline-light btn-sm<?= $active('/profile') ?>" href="/profile">Profile</a>
+                            <a class="btn btn-outline-danger btn-sm" href="/logout">Log out</a>
+                        </div>
+                    </div>
+                </div>
             </div>
         </aside>
         <main class="container-fluid px-3 px-md-4 py-4 pixie-content"><?= $content ?></main>
