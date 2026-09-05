@@ -91,11 +91,10 @@ $sidebarReturn = preg_match('#^/(?:admin|dashboard)(?:/|$)#', $path) ? $path : '
                         <?php endif; ?>
                     <?php endif; ?>
 
-                    <?php if (($access['users'] ?? false) || ($access['groups'] ?? false) || ($access['permissions'] ?? false)): ?>
+                    <?php if (($access['users'] ?? false) || ($access['groups'] ?? false)): ?>
                         <div class="nav-group-label mt-3">Administration</div>
                         <?php if ($access['users'] ?? false): ?><a class="nav-link<?= $active('/admin/users') ?>" href="/admin/users">Users</a><?php endif; ?>
                         <?php if ($access['groups'] ?? false): ?><a class="nav-link<?= $active('/admin/groups') ?>" href="/admin/groups">Groups</a><?php endif; ?>
-                        <?php if ($access['permissions'] ?? false): ?><a class="nav-link<?= $active('/admin/permissions') ?>" href="/admin/permissions">Permissions</a><?php endif; ?>
                     <?php endif; ?>
 
                     <?php if ($access['logs'] ?? false): ?>
