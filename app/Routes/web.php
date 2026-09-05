@@ -64,6 +64,18 @@ return static function (RouteManager $routes, array $c): void {
     $routes->get('/dashboard', [$c['dashboard'], 'index'])->name('dashboard')->auth()->middleware('prefab.access');
     $routes->post('/devices/claim', [$c['dashboard'], 'claimDevice'])->name('devices.claim')->auth()->middleware('prefab.access');
 
+    $routes
+        ->get('/admin/select/router', [$c['admin.selection'], 'router'])
+        ->name('admin.select.router')
+        ->auth()
+        ->middleware('prefab.access');
+
+    $routes
+        ->get('/admin/select/vendo', [$c['admin.selection'], 'vendo'])
+        ->name('admin.select.vendo')
+        ->auth()
+        ->middleware('prefab.access');
+
     // Personal account routes are intentionally separate from admin user management.
     (require dirname(__DIR__) . '/Profile/routes.php')($routes, $c);
 
