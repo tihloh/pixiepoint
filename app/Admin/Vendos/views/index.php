@@ -33,8 +33,8 @@
 <section class="panel">
     <h2>Configured vendos</h2>
     <p class="muted">
-        Wi-Fi name inherits the selected router's effective name when its template is blank.
-        Router name: <strong><?= e($routerBusinessName) ?></strong>
+        Wi-Fi name uses the vendo's own name when set. Leave it blank to use the selected router's Wi-Fi name:
+        <strong><?= e($routerBusinessName ?: 'Not set') ?></strong>
     </p>
 
     <div class="table-responsive">
@@ -64,9 +64,9 @@
                             <?php endif; ?>
                         </td>
                         <td>
-                            <strong><?= e($v['business_name']) ?></strong>
+                            <strong><?= e($v['business_name'] ?: 'Not set') ?></strong>
                             <div class="small text-body-secondary">
-                                <?= e($v['business_name_template'] ?: 'Inherited') ?>
+                                <?= e($v['business_name_template'] ? 'Vendo name' : 'Router name') ?>
                             </div>
                         </td>
                         <td>
@@ -117,7 +117,7 @@
                                         data-mode="edit"
                                         data-id="<?= e($v['id']) ?>"
                                         data-name="<?= e($v['name']) ?>"
-                                        data-business-name-template="<?= e($v['business_name_template'] ?? '') ?>"
+                                        data-business-name="<?= e($v['business_name_template'] ?? '') ?>"
                                         data-router="<?= e($v['router_id']) ?>"
                                         data-url="<?= e(
                                             preg_replace('~^https?://~i', '', $v['base_url']),
@@ -206,14 +206,14 @@
                             </div>
 
                             <div class="col-12">
-                                <label>Business / Wi-Fi name template</label>
+                                <label>Business / Wi-Fi name</label>
                                 <input
-                                    name="business_name_template"
+                                    name="business_name"
                                     maxlength="255"
-                                    placeholder="Leave blank to inherit: {parent} - Main"
+                                    placeholder="Leave blank to use the router name"
                                 >
                                 <small class="text-body-secondary">
-                                    Blank inherits the router's effective name. Use <code>{parent}</code> to extend it.
+                                    Optional Vendo-level Wi-Fi/business name. Blank means the router's name is used.
                                 </small>
                             </div>
 
@@ -343,8 +343,8 @@
             form.querySelector('[name="action"]').value = isEdit ? 'update' : 'create';
             form.querySelector('[name="id"]').value = isEdit ? button.dataset.id : '0';
             form.querySelector('[name="name"]').value = isEdit ? button.dataset.name : '';
-            form.querySelector('[name="business_name_template"]').value = isEdit
-                ? button.dataset.businessNameTemplate
+            form.querySelector('[name="business_name"]').value = isEdit
+                ? button.dataset.businessName
                 : '';
             form.querySelector('[name="router_id"]').value = isEdit ? button.dataset.router : '';
             form.querySelector('[name="server_ip"]').value = isEdit ? button.dataset.serverIp : '';
