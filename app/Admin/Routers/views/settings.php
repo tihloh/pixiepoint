@@ -69,6 +69,21 @@
                     maxlength="255"
                 >
             </div>
+
+            <div class="field" style="grid-column:1/-1">
+                <label for="router-business-name">Business / Wi-Fi name template</label>
+                <input
+                    id="router-business-name"
+                    name="business_name_template"
+                    value="<?= e($router['business_name_template'] ?? '') ?>"
+                    maxlength="255"
+                    placeholder="Leave blank to inherit: {parent} - Downtown"
+                >
+                <small class="text-body-secondary">
+                    Leave blank to inherit the owner's effective name. Use <code>{parent}</code> to extend it.
+                    Current effective name: <strong><?= e($router['business_name']) ?></strong>
+                </small>
+            </div>
         </div>
 
         <div class="form-check mt-3">
