@@ -66,7 +66,7 @@
                         <td>
                             <strong><?= e($v['business_name'] ?: 'Not set') ?></strong>
                             <div class="small text-body-secondary">
-                                <?= e($v['business_name_template'] ? 'Vendo name' : 'Router name') ?>
+                                <?= e($v['business_name_override'] !== '' ? 'Vendo name' : 'Router name') ?>
                             </div>
                         </td>
                         <td>
@@ -117,7 +117,7 @@
                                         data-mode="edit"
                                         data-id="<?= e($v['id']) ?>"
                                         data-name="<?= e($v['name']) ?>"
-                                        data-business-name="<?= e($v['business_name_template'] ?? '') ?>"
+                                        data-business-name="<?= e($v['business_name_override']) ?>"
                                         data-router="<?= e($v['router_id']) ?>"
                                         data-url="<?= e(
                                             preg_replace('~^https?://~i', '', $v['base_url']),
