@@ -58,6 +58,7 @@ final class Controller extends FeatureController
         $stmt->execute([$selectedRouterId]);
         $vendos = $stmt->fetchAll();
         foreach ($vendos as &$vendo) {
+            $vendo['business_name_override'] = trim((string) ($vendo['business_name'] ?? ''));
             $vendo['business_name'] = $businessNames->vendo((int) $vendo['id']);
         }
         unset($vendo);
