@@ -154,22 +154,27 @@ final class Controller extends FeatureController
 
         $_SESSION['pixiepoint_selected_router_id'] = $routerId;
 
-        $queries = [
-            'Vendos' => ['SELECT COUNT(*) FROM vendos WHERE router_id=?', 'vendos'],
-            'Vouchers' => ['SELECT COUNT(*) FROM vouchers WHERE router_id=?', 'vouchers'],
-            'Devices' => ['SELECT COUNT(*) FROM devices WHERE router_id=?', 'devices'],
-            'Sessions' => ['SELECT COUNT(*) FROM sessions WHERE router_id=?', 'sessions'],
-            'Sales today' => [
-                "SELECT COALESCE(SUM(amount_pesos),0) FROM router_login_events WHERE router_id=? AND created_at >= CURDATE()",
+        $metrics = [];
+        $metricQueries = [
+            'vendos' => ['Vendos', 'vendos', 'SELECT COUNT(*) FROM vendos WHERE router_id=?'],
+            'vouchers' => ['Vouchers', 'vouchers', 'SELECT COUNT(*) FROM vouchers WHERE router_id=?'],
+            'devices' => ['Devices', 'devices', 'SELECT COUNT(*) FROM devices WHERE router_id=?'],
+            'sessions' => ['Sessions', 'sessions', 'SELECT COUNT(*) FROM sessions WHERE router_id=?'],
+            'sales' => [
+                'Sales today',
                 'sales',
+                "SELECT COALESCE(SUM(amount_pesos),0) FROM router_login_events WHERE router_id=? AND created_at >= CURDATE()",
             ],
         ];
 
-        $metrics = [];
-        foreach ($queries as $label => [$sql]) {
+        foreach ($metricQueries as $key => [$label, $permission, $sql]) {
+            if (!$this->auth->can($permission . '.view')) {
+                continue;
+            }
+
             $stmt = $this->db->prepare($sql);
             $stmt->execute([$routerId]);
-            $metrics[$label] = $stmt->fetchColumn();
+            $metrics[$key] = ['label' => $label, 'value' => $stmt->fetchColumn()];
         }
 
         $recentSessions = [];
@@ -188,6 +193,7 @@ final class Controller extends FeatureController
             'recentSessions' => $recentSessions,
             'canManageRouters' => $this->auth->can('routers.manage'),
             'canManageTeam' => $access->canManageTeam($routerId, $userId, $platformOwner),
+            'canViewSales' => $this->auth->can('sales.view'),
             'csrf' => csrf_token(),
         ]);
     }
