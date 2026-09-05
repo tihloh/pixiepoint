@@ -1,9 +1,10 @@
 <?php
 /** @var array $router */
-/** @var array<string,mixed> $metrics */
+/** @var array<string,array{label:string,value:mixed}> $metrics */
 /** @var array $recentSessions */
 /** @var bool $canManageRouters */
 /** @var bool $canManageTeam */
+/** @var bool $canViewSales */
 /** @var string $csrf */
 ?>
 
@@ -32,26 +33,18 @@
 </div>
 
 <section class="grid" aria-label="Router summary">
-    <div class="metric">
-        <small>Vendos</small>
-        <strong><?= e((int) $metrics['Vendos']) ?></strong>
-    </div>
-    <div class="metric">
-        <small>Vouchers</small>
-        <strong><?= e((int) $metrics['Vouchers']) ?></strong>
-    </div>
-    <div class="metric">
-        <small>Devices</small>
-        <strong><?= e((int) $metrics['Devices']) ?></strong>
-    </div>
-    <div class="metric">
-        <small>Sessions</small>
-        <strong><?= e((int) $metrics['Sessions']) ?></strong>
-    </div>
-    <div class="metric">
-        <small>Sales today</small>
-        <strong>₱<?= e(number_format((float) $metrics['Sales today'], 2)) ?></strong>
-    </div>
+    <?php foreach ($metrics as $metric): ?>
+        <div class="metric">
+            <small><?= e($metric['label']) ?></small>
+            <strong>
+                <?php if ($metric['label'] === 'Sales today'): ?>
+                    ₱<?= e(number_format((float) $metric['value'], 2)) ?>
+                <?php else: ?>
+                    <?= e((int) $metric['value']) ?>
+                <?php endif; ?>
+            </strong>
+        </div>
+    <?php endforeach; ?>
 </section>
 
 <section class="panel">
@@ -66,27 +59,27 @@
     </div>
 
     <div class="row g-2">
-        <?php if ($metrics['Vendos'] !== null): ?>
+        <?php if (isset($metrics['vendos'])): ?>
             <div class="col-sm-6 col-xl">
                 <a class="btn btn-outline-secondary w-100" href="/admin/vendos">Vendos</a>
             </div>
         <?php endif; ?>
-        <?php if ($metrics['Vouchers'] !== null): ?>
+        <?php if (isset($metrics['vouchers'])): ?>
             <div class="col-sm-6 col-xl">
                 <a class="btn btn-outline-secondary w-100" href="/admin/vouchers">Vouchers</a>
             </div>
         <?php endif; ?>
-        <?php if ($metrics['Devices'] !== null): ?>
+        <?php if (isset($metrics['devices'])): ?>
             <div class="col-sm-6 col-xl">
                 <a class="btn btn-outline-secondary w-100" href="/admin/devices">Devices</a>
             </div>
         <?php endif; ?>
-        <?php if ($metrics['Sessions'] !== null): ?>
+        <?php if (isset($metrics['sessions'])): ?>
             <div class="col-sm-6 col-xl">
                 <a class="btn btn-outline-secondary w-100" href="/admin/sessions">Sessions</a>
             </div>
         <?php endif; ?>
-        <?php if ($this->auth ?? false): ?>
+        <?php if ($canViewSales): ?>
             <div class="col-sm-6 col-xl">
                 <a class="btn btn-outline-secondary w-100" href="/admin/sales">Sales</a>
             </div>
