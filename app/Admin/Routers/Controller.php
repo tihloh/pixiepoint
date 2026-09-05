@@ -37,12 +37,7 @@ final class Controller extends FeatureController
             }
 
             $_SESSION['pixiepoint_selected_router_id'] = $selectId;
-
-            $return = (string) ($_GET['return'] ?? '/admin/vendos');
-            if ($return === '' || !str_starts_with($return, '/') || !preg_match('#^/(?:admin|dashboard)(?:/|$)#', $return)) {
-                $return = '/admin/vendos';
-            }
-            redirect($return);
+            redirect('/admin/routers/' . $selectId);
         }
 
         if ($this->isPost()) {
@@ -131,6 +126,68 @@ final class Controller extends FeatureController
             'routers' => $routers,
             'canManageRouters' => $this->auth->can('routers.manage'),
             'canCreateRouters' => false,
+            'csrf' => csrf_token(),
+        ]);
+    }
+
+    public function dashboard(int|string $id): never
+    {
+        $user = $this->auth->requireAccount();
+        $userId = (int) $user['id'];
+        $routerId = max(0, (int) $id);
+        $platformOwner = $this->auth->isPlatformOwner();
+        $access = new RouterAccess($this->db);
+
+        if ($routerId < 1 || !$access->canView($routerId, $userId, $platformOwner)) {
+            $_SESSION['admin_flash'] = '<div class="alert">Router not found or access denied.</div>';
+            redirect('/admin/routers');
+        }
+
+        $stmt = $this->db->prepare('SELECT * FROM routers WHERE id=? AND enabled=1 LIMIT 1');
+        $stmt->execute([$routerId]);
+        $router = $stmt->fetch();
+
+        if (!$router) {
+            $_SESSION['admin_flash'] = '<div class="alert">Router is unavailable.</div>';
+            redirect('/admin/routers');
+        }
+
+        $_SESSION['pixiepoint_selected_router_id'] = $routerId;
+
+        $queries = [
+            'Vendos' => ['SELECT COUNT(*) FROM vendos WHERE router_id=?', 'vendos'],
+            'Vouchers' => ['SELECT COUNT(*) FROM vouchers WHERE router_id=?', 'vouchers'],
+            'Devices' => ['SELECT COUNT(*) FROM devices WHERE router_id=?', 'devices'],
+            'Sessions' => ['SELECT COUNT(*) FROM sessions WHERE router_id=?', 'sessions'],
+            'Sales today' => [
+                "SELECT COALESCE(SUM(amount_pesos),0) FROM router_login_events WHERE router_id=? AND created_at >= CURDATE()",
+                'sales',
+            ],
+        ];
+
+        $metrics = [];
+        foreach ($queries as $label => [$sql]) {
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute([$routerId]);
+            $metrics[$label] = $stmt->fetchColumn();
+        }
+
+        $recentSessions = [];
+        if ($this->auth->can('sessions.view')) {
+            $stmt = $this->db->prepare(
+                'SELECT s.*,d.mac FROM sessions s LEFT JOIN devices d ON d.id=s.device_id '
+                . 'WHERE s.router_id=? ORDER BY s.updated_at DESC LIMIT 8',
+            );
+            $stmt->execute([$routerId]);
+            $recentSessions = $stmt->fetchAll();
+        }
+
+        $this->page('Router Dashboard', __DIR__ . '/views/dashboard.php', [
+            'router' => $router,
+            'metrics' => $metrics,
+            'recentSessions' => $recentSessions,
+            'canManageRouters' => $this->auth->can('routers.manage'),
+            'canManageTeam' => $access->canManageTeam($routerId, $userId, $platformOwner),
             'csrf' => csrf_token(),
         ]);
     }
