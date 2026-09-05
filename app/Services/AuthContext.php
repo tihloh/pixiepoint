@@ -157,6 +157,8 @@ final class AuthContext
     /** @return array<string,bool> */
     public function navigation(): array
     {
+        $GLOBALS['pixiepoint_sidebar_user'] = $this->user() ?? [];
+
         return [
             'users' => $this->can('users.view'),
             'groups' => $this->can('groups.manage'),
