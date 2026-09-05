@@ -151,10 +151,10 @@ final class RegistrationController
         echo '/system script remove [find name="pixiepoint-agent"];', "\n";
         echo '/system script add name="pixiepoint-agent" ',
             'source=[/file get [find name="PixiePointAgent.rsc"] contents] ',
-            'policy=read,write,test;', "\n";
+            'policy=ftp,read,write,test;', "\n";
         echo '/system scheduler add name="pixiepoint-agent" interval=5s ',
             'start-time=startup on-event="/system script run pixiepoint-agent" ',
-            'policy=read,write,test;', "\n";
+            'policy=ftp,read,write,test;', "\n";
         echo '/file remove [find name="PixiePointAgent.rsc"];', "\n";
         echo '/system script run pixiepoint-agent;', "\n";
         echo ':put "SUCCESS - PixiePoint Agent installed";', "\n";
