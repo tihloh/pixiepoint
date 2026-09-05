@@ -67,7 +67,7 @@ $sidebarInitial = strtoupper(substr($sidebarName, 0, 1));
                     <?php endif; ?>
                 </nav>
 
-                <div class="card border-0 rounded-3 mt-auto pt-3 pixie-user-card">
+                <div class="card border-0 rounded-3 mt-auto pixie-user-card">
                     <div class="card-body p-3">
                         <div class="d-flex align-items-center gap-3">
                             <?php if ($sidebarAvatar !== ''): ?>
@@ -83,9 +83,9 @@ $sidebarInitial = strtoupper(substr($sidebarName, 0, 1));
                                 <?php endif; ?>
                             </div>
                         </div>
-                        <div class="d-grid grid-template-columns-1fr-1fr gap-2 mt-3">
-                            <a class="btn btn-outline-light btn-sm<?= $active('/profile') ?>" href="/profile">Profile</a>
-                            <a class="btn btn-outline-danger btn-sm" href="/logout">Log out</a>
+                        <div class="d-flex gap-2 mt-3">
+                            <a class="btn btn-outline-light btn-sm flex-fill<?= $active('/profile') ?>" href="/profile">Profile</a>
+                            <a class="btn btn-outline-danger btn-sm flex-fill" href="/logout">Log out</a>
                         </div>
                     </div>
                 </div>
