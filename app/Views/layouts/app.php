@@ -7,6 +7,16 @@
 /** @var string $cssVersion */
 $path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
 $active = static fn (string $href): string => $path === $href || ($href !== '/dashboard' && str_starts_with($path, $href . '/')) ? ' active' : '';
+$sidebarUser = $dashboard ? ($this->auth->user() ?? []) : [];
+$sidebarName = trim((string) ($sidebarUser['name'] ?? '')) ?: 'User';
+$sidebarRole = match ((string) ($sidebarUser['platform_role'] ?? 'member')) {
+    'platform_owner' => 'Platform owner',
+    'pisowifi_owner' => 'PisoWiFi owner',
+    default => 'Member',
+};
+$sidebarAvatar = trim((string) ($sidebarUser['avatar_url'] ?? ''));
+$sidebarPoints = isset($sidebarUser['points']) ? max(0, (int) $sidebarUser['points']) : null;
+$sidebarInitial = strtoupper(substr($sidebarName, 0, 1));
 ?>
 <!doctype html>
 <html lang="en" data-bs-theme="dark">
@@ -33,6 +43,22 @@ $active = static fn (string $href): string => $path === $href || ($href !== '/da
             <div class="offcanvas-header border-bottom d-lg-none"><h5 class="offcanvas-title" id="pixiepoint-sidebar-label"><?= $name ?></h5><button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#pixiepoint-sidebar" aria-label="Close"></button></div>
             <div class="offcanvas-body d-flex flex-column p-3">
                 <a class="d-none d-lg-flex flex-column align-items-center text-decoration-none text-body fw-bold mb-4 px-2 pixie-brand" href="/dashboard"><span class="logo pixie-brand-logo">P</span><span class="mt-2"><?= $name ?></span></a>
+
+                <a href="/profile" class="d-flex align-items-center gap-3 p-2 rounded-3 text-decoration-none text-body pixie-user-card<?= $active('/profile') ?>" aria-label="Open profile">
+                    <?php if ($sidebarAvatar !== ''): ?>
+                        <img src="<?= e($sidebarAvatar) ?>" alt="" class="pixie-user-avatar">
+                    <?php else: ?>
+                        <span class="pixie-user-avatar pixie-user-avatar-fallback" aria-hidden="true"><?= e($sidebarInitial) ?></span>
+                    <?php endif; ?>
+                    <span class="min-w-0 flex-grow-1">
+                        <span class="d-block fw-semibold text-truncate"><?= e($sidebarName) ?></span>
+                        <span class="d-block text-body-secondary small text-truncate"><?= e($sidebarRole) ?></span>
+                        <?php if ($sidebarPoints !== null): ?>
+                            <span class="d-block small mt-1"><span aria-hidden="true">★</span> <?= e(number_format($sidebarPoints)) ?> points</span>
+                        <?php endif; ?>
+                    </span>
+                </a>
+
                 <nav class="nav nav-pills flex-column gap-1">
                     <?php if (($access['routers'] ?? false) || ($access['vendos'] ?? false) || ($access['vouchers'] ?? false)): ?>
                         <div class="nav-group-label mt-3">Wi-Fi</div>
