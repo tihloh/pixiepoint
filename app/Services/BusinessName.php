@@ -15,8 +15,17 @@ final class BusinessName
         $this->ensureSchema();
     }
 
+    public function isCertifiedOwner(int $userId): bool
+    {
+        return $this->ownerRouterId($userId) !== null;
+    }
+
     public function owner(int $userId): string
     {
+        if (!$this->isCertifiedOwner($userId)) {
+            return '';
+        }
+
         $stmt = $this->db->prepare('SELECT name,business_name_template FROM users WHERE id=? LIMIT 1');
         $stmt->execute([$userId]);
         $user = $stmt->fetch();
@@ -35,8 +44,8 @@ final class BusinessName
         $stmt = $this->db->prepare(
             "SELECT r.business_name_template,rm.user_id,u.name owner_name,u.business_name_template owner_business_name
              FROM routers r
-             LEFT JOIN router_members rm ON rm.router_id=r.id AND rm.role='owner'
-             LEFT JOIN users u ON u.id=rm.user_id
+             JOIN router_members rm ON rm.router_id=r.id AND rm.role='owner'
+             JOIN users u ON u.id=rm.user_id
              WHERE r.id=?
              ORDER BY rm.user_id
              LIMIT 1",
@@ -72,6 +81,22 @@ final class BusinessName
         $template = trim((string) ($vendo['business_name_template'] ?? ''));
 
         return $template === '' ? $parent : $this->render($template, $parent);
+    }
+
+    private function ownerRouterId(int $userId): ?int
+    {
+        $stmt = $this->db->prepare(
+            "SELECT rm.router_id
+             FROM router_members rm
+             JOIN routers r ON r.id=rm.router_id
+             WHERE rm.user_id=? AND rm.role='owner' AND r.enabled=1
+             ORDER BY rm.router_id
+             LIMIT 1",
+        );
+        $stmt->execute([$userId]);
+        $routerId = $stmt->fetchColumn();
+
+        return $routerId === false ? null : (int) $routerId;
     }
 
     private function render(string $template, string $parent): string
