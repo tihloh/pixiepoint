@@ -8,6 +8,8 @@
 $path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
 $active = static fn (string $href): string => $path === $href || ($href !== '/dashboard' && str_starts_with($path, $href . '/')) ? ' active' : '';
 $sidebarUser = $dashboard ? (is_array($GLOBALS['pixiepoint_sidebar_user'] ?? null) ? $GLOBALS['pixiepoint_sidebar_user'] : []) : [];
+$sidebarRouters = $dashboard ? (is_array($GLOBALS['pixiepoint_sidebar_routers'] ?? null) ? $GLOBALS['pixiepoint_sidebar_routers'] : []) : [];
+$selectedRouter = $dashboard && is_array($GLOBALS['pixiepoint_selected_router'] ?? null) ? $GLOBALS['pixiepoint_selected_router'] : null;
 $sidebarName = trim((string) ($sidebarUser['name'] ?? '')) ?: 'User';
 $sidebarRole = match ((string) ($sidebarUser['platform_role'] ?? 'member')) {
     'platform_owner' => 'Platform owner',
@@ -17,6 +19,7 @@ $sidebarRole = match ((string) ($sidebarUser['platform_role'] ?? 'member')) {
 $sidebarAvatar = trim((string) ($sidebarUser['avatar_url'] ?? ''));
 $sidebarPoints = isset($sidebarUser['points']) ? max(0, (int) $sidebarUser['points']) : null;
 $sidebarInitial = strtoupper(substr($sidebarName, 0, 1));
+$sidebarReturn = preg_match('#^/(?:admin|dashboard)(?:/|$)#', $path) ? $path : '/dashboard';
 ?>
 <!doctype html>
 <html lang="en" data-bs-theme="dark">
@@ -45,13 +48,51 @@ $sidebarInitial = strtoupper(substr($sidebarName, 0, 1));
                 <a class="d-none d-lg-flex flex-column align-items-center text-decoration-none text-body fw-bold mb-4 px-2 pixie-brand" href="/dashboard"><span class="logo pixie-brand-logo">P</span><span class="mt-2"><?= $name ?></span></a>
 
                 <nav class="nav nav-pills flex-column gap-1">
-                    <?php if (($access['routers'] ?? false) || ($access['vendos'] ?? false) || ($access['vouchers'] ?? false) || ($access['devices'] ?? false) || ($access['sessions'] ?? false)): ?>
+                    <?php if ($access['routers'] ?? false): ?>
                         <div class="nav-group-label mt-3">Network</div>
-                        <?php if ($access['routers'] ?? false): ?><a class="nav-link<?= $active('/admin/routers') ?>" href="/admin/routers">Routers</a><?php endif; ?>
-                        <?php if ($access['vendos'] ?? false): ?><a class="nav-link<?= $active('/admin/vendos') ?>" href="/admin/vendos">Vendos</a><?php endif; ?>
-                        <?php if ($access['vouchers'] ?? false): ?><a class="nav-link<?= $active('/admin/vouchers') ?>" href="/admin/vouchers">Vouchers</a><?php endif; ?>
-                        <?php if ($access['devices'] ?? false): ?><a class="nav-link<?= $active('/admin/devices') ?>" href="/admin/devices">Devices</a><?php endif; ?>
-                        <?php if ($access['sessions'] ?? false): ?><a class="nav-link<?= $active('/admin/sessions') ?>" href="/admin/sessions">Sessions</a><?php endif; ?>
+                        <a class="nav-link<?= $active('/admin/routers') ?>" href="/admin/routers">Routers</a>
+
+                        <?php if ($sidebarRouters): ?>
+                            <form method="get" action="/admin/routers" class="px-2 pt-1 pb-2">
+                                <input type="hidden" name="return" value="<?= e($sidebarReturn) ?>">
+                                <label class="visually-hidden" for="sidebar-router-select">Select router</label>
+                                <select class="form-select form-select-sm" id="sidebar-router-select" name="select" onchange="this.form.submit()">
+                                    <option value="">Select router</option>
+                                    <?php foreach ($sidebarRouters as $router): ?>
+                                        <option value="<?= e($router['id']) ?>" <?= $selectedRouter && (int) $selectedRouter['id'] === (int) $router['id'] ? 'selected' : '' ?>>
+                                            <?= e($router['name']) ?> · <?= e($router['identity']) ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                                <?php if ($selectedRouter): ?>
+                                    <div class="small text-body-secondary mt-1 text-truncate" title="<?= e($selectedRouter['identity']) ?>">
+                                        <?= e($selectedRouter['identity']) ?>
+                                    </div>
+                                <?php endif; ?>
+                            </form>
+
+                            <?php if ($selectedRouter): ?>
+                                <?php if ($access['vendos'] ?? false): ?>
+                                    <div class="nav-group-label mt-2">Vendos</div>
+                                    <a class="nav-link<?= $active('/admin/vendos') ?>" href="/admin/vendos">Vendos</a>
+                                <?php endif; ?>
+
+                                <?php if (($access['vouchers'] ?? false) || ($access['devices'] ?? false)): ?>
+                                    <div class="nav-group-label mt-2">Access</div>
+                                    <?php if ($access['vouchers'] ?? false): ?><a class="nav-link<?= $active('/admin/vouchers') ?>" href="/admin/vouchers">Vouchers</a><?php endif; ?>
+                                    <?php if ($access['devices'] ?? false): ?><a class="nav-link<?= $active('/admin/devices') ?>" href="/admin/devices">Devices</a><?php endif; ?>
+                                <?php endif; ?>
+
+                                <?php if ($access['sessions'] ?? false): ?>
+                                    <div class="nav-group-label mt-2">Activity</div>
+                                    <a class="nav-link<?= $active('/admin/sessions') ?>" href="/admin/sessions">Sessions</a>
+                                <?php endif; ?>
+                            <?php else: ?>
+                                <div class="small text-body-secondary px-2 py-2">Select a router to access its Vendos, Vouchers, Devices and Sessions.</div>
+                            <?php endif; ?>
+                        <?php else: ?>
+                            <div class="small text-body-secondary px-2 py-2">No routers are assigned to your account.</div>
+                        <?php endif; ?>
                     <?php endif; ?>
 
                     <?php if ($access['sales'] ?? false): ?>
