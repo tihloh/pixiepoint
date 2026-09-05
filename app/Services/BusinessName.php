@@ -57,15 +57,27 @@ final class BusinessName
             "ALTER TABLE vendos ADD COLUMN IF NOT EXISTS business_name VARCHAR(255) NULL AFTER name",
         );
 
-        // Preserve names created by the previous template-based implementation.
-        $this->db->exec(
-            "UPDATE routers SET business_name=business_name_template
-             WHERE business_name IS NULL AND business_name_template IS NOT NULL",
-        );
-        $this->db->exec(
-            "UPDATE vendos SET business_name=business_name_template
-             WHERE business_name IS NULL AND business_name_template IS NOT NULL",
-        );
+        // Preserve names created by the previous template-based implementation
+        // when upgrading an existing installation. Fresh installs have no legacy columns.
+        $routerLegacy = $this->db->query(
+            "SHOW COLUMNS FROM routers LIKE 'business_name_template'",
+        )->fetch();
+        if ($routerLegacy) {
+            $this->db->exec(
+                "UPDATE routers SET business_name=business_name_template
+                 WHERE business_name IS NULL AND business_name_template IS NOT NULL",
+            );
+        }
+
+        $vendoLegacy = $this->db->query(
+            "SHOW COLUMNS FROM vendos LIKE 'business_name_template'",
+        )->fetch();
+        if ($vendoLegacy) {
+            $this->db->exec(
+                "UPDATE vendos SET business_name=business_name_template
+                 WHERE business_name IS NULL AND business_name_template IS NOT NULL",
+            );
+        }
 
         self::$schemaReady = true;
     }
