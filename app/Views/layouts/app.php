@@ -10,6 +10,7 @@ $active = static fn (string $href): string => $path === $href || ($href !== '/da
 $sidebarUser = $dashboard ? (is_array($GLOBALS['pixiepoint_sidebar_user'] ?? null) ? $GLOBALS['pixiepoint_sidebar_user'] : []) : [];
 $sidebarRouters = $dashboard ? (is_array($GLOBALS['pixiepoint_sidebar_routers'] ?? null) ? $GLOBALS['pixiepoint_sidebar_routers'] : []) : [];
 $selectedRouter = $dashboard && is_array($GLOBALS['pixiepoint_selected_router'] ?? null) ? $GLOBALS['pixiepoint_selected_router'] : null;
+$isOverview = $path === '/dashboard';
 $sidebarName = trim((string) ($sidebarUser['name'] ?? '')) ?: 'User';
 $sidebarRole = match ((string) ($sidebarUser['platform_role'] ?? 'member')) {
     'platform_owner' => 'Platform owner',
@@ -53,7 +54,12 @@ $sidebarReturn = preg_match('#^/(?:admin|dashboard)(?:/|$)#', $path) ? $path : '
                     <div class="nav-group-label">Overview</div>
                     <a class="nav-link<?= $active('/dashboard') ?>" href="/dashboard">Dashboard</a>
 
-                    <?php if ($access['routers'] ?? false): ?>
+                    <?php if ($isOverview): ?>
+                        <?php if ($access['routers'] ?? false): ?>
+                            <div class="nav-group-label mt-3">Network</div>
+                            <a class="nav-link<?= $active('/admin/routers') ?>" href="/admin/routers">Routers</a>
+                        <?php endif; ?>
+                    <?php elseif ($access['routers'] ?? false): ?>
                         <div class="nav-group-label mt-3">Network</div>
 
                         <form method="get" action="/admin/routers" class="px-2 pt-1 pb-2" id="sidebar-router-form">
