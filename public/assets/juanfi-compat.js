@@ -133,11 +133,11 @@
     rpc('/health')
       .then(function (result) {
         if (!result.ok) throw new Error('HTTP ' + result.status);
-        setReady(true, selected.name + ' is ready');
+        setReady(true, (selected.businessName || selected.name) + ' is ready');
         alertMessage('');
       })
       .catch(function () {
-        setReady(false, selected.name + ' is unavailable');
+        setReady(false, (selected.businessName || selected.name) + ' is unavailable');
         alertMessage(
           'PixiePoint is online, but this browser cannot reach the local coin slot. Check its power, Wi-Fi connection, and address.',
         );
@@ -164,7 +164,7 @@
     vendos.forEach(function (vendo) {
       var option = document.createElement('option');
       option.value = vendo.id;
-      option.textContent = vendo.name;
+      option.textContent = vendo.businessName || vendo.name;
       if (vendo.interfaceName && vendo.interfaceName === context.interfaceName)
         option.selected = true;
       select.appendChild(option);
@@ -500,8 +500,8 @@
           list.appendChild(row);
         });
 
-        if (!rates.length)
-          list.textContent = typeof data.raw === 'string' ? data.raw : 'No rates were returned.';
+        if (!rates.length && typeof data.raw === 'string') list.textContent = data.raw;
+        if (!rates.length && typeof data.raw !== 'string') list.textContent = 'No rates were returned.';
         list.hidden = false;
       })
       .catch(function (error) {
