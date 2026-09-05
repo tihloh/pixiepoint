@@ -126,5 +126,12 @@ $isRouterOwner = ($user['platform_role'] ?? 'member') === 'pisowifi_owner';
                 this.textContent = 'Copy command';
             }, 1200);
         });
+
+        if (new URLSearchParams(window.location.search).get('register') === '1') {
+            const modal = document.getElementById('register-router-modal');
+            if (modal) {
+                bootstrap.Modal.getOrCreateInstance(modal).show();
+            }
+        }
     </script>
 <?php endif; ?>
