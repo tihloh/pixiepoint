@@ -1,7 +1,5 @@
 <?php
 /** @var array $user */
-/** @var string $businessName */
-/** @var bool $canUseBusinessName */
 /** @var string $message */
 /** @var string $csrf */
 ?>
@@ -74,26 +72,6 @@
                             required
                         >
                     </div>
-
-                    <?php if ($canUseBusinessName): ?>
-                        <div class="mb-4">
-                            <label class="form-label" for="profile-business-name">Business / Wi-Fi name</label>
-                            <input
-                                class="form-control"
-                                id="profile-business-name"
-                                name="business_name_template"
-                                value="<?= e($user['business_name_template'] ?? '') ?>"
-                                maxlength="255"
-                                placeholder="Example: Juan's Wi-Fi"
-                            >
-                            <div class="form-text">
-                                Owner-level name. Leave blank to use your account name. Use <code>{parent}</code> only when extending a parent name at a lower level.
-                            </div>
-                            <div class="small text-body-secondary mt-2">
-                                Effective name: <strong><?= e($businessName) ?></strong>
-                            </div>
-                        </div>
-                    <?php endif; ?>
 
                     <div class="d-flex justify-content-end pt-3 border-top">
                         <button class="button flex-shrink-0" type="submit">Save Profile</button>
