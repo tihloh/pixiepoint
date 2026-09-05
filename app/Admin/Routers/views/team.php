@@ -26,58 +26,75 @@ $roleLabels = [
         <?php endif; ?>
     </div>
 
-    <a class="btn btn-outline-secondary" href="/admin/routers">Back to routers</a>
+    <div class="actions">
+        <?php if ($canManageTeam && $router): ?>
+            <button class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#add-team-member-modal">
+                Add team member
+            </button>
+        <?php endif; ?>
+        <a class="btn btn-outline-secondary" href="/admin/routers">Back to routers</a>
+    </div>
 </div>
 
 <?= $message ?>
 
 <?php if ($router): ?>
     <?php if ($canManageTeam): ?>
-        <section class="panel mb-4">
-            <h2>Add or update team member</h2>
+        <div class="modal fade" id="add-team-member-modal" tabindex="-1" aria-labelledby="add-team-member-modal-label" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <form method="post">
+                        <div class="modal-header">
+                            <h2 class="modal-title fs-5" id="add-team-member-modal-label">Add or update team member</h2>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
 
-            <form method="post" class="form-grid">
-                <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
-                <input type="hidden" name="action" value="save">
+                        <div class="modal-body">
+                            <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
+                            <input type="hidden" name="action" value="save">
 
-                <div class="field">
-                    <label for="team-email">Account email</label>
-                    <input
-                        id="team-email"
-                        type="email"
-                        name="email"
-                        autocomplete="off"
-                        required
-                    >
-                    <small class="text-body-secondary">
-                        The person must already have a PixiePoint account.
-                    </small>
+                            <div class="mb-3">
+                                <label class="form-label" for="team-email">Account email</label>
+                                <input
+                                    class="form-control"
+                                    id="team-email"
+                                    type="email"
+                                    name="email"
+                                    autocomplete="off"
+                                    required
+                                >
+                                <div class="form-text">The person must already have a PixiePoint account.</div>
+                            </div>
+
+                            <div>
+                                <label class="form-label" for="team-role">Role</label>
+                                <select class="form-select" id="team-role" name="role" required>
+                                    <?php if (($isPlatformOwner ?? false) || $currentRole === 'owner'): ?>
+                                        <option value="owner">Owner</option>
+                                    <?php endif; ?>
+                                    <option value="manager">Manager</option>
+                                    <option value="operator" selected>Operator</option>
+                                    <option value="viewer">Viewer</option>
+                                </select>
+                                <div class="form-text">Managers manage staff, operators handle daily operations, viewers are read-only.</div>
+                            </div>
+                        </div>
+
+                        <div class="modal-footer">
+                            <button class="btn btn-secondary" type="button" data-bs-dismiss="modal">Cancel</button>
+                            <button class="btn btn-primary" type="submit">Save member</button>
+                        </div>
+                    </form>
                 </div>
-
-                <div class="field">
-                    <label for="team-role">Role</label>
-                    <select id="team-role" name="role" required>
-                        <?php if (($isPlatformOwner ?? false) || $currentRole === 'owner'): ?>
-                            <option value="owner">Owner</option>
-                        <?php endif; ?>
-                        <option value="manager">Manager</option>
-                        <option value="operator" selected>Operator</option>
-                        <option value="viewer">Viewer</option>
-                    </select>
-                    <small class="text-body-secondary">
-                        Managers manage staff, operators handle daily operations, viewers are read-only.
-                    </small>
-                </div>
-
-                <div class="field align-self-end">
-                    <button class="button" type="submit">Save member</button>
-                </div>
-            </form>
-        </section>
+            </div>
+        </div>
     <?php endif; ?>
 
     <section class="panel">
-        <h2>Team members</h2>
+        <div class="d-flex align-items-center justify-content-between gap-2 mb-3">
+            <h2 class="mb-0">Team members</h2>
+            <span class="text-body-secondary small"><?= e(count($members)) ?> member<?= count($members) === 1 ? '' : 's' ?></span>
+        </div>
 
         <div class="table-responsive">
             <table class="table align-middle">
