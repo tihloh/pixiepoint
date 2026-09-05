@@ -9,9 +9,7 @@ $path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
 $active = static fn (string $href): string => $path === $href || ($href !== '/dashboard' && str_starts_with($path, $href . '/')) ? ' active' : '';
 $sidebarUser = $dashboard ? (is_array($GLOBALS['pixiepoint_sidebar_user'] ?? null) ? $GLOBALS['pixiepoint_sidebar_user'] : []) : [];
 $sidebarRouters = $dashboard ? (is_array($GLOBALS['pixiepoint_sidebar_routers'] ?? null) ? $GLOBALS['pixiepoint_sidebar_routers'] : []) : [];
-$sidebarVendos = $dashboard ? (is_array($GLOBALS['pixiepoint_sidebar_vendos'] ?? null) ? $GLOBALS['pixiepoint_sidebar_vendos'] : []) : [];
 $selectedRouter = $dashboard && is_array($GLOBALS['pixiepoint_selected_router'] ?? null) ? $GLOBALS['pixiepoint_selected_router'] : null;
-$selectedVendo = $dashboard && is_array($GLOBALS['pixiepoint_selected_vendo'] ?? null) ? $GLOBALS['pixiepoint_selected_vendo'] : null;
 $isOverview = $path === '/dashboard';
 $sidebarName = trim((string) ($sidebarUser['name'] ?? '')) ?: 'User';
 $sidebarRole = match ((string) ($sidebarUser['platform_role'] ?? 'member')) {
@@ -84,21 +82,6 @@ $sidebarReturn = preg_match('#^/(?:admin|dashboard)(?:/|$)#', $path) ? ($path . 
                             </div>
                             <a class="nav-link mt-2 px-2 py-1<?= $active('/admin/routers/' . (int) $selectedRouter['id']) ?>" href="/admin/routers/<?= e($selectedRouter['id']) ?>">Router dashboard</a>
 
-                            <?php if ($sidebarVendos !== []): ?>
-                                <form method="get" action="/admin/select/vendo" class="px-2 pt-2 pb-1" id="sidebar-vendo-form">
-                                    <input type="hidden" name="return" value="<?= e($sidebarReturn) ?>">
-                                    <label class="visually-hidden" for="sidebar-vendo-select">Select Vendo</label>
-                                    <select class="form-select form-select-sm" id="sidebar-vendo-select" name="select">
-                                        <option value="">Select Vendo…</option>
-                                        <?php foreach ($sidebarVendos as $vendo): ?>
-                                            <option value="<?= e($vendo['id']) ?>" <?= $selectedVendo && (int) $selectedVendo['id'] === (int) $vendo['id'] ? 'selected' : '' ?>>
-                                                <?= e($vendo['name']) ?>
-                                            </option>
-                                        <?php endforeach; ?>
-                                    </select>
-                                </form>
-                            <?php endif; ?>
-
                             <div class="nav-group-label mt-2">Router management</div>
                             <?php if ($access['vendos'] ?? false): ?><a class="nav-link<?= $active('/admin/vendos') ?>" href="/admin/vendos">Vendos</a><?php endif; ?>
                             <?php if ($access['vouchers'] ?? false): ?><a class="nav-link<?= $active('/admin/vouchers') ?>" href="/admin/vouchers">Vouchers</a><?php endif; ?>
@@ -164,10 +147,6 @@ $sidebarReturn = preg_match('#^/(?:admin|dashboard)(?:/|$)#', $path) ? ($path . 
             } else {
                 $('#sidebar-router-form').trigger('submit');
             }
-        });
-
-        $('#sidebar-vendo-select').on('change', function () {
-            $('#sidebar-vendo-form').trigger('submit');
         });
     });
 </script>
