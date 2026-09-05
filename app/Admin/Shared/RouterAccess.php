@@ -32,6 +32,7 @@ final class RouterAccess
              ON DUPLICATE KEY UPDATE role=IF(role='owner',role,VALUES(role))",
         );
         $stmt->execute([$routerId, $userId]);
+        $this->syncBusinessOwnerStatus($userId);
     }
 
     public function canView(int $routerId, int $userId, bool $platformOwner): bool
@@ -88,6 +89,7 @@ final class RouterAccess
              ON DUPLICATE KEY UPDATE role=VALUES(role)',
         );
         $stmt->execute([$routerId, $userId, $role]);
+        $this->syncBusinessOwnerStatus($userId);
     }
 
     public function removeMember(int $routerId, int $userId): void
@@ -137,7 +139,7 @@ final class RouterAccess
     private function syncBusinessOwnerStatus(int $userId): void
     {
         $stmt = $this->db->prepare(
-            "SELECT platform_role FROM users WHERE id=? LIMIT 1",
+            'SELECT platform_role FROM users WHERE id=? LIMIT 1',
         );
         $stmt->execute([$userId]);
         $platformRole = $stmt->fetchColumn();
@@ -153,7 +155,7 @@ final class RouterAccess
         $hasOwnedRouter = (bool) $stmt->fetchColumn();
 
         $stmt = $this->db->prepare(
-            "UPDATE users SET platform_role=? WHERE id=?",
+            'UPDATE users SET platform_role=? WHERE id=?',
         );
         $stmt->execute([$hasOwnedRouter ? 'pisowifi_owner' : 'member', $userId]);
     }
