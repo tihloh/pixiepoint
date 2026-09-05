@@ -6,6 +6,7 @@ namespace PixiePoint\App\Profile;
 
 use PixiePoint\App\Admin\Users\AvatarService;
 use PixiePoint\App\Services\AuthContext;
+use PixiePoint\App\Services\BusinessName;
 use PixiePoint\App\Services\View;
 use RuntimeException;
 use Tihloh\Prefab\Users\Services\UserManager;
@@ -17,6 +18,7 @@ final class Controller
         private View $view,
         private UserManager $users,
         private AvatarService $avatars,
+        private BusinessName $businessNames,
     ) {
     }
 
@@ -39,9 +41,13 @@ final class Controller
                 } else {
                     $name = trim((string) ($_POST['name'] ?? ''));
                     $email = strtolower(trim((string) ($_POST['email'] ?? '')));
+                    $businessNameTemplate = trim((string) ($_POST['business_name_template'] ?? ''));
 
                     if ($name === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
                         throw new RuntimeException('Enter a name and valid email address.');
+                    }
+                    if (mb_strlen($businessNameTemplate) > 255) {
+                        throw new RuntimeException('Business name template is too long.');
                     }
 
                     $existing = $this->users->findByEmail($email);
@@ -52,6 +58,7 @@ final class Controller
                     $this->users->update($userId, [
                         'name' => $name,
                         'email' => $email,
+                        'business_name_template' => $businessNameTemplate ?: null,
                     ], $this->context());
                 }
 
@@ -66,6 +73,7 @@ final class Controller
         $user = $this->users->find($userId)?->toArray() ?? [];
         $content = $this->view->renderFile(__DIR__ . '/views/index.php', [
             'user' => $user,
+            'businessName' => $this->businessNames->owner($userId),
             'message' => $message,
             'csrf' => csrf_token(),
         ]);
