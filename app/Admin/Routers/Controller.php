@@ -130,6 +130,81 @@ final class Controller extends FeatureController
         ]);
     }
 
+    public function settings(int|string $id): never
+    {
+        $user = $this->auth->requireAccount();
+        $userId = (int) $user['id'];
+        $routerId = max(0, (int) $id);
+        $platformOwner = $this->auth->isPlatformOwner();
+        $access = new RouterAccess($this->db);
+
+        if ($routerId < 1 || !$access->canManage($routerId, $userId, $platformOwner)) {
+            $_SESSION['admin_flash'] = '<div class="alert">Router not found or access denied.</div>';
+            redirect('/admin/routers');
+        }
+
+        $stmt = $this->db->prepare('SELECT * FROM routers WHERE id=? LIMIT 1');
+        $stmt->execute([$routerId]);
+        $router = $stmt->fetch();
+
+        if (!$router) {
+            $_SESSION['admin_flash'] = '<div class="alert">Router not found.</div>';
+            redirect('/admin/routers');
+        }
+
+        $message = (string) ($_SESSION['admin_flash'] ?? '');
+        unset($_SESSION['admin_flash']);
+
+        if ($this->isPost()) {
+            require_csrf();
+
+            $result = Input::fromRequest()->process([
+                'name' => 'trim|required|string|max:160',
+                'public_host' => 'trim|null_if_empty|nullable|string|max:255',
+                'location' => 'trim|null_if_empty|nullable|string|max:255',
+                'enabled' => 'default:0|integer|min:0|max:1',
+            ]);
+
+            if ($result->fails()) {
+                $message = $this->errors($result->errors());
+            } else {
+                $data = $result->validated();
+
+                try {
+                    $stmt = $this->db->prepare(
+                        'UPDATE routers SET name=?,public_host=?,location=?,enabled=? WHERE id=?',
+                    );
+                    $stmt->execute([
+                        $data['name'],
+                        $data['public_host'] ?? null,
+                        $data['location'] ?? null,
+                        (int) ($data['enabled'] ?? 0),
+                        $routerId,
+                    ]);
+
+                    $this->audit(
+                        'router.updated',
+                        'router',
+                        $routerId,
+                        'MikroTik router was updated.',
+                    );
+                    $_SESSION['admin_flash'] = '<div class="alert ok">Router updated.</div>';
+                    redirect('/admin/routers/' . $routerId . '/settings');
+                } catch (Throwable $e) {
+                    $message = '<div class="alert">The router could not be saved. '
+                        . e($e->getMessage())
+                        . '</div>';
+                }
+            }
+        }
+
+        $this->page('Router Settings', __DIR__ . '/views/settings.php', [
+            'router' => $router,
+            'message' => $message,
+            'csrf' => csrf_token(),
+        ]);
+    }
+
     public function dashboard(int|string $id): never
     {
         $user = $this->auth->requireAccount();
