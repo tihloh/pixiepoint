@@ -123,7 +123,7 @@ final class Controller extends FeatureController
     ): string {
         $result = Input::fromRequest()->process([
             'name' => 'trim|required|string|max:160',
-            'business_name_template' => 'trim|null_if_empty|nullable|string|max:255',
+            'business_name' => 'trim|null_if_empty|nullable|string|max:255',
             'router_id' => 'required|integer|min:1',
             'base_url' => 'trim|required|string|max:255',
             'server_ip' => 'trim|required|string|max:45',
@@ -190,7 +190,7 @@ final class Controller extends FeatureController
                 $stmt->execute([
                     $routerId,
                     $data['name'],
-                    $data['business_name_template'] ?? null,
+                    $data['business_name'] ?? null,
                     $baseUrl,
                     $serverIp,
                     $subnet ?: null,
@@ -220,7 +220,7 @@ final class Controller extends FeatureController
             $stmt->execute([
                 $routerId,
                 $data['name'],
-                $data['business_name_template'] ?? null,
+                $data['business_name'] ?? null,
                 $baseUrl,
                 $serverIp,
                 $subnet ?: null,
