@@ -54,7 +54,7 @@ $sidebarReturn = preg_match('#^/(?:admin|dashboard)(?:/|$)#', $path) ? $path : '
                         <form method="get" action="/admin/routers" class="px-2 pt-1 pb-2" id="sidebar-router-form">
                             <input type="hidden" name="return" value="<?= e($sidebarReturn) ?>">
                             <label class="visually-hidden" for="sidebar-router-select">Select router</label>
-                            <select class="form-select form-select-sm" id="sidebar-router-select" name="select" onchange="this.form.submit()">
+                            <select class="form-select form-select-sm" id="sidebar-router-select" name="select">
                                 <?php foreach ($sidebarRouters as $router): ?>
                                     <option value="<?= e($router['id']) ?>" <?= $selectedRouter && (int) $selectedRouter['id'] === (int) $router['id'] ? 'selected' : '' ?>>
                                         <?= e($router['name']) ?> · <?= e($router['identity']) ?>
@@ -125,13 +125,24 @@ $sidebarReturn = preg_match('#^/(?:admin|dashboard)(?:/|$)#', $path) ? $path : '
 <?php else: ?>
     <main class="portal container-fluid"><?= $content ?></main>
 <?php endif; ?>
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqFkt0a36seU=" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwxH9JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
 <script>
-    const routerSelect = document.getElementById('sidebar-router-select');
-    routerSelect?.addEventListener('change', function () {
-        if (this.value === '__add__') {
-            window.location.href = '/dashboard?register=1';
-        }
+    $(function () {
+        $('#sidebar-router-select').on('change', function () {
+            if (this.value === '__add__') {
+                const modal = document.getElementById('register-router-modal');
+
+                if (modal && window.bootstrap?.Modal) {
+                    window.bootstrap.Modal.getOrCreateInstance(modal).show();
+                    return;
+                }
+
+                window.location.href = '/dashboard?register=1';
+            } else {
+                $('#sidebar-router-form').trigger('submit');
+            }
+        });
     });
 </script>
 </body>
