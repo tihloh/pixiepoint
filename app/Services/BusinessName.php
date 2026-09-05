@@ -10,6 +10,7 @@ final class BusinessName
 {
     public function __construct(private PDO $db)
     {
+        $this->ensureSchema();
     }
 
     public function owner(int $userId): string
@@ -74,5 +75,18 @@ final class BusinessName
     private function render(string $template, string $parent): string
     {
         return trim(str_replace('{parent}', $parent, $template));
+    }
+
+    private function ensureSchema(): void
+    {
+        $this->db->exec(
+            "ALTER TABLE users ADD COLUMN IF NOT EXISTS business_name_template VARCHAR(255) NULL AFTER points",
+        );
+        $this->db->exec(
+            "ALTER TABLE routers ADD COLUMN IF NOT EXISTS business_name_template VARCHAR(255) NULL AFTER location",
+        );
+        $this->db->exec(
+            "ALTER TABLE vendos ADD COLUMN IF NOT EXISTS business_name_template VARCHAR(255) NULL AFTER name",
+        );
     }
 }
