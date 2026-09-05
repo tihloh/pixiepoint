@@ -24,6 +24,13 @@ return static function (RouteManager $routes, array $c): void {
         ->middleware('prefab.access');
 
     $routes
+        ->get('/admin/routers/{id}', [$c['admin.routers'], 'dashboard'])
+        ->name('admin.routers.dashboard')
+        ->auth()
+        ->permission('routers.view')
+        ->middleware('prefab.access');
+
+    $routes
         ->get('/admin/routers/{id}/team', [$c['admin.router-team'], 'index'])
         ->name('admin.routers.team')
         ->auth()
