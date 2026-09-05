@@ -100,6 +100,8 @@ final class RouterAccess
             'DELETE FROM router_members WHERE router_id=? AND user_id=?',
         );
         $stmt->execute([$routerId, $userId]);
+
+        $this->syncBusinessOwnerStatus($userId);
     }
 
     public function ownerCount(int $routerId): int
@@ -130,6 +132,30 @@ final class RouterAccess
         $stmt->execute([$routerId, $userId]);
 
         return (bool) $stmt->fetchColumn();
+    }
+
+    private function syncBusinessOwnerStatus(int $userId): void
+    {
+        $stmt = $this->db->prepare(
+            "SELECT platform_role FROM users WHERE id=? LIMIT 1",
+        );
+        $stmt->execute([$userId]);
+        $platformRole = $stmt->fetchColumn();
+
+        if ($platformRole === false || (string) $platformRole === 'platform_owner') {
+            return;
+        }
+
+        $stmt = $this->db->prepare(
+            "SELECT 1 FROM router_members WHERE user_id=? AND role='owner' LIMIT 1",
+        );
+        $stmt->execute([$userId]);
+        $hasOwnedRouter = (bool) $stmt->fetchColumn();
+
+        $stmt = $this->db->prepare(
+            "UPDATE users SET platform_role=? WHERE id=?",
+        );
+        $stmt->execute([$hasOwnedRouter ? 'pisowifi_owner' : 'member', $userId]);
     }
 
     private function ensureSchema(): void
