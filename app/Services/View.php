@@ -64,7 +64,18 @@ final class View
         bool $dashboard = false,
         array $access = [],
     ): never {
-        $cssFile = dirname(__DIR__, 2) . '/public/assets/app.css';
+        $assets = dirname(__DIR__, 2) . '/public/assets';
+        $cssFiles = [
+            $assets . '/app.css',
+            $assets . '/admin.css',
+        ];
+        $cssVersion = 1;
+
+        foreach ($cssFiles as $cssFile) {
+            if (is_file($cssFile)) {
+                $cssVersion = max($cssVersion, (int) filemtime($cssFile));
+            }
+        }
 
         echo $this->render('layouts/app', [
             'title' => $title,
@@ -72,9 +83,7 @@ final class View
             'content' => $this->bootstrapMarkup($content),
             'dashboard' => $dashboard,
             'access' => $access,
-            'cssVersion' => is_file($cssFile)
-                ? (string) filemtime($cssFile)
-                : '1',
+            'cssVersion' => (string) $cssVersion,
         ]);
 
         exit;
@@ -121,8 +130,6 @@ final class View
 
         $html = strtr($html, $replacements);
 
-        // Apply Bootstrap controls only when the template did not provide an
-        // explicit class itself.
         $html = preg_replace(
             '/<input(?![^>]*\\bclass=)([^>]*)>/i',
             '<input class="form-control"$1>',
