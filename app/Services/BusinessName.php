@@ -18,7 +18,7 @@ final class BusinessName
     public function router(int $routerId): string
     {
         $stmt = $this->db->prepare(
-            'SELECT business_name_template FROM routers WHERE id=? LIMIT 1',
+            'SELECT business_name FROM routers WHERE id=? LIMIT 1',
         );
         $stmt->execute([$routerId]);
 
@@ -28,7 +28,7 @@ final class BusinessName
     public function vendo(int $vendoId): string
     {
         $stmt = $this->db->prepare(
-            'SELECT business_name_template,router_id FROM vendos WHERE id=? LIMIT 1',
+            'SELECT business_name,router_id FROM vendos WHERE id=? LIMIT 1',
         );
         $stmt->execute([$vendoId]);
         $vendo = $stmt->fetch();
@@ -36,7 +36,7 @@ final class BusinessName
             return '';
         }
 
-        $name = trim((string) ($vendo['business_name_template'] ?? ''));
+        $name = trim((string) ($vendo['business_name'] ?? ''));
         if ($name !== '') {
             return $name;
         }
@@ -51,10 +51,20 @@ final class BusinessName
         }
 
         $this->db->exec(
-            "ALTER TABLE routers ADD COLUMN IF NOT EXISTS business_name_template VARCHAR(255) NULL AFTER location",
+            "ALTER TABLE routers ADD COLUMN IF NOT EXISTS business_name VARCHAR(255) NULL AFTER location",
         );
         $this->db->exec(
-            "ALTER TABLE vendos ADD COLUMN IF NOT EXISTS business_name_template VARCHAR(255) NULL AFTER name",
+            "ALTER TABLE vendos ADD COLUMN IF NOT EXISTS business_name VARCHAR(255) NULL AFTER name",
+        );
+
+        // Preserve names created by the previous template-based implementation.
+        $this->db->exec(
+            "UPDATE routers SET business_name=business_name_template
+             WHERE business_name IS NULL AND business_name_template IS NOT NULL",
+        );
+        $this->db->exec(
+            "UPDATE vendos SET business_name=business_name_template
+             WHERE business_name IS NULL AND business_name_template IS NOT NULL",
         );
 
         self::$schemaReady = true;
