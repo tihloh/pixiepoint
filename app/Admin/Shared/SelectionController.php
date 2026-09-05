@@ -29,57 +29,22 @@ final class SelectionController
 
         $access = new RouterAccess($this->db);
         if (!$access->canView($routerId, $userId, $platformOwner)) {
+            unset($_SESSION['pixiepoint_selected_router_id'], $_SESSION['pixiepoint_selected_vendo_id']);
             redirect('/admin/routers');
         }
 
         $stmt = $this->db->prepare('SELECT id FROM routers WHERE id=? AND enabled=1 LIMIT 1');
         $stmt->execute([$routerId]);
         if (!$stmt->fetchColumn()) {
-            redirect('/admin/routers');
-        }
-
-        $_SESSION['pixiepoint_selected_router_id'] = $routerId;
-        unset($_SESSION['pixiepoint_selected_vendo_id']);
-
-        redirect($this->returnPath('/admin/routers/' . $routerId));
-    }
-
-    public function vendo(): never
-    {
-        $user = $this->auth->requireAccount();
-        $userId = (int) $user['id'];
-        $platformOwner = $this->auth->isPlatformOwner();
-        $routerId = max(0, (int) ($_SESSION['pixiepoint_selected_router_id'] ?? 0));
-        $vendoId = max(0, (int) ($_GET['select'] ?? 0));
-
-        if ($routerId < 1) {
-            unset($_SESSION['pixiepoint_selected_vendo_id']);
-            redirect('/admin/routers');
-        }
-
-        $access = new RouterAccess($this->db);
-        if (!$access->canView($routerId, $userId, $platformOwner)) {
             unset($_SESSION['pixiepoint_selected_router_id'], $_SESSION['pixiepoint_selected_vendo_id']);
             redirect('/admin/routers');
         }
 
-        if ($vendoId < 1) {
-            unset($_SESSION['pixiepoint_selected_vendo_id']);
-            redirect($this->returnPath('/admin/vendos'));
-        }
+        // A new parent selection always invalidates child selection state.
+        $_SESSION['pixiepoint_selected_router_id'] = $routerId;
+        unset($_SESSION['pixiepoint_selected_vendo_id']);
 
-        $stmt = $this->db->prepare(
-            'SELECT id FROM vendos WHERE id=? AND router_id=? AND enabled=1 LIMIT 1',
-        );
-        $stmt->execute([$vendoId, $routerId]);
-        if (!$stmt->fetchColumn()) {
-            unset($_SESSION['pixiepoint_selected_vendo_id']);
-            redirect($this->returnPath('/admin/vendos'));
-        }
-
-        $_SESSION['pixiepoint_selected_vendo_id'] = $vendoId;
-
-        redirect($this->returnPath('/admin/vendos'));
+        redirect($this->returnPath('/admin/routers/' . $routerId));
     }
 
     private function returnPath(string $fallback): string
