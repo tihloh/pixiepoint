@@ -27,11 +27,15 @@ final class Controller extends FeatureController
              FROM devices d
              LEFT JOIN users u ON u.id=d.user_id
              LEFT JOIN sessions s ON s.device_id=d.id
-             WHERE d.router_id=?
+             WHERE d.id IN (
+                 SELECT device_id FROM sessions WHERE router_id=? AND device_id IS NOT NULL
+                 UNION
+                 SELECT device_id FROM router_login_events WHERE router_id=? AND device_id IS NOT NULL
+             )
              GROUP BY d.id
              ORDER BY d.last_seen_at DESC',
         );
-        $stmt->execute([$routerId]);
+        $stmt->execute([$routerId, $routerId]);
         $devices = $stmt->fetchAll();
 
         $this->page('Devices', __DIR__ . '/views/index.php', ['devices' => $devices]);
