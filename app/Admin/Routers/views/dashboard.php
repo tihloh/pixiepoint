@@ -2,7 +2,7 @@
 /** @var array $router */
 /** @var array<string,array{label:string,value:mixed}> $metrics */
 /** @var array $recentSessions */
-/** @var bool $canManageRouters */
+/** @var bool $canManageRouter */
 /** @var bool $canManageTeam */
 /** @var bool $canViewSales */
 /** @var string $csrf */
@@ -26,7 +26,7 @@
         <?php if ($canManageTeam): ?>
             <a class="btn btn-outline-secondary" href="/admin/routers/<?= e($router['id']) ?>/team">Team</a>
         <?php endif; ?>
-        <?php if ($canManageRouters): ?>
+        <?php if ($canManageRouter): ?>
             <a class="btn btn-outline-secondary" href="/admin/routers/<?= e($router['id']) ?>/settings">Router settings</a>
         <?php endif; ?>
     </div>
