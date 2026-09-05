@@ -15,6 +15,7 @@ use PixiePoint\App\Admin\Routers\RegistrationController as RouterRegistrationCon
 use PixiePoint\App\Admin\Routers\TeamController as RouterTeamController;
 use PixiePoint\App\Admin\Sales\Controller as SalesController;
 use PixiePoint\App\Admin\Sessions\Controller as SessionsController;
+use PixiePoint\App\Admin\Shared\SelectionController;
 use PixiePoint\App\Admin\Users\AvatarService;
 use PixiePoint\App\Admin\Users\Controller as UsersController;
 use PixiePoint\App\Admin\Vendos\Api as VendoApi;
@@ -124,6 +125,7 @@ final class Application
             ),
             'admin.routers' => new RoutersController($app->db, $auth, $view, $logs),
             'admin.router-team' => new RouterTeamController($app->db, $auth, $view, $logs),
+            'admin.selection' => new SelectionController($app->db, $auth),
             'router.registration' => new RouterRegistrationController($app->db, $logs),
             'router.agent' => new RouterAgentController($app->db, $routerQueue),
             'admin.vendos' => new VendosController($app->db, $auth, $view, $logs),
