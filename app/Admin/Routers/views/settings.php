@@ -12,7 +12,8 @@
         </div>
         <h1><?= e($router['name']) ?></h1>
         <p class="muted mb-0">
-            Configure this MikroTik router. RouterOS identity is managed by the router itself.
+            Configure this MikroTik router. The router name is also the top-level Wi-Fi/business name.
+            RouterOS identity is managed by the router itself.
         </p>
     </div>
     <div class="actions">
@@ -29,7 +30,7 @@
 
         <div class="form-grid">
             <div class="field">
-                <label for="router-name">Display name</label>
+                <label for="router-name">Router / Wi-Fi name</label>
                 <input
                     id="router-name"
                     name="name"
@@ -37,6 +38,9 @@
                     required
                     maxlength="160"
                 >
+                <small class="text-body-secondary">
+                    Used as the router's display name and top-level Wi-Fi/business identity.
+                </small>
             </div>
 
             <div class="field">
@@ -68,20 +72,6 @@
                     placeholder="Branch, site or area"
                     maxlength="255"
                 >
-            </div>
-
-            <div class="field" style="grid-column:1/-1">
-                <label for="router-business-name">Business / Wi-Fi name</label>
-                <input
-                    id="router-business-name"
-                    name="business_name"
-                    value="<?= e($router['business_name'] ?? '') ?>"
-                    maxlength="255"
-                    placeholder="Example: Juan's Wi-Fi"
-                >
-                <small class="text-body-secondary">
-                    This is the top-level Wi-Fi/business name for this router. It can be the same on multiple routers.
-                </small>
             </div>
         </div>
 
