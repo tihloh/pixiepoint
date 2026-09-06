@@ -127,6 +127,7 @@
         server_address: c.serverAddress || '',
         client_ip: c.ip || '',
         interface: c.interfaceName || '',
+        mac: c.mac || '',
         v: String(version),
       });
     root.innerHTML = await request(`${hostedOrigin}/hotspot/status?${q.toString()}`, 'text/html');
@@ -156,11 +157,11 @@
       if (isLogin) {
         await loadLoginMarkup();
         await loadScript(`${hostedOrigin}/assets/juanfi-compat.js?v=${version}`, 'pixiepoint-app');
+        await loadScript(`${hostedOrigin}/assets/device-info.js?v=${version}`, 'pixiepoint-device-info');
       } else if (isStatus) {
         await loadStatusMarkup();
         await loadScript(`${hostedOrigin}/assets/session-portal.js?v=${version}`, 'pixiepoint-session');
       }
-      await loadScript(`${hostedOrigin}/assets/device-info.js?v=${version}`, 'pixiepoint-device-info');
       if (isLogin) {
         if (window.PIXIEPOINT_DEVICE_PROFILE) applyDeviceProfile(window.PIXIEPOINT_DEVICE_PROFILE);
         setTimeout(ensureVoucherFallback, 1500);
