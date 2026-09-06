@@ -47,7 +47,7 @@ final class Application
         self::startSession($app->config);
         $prefab = PrefabKernel::boot($app->db, $root);
         $auth = new AuthContext($prefab['users'],$prefab['auth'],$prefab['permissions'],$app->db);
-        $themes = new PortalThemeManager($app->db, $root);
+        $themes = new PortalThemeManager($app->db, $root, (string) ($app->config['base_url'] ?? ''));
         $view = new View($app->config, $themes);
         $google = new GoogleOAuth($app->db,$app->config,$prefab['users']);
         $devices = new DeviceIdentity($app->db);
