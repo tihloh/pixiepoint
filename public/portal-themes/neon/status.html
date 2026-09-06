@@ -1,24 +1,38 @@
 <main id="pp-page" class="neon-shell">
-    <section id="pp-status-card" class="portal-card">
+    <section id="pp-status-card" class="portal-card p-4">
         <div id="pp-session" class="session-view">
-            <div id="pp-brand" class="brand">{{ portal.name }}</div>
-            <h1 id="pp-session-title">You're connected</h1>
-            <p id="pp-session-description" class="muted">Live Wi-Fi session.</p>
-            <div id="pp-session-details" class="context">
+            <div id="pp-brand" class="brand mb-3">{{ portal.name }}</div>
+            <h1 id="pp-session-title" class="h3 mb-2">You're connected</h1>
+            <p id="pp-session-description" class="muted mb-4">Live Wi-Fi session.</p>
+            <div id="pp-session-details" class="context mb-3">
                 <div><small>Device</small><span id="pp-session-device">—</span></div>
                 <div><small>Time left</small><span id="pp-time-left">Unlimited</span></div>
                 <div><small>Data in</small><span id="pp-data-in">0 B</span></div>
                 <div><small>Data out</small><span id="pp-data-out">0 B</span></div>
             </div>
-            <button id="pp-extend" class="button" type="button" hidden>Extend time</button>
-            <div id="pp-extend-box" hidden>
-                <span id="pp-extend-countdown">Waiting…</span>
-                <div id="pp-extend-progress-bar" style="width:100%"></div>
-                <span id="pp-extend-amount">₱0</span>
-                <span id="pp-extend-time">—</span>
-                <p id="pp-extend-status" class="muted">Activating coin slot…</p>
-                <button id="pp-extend-finish" type="button" disabled>Done</button>
-                <button id="pp-extend-cancel" type="button">Cancel</button>
+            <div class="d-grid gap-2 mb-3">
+                <button id="pp-extend" class="button" type="button" hidden>Extend time</button>
+            </div>
+            <div id="pp-extend-box" class="compat-transaction mb-3" hidden>
+                <div class="d-flex justify-content-between gap-3 align-items-start mb-3">
+                    <div>
+                        <small class="d-block">Extend current voucher</small>
+                        <strong id="pp-extend-voucher" class="d-block">—</strong>
+                    </div>
+                    <small id="pp-extend-countdown" class="compat-countdown">Waiting…</small>
+                </div>
+                <div class="compat-coin-progress mb-3" aria-label="Extension coin slot timeout">
+                    <div id="pp-extend-progress-bar" class="compat-coin-progress-bar"></div>
+                </div>
+                <div class="context mb-3">
+                    <div><small>Coin total</small><span id="pp-extend-amount">₱0</span></div>
+                    <div><small>Added time</small><span id="pp-extend-time">—</span></div>
+                </div>
+                <p id="pp-extend-status" class="muted mb-3">Activating coin slot…</p>
+                <div class="actions">
+                    <button id="pp-extend-finish" class="button" type="button" disabled>Done</button>
+                    <button id="pp-extend-cancel" class="button secondary" type="button">Cancel</button>
+                </div>
             </div>
             <div id="pp-session-actions" class="actions">
                 <button id="pp-disconnect" class="button secondary" type="button">Disconnect</button>
@@ -26,7 +40,7 @@
             </div>
         </div>
         <div id="pp-disconnected" hidden>
-            <div id="pp-disconnected-message">Your Wi-Fi session has ended.</div>
+            <div id="pp-disconnected-message" class="mb-3">Your Wi-Fi session has ended.</div>
             <a id="pp-login" class="button" href="#">Connect again</a>
         </div>
     </section>
