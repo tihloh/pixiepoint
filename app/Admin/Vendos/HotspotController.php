@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace PixiePoint\App\Admin\Vendos;
 
+use PixiePoint\App\Portal\Adapters\PlatformAdapter;
+use PixiePoint\App\Portal\ThemeEngine;
 use PixiePoint\App\Services\PortalThemeManager;
 use PixiePoint\App\Services\View;
 
@@ -13,6 +15,8 @@ final class HotspotController
         private Api $api,
         private View $view,
         private PortalThemeManager $themes,
+        private ThemeEngine $themeEngine,
+        private PlatformAdapter $portalAdapter,
     ) {
     }
 
@@ -52,7 +56,23 @@ final class HotspotController
             $context['routerIdentity'],
             isset($vendos[0]['id']) ? (int) $vendos[0]['id'] : null,
         );
-        echo $this->themes->render($theme, $content, ['portal.name' => 'PixiePoint Wi-Fi']);
+        echo $this->themeEngine->render(
+            $theme,
+            'index.html',
+            $this->portalAdapter,
+            [
+                'portal' => [
+                    'name' => 'PixiePoint Wi-Fi',
+                ],
+                'content' => $content,
+            ],
+            [
+                'voucher_login' => true,
+                'member_login' => true,
+                'coin_slot' => false,
+                'points' => true,
+            ],
+        );
         exit;
     }
 
