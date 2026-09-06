@@ -41,6 +41,7 @@ final class HotspotController
             'server_address' => $context['serverAddress'],
             'client_ip' => $context['ip'],
             'interface' => $context['interfaceName'],
+            'mac' => $context['mac'],
         ];
         if ($this->api->hasDebugTarget($context['routerIdentity'])) {
             $debug = [
@@ -97,6 +98,7 @@ final class HotspotController
             'server_address' => (string) ($_GET['server_address'] ?? ''),
             'client_ip' => (string) ($_GET['client_ip'] ?? ''),
             'interface' => (string) ($_GET['interface'] ?? ''),
+            'mac' => (string) ($_GET['mac'] ?? ''),
         ];
         [$d, $errors] = $this->validateQuery($raw);
         if ($errors) {
@@ -112,7 +114,7 @@ final class HotspotController
     /** @param array{routerIdentity:string,serverAddress:string,ip:string,interfaceName:string,mac:string} $context */
     private function portalDevice(array $context): array
     {
-        $mac = client_mac($context['mac']);
+        $mac = $this->normalizeMac($context['mac']);
         if ($mac === '') {
             return [
                 'account' => 'Guest device',
@@ -172,6 +174,21 @@ final class HotspotController
         }
     }
 
+    private function normalizeMac(string $value): string
+    {
+        $value = trim($value);
+        if ($value === '' || str_contains($value, '$(')) {
+            return '';
+        }
+
+        $hex = preg_replace('/[^0-9a-fA-F]/', '', $value) ?? '';
+        if (strlen($hex) !== 12) {
+            return '';
+        }
+
+        return strtoupper(implode(':', str_split($hex, 2)));
+    }
+
     /** @param array<int,array<string,mixed>> $vendos */
     private function vendoOptions(array $vendos): string
     {
@@ -204,7 +221,7 @@ final class HotspotController
             'serverAddress' => $data['server_address'],
             'ip' => $data['client_ip'],
             'interfaceName' => $data['interface'],
-            'mac' => client_mac($data['mac']),
+            'mac' => $this->normalizeMac($data['mac']),
         ];
     }
 
