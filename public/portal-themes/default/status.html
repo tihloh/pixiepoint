@@ -1,0 +1,33 @@
+<main id="pp-page" class="portal-theme-shell">
+    <section id="pp-status-card" class="portal-card">
+        <div id="pp-session" class="session-view">
+            <div id="pp-brand" class="brand">{{ portal.business_name }}</div>
+            <h1 id="pp-session-title">You're connected</h1>
+            <p id="pp-session-description" class="muted">Live Wi-Fi session.</p>
+            <div id="pp-session-details" class="context">
+                <div><small>Device</small><span id="pp-session-device">—</span></div>
+                <div><small>Time left</small><span id="pp-time-left">Unlimited</span></div>
+                <div><small>Data in</small><span id="pp-data-in">0 B</span></div>
+                <div><small>Data out</small><span id="pp-data-out">0 B</span></div>
+            </div>
+            <button id="pp-extend" class="button" type="button" hidden>Extend time</button>
+            <div id="pp-extend-box" hidden>
+                <span id="pp-extend-countdown">Waiting…</span>
+                <div id="pp-extend-progress-bar" style="width:100%"></div>
+                <span id="pp-extend-amount">₱0</span>
+                <span id="pp-extend-time">—</span>
+                <p id="pp-extend-status" class="muted">Activating coin slot…</p>
+                <button id="pp-extend-finish" type="button" disabled>Done</button>
+                <button id="pp-extend-cancel" type="button">Cancel</button>
+            </div>
+            <div id="pp-session-actions" class="actions">
+                <button id="pp-disconnect" class="button secondary" type="button">Disconnect</button>
+                <button id="pp-end-session" class="button secondary" type="button">End session</button>
+            </div>
+        </div>
+        <div id="pp-disconnected" hidden>
+            <div id="pp-disconnected-message">Your Wi-Fi session has ended.</div>
+            <a id="pp-login" class="button" href="#">Connect again</a>
+        </div>
+    </section>
+</main>
