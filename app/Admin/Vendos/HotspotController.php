@@ -119,6 +119,8 @@ final class HotspotController
                 'points' => 0,
                 'ip' => $context['ip'] !== '' ? $context['ip'] : '—',
                 'mac' => '—',
+                'last_voucher' => '',
+                'uuid' => '',
             ];
         }
 
@@ -134,6 +136,8 @@ final class HotspotController
                     'points' => 0,
                     'ip' => $context['ip'] !== '' ? $context['ip'] : '—',
                     'mac' => $mac,
+                    'last_voucher' => '',
+                    'uuid' => '',
                 ];
             }
 
@@ -153,6 +157,8 @@ final class HotspotController
                 'points' => $this->points->balanceForDevice($deviceId, $userId),
                 'ip' => $context['ip'] !== '' ? $context['ip'] : (string) ($device['last_ip'] ?? '—'),
                 'mac' => (string) ($device['mac'] ?? $mac),
+                'last_voucher' => trim((string) ($device['last_voucher'] ?? '')),
+                'uuid' => (string) ($device['uuid'] ?? ''),
             ];
         } catch (Throwable) {
             return [
@@ -160,6 +166,8 @@ final class HotspotController
                 'points' => 0,
                 'ip' => $context['ip'] !== '' ? $context['ip'] : '—',
                 'mac' => $mac,
+                'last_voucher' => '',
+                'uuid' => '',
             ];
         }
     }
