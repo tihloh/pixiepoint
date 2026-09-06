@@ -30,10 +30,7 @@ final class View
 
     public function renderFile(string $file, array $data = []): string
     {
-        if (
-            !is_file($file)
-            || strtolower((string) pathinfo($file, PATHINFO_EXTENSION)) !== 'php'
-        ) {
+        if (!is_file($file) || strtolower((string) pathinfo($file, PATHINFO_EXTENSION)) !== 'php') {
             throw new RuntimeException('View not found: ' . $file);
         }
 
@@ -45,17 +42,10 @@ final class View
     }
 
     /** @param array<string, bool> $access */
-    public function page(
-        string $title,
-        string $content,
-        bool $dashboard = false,
-        array $access = [],
-    ): never {
+    public function page(string $title, string $content, bool $dashboard = false, array $access = []): never
+    {
         $assets = dirname(__DIR__, 2) . '/public/assets';
-        $cssFiles = [
-            $assets . '/app.css',
-            $assets . '/admin.css',
-        ];
+        $cssFiles = [$assets . '/app.css', $assets . '/admin.css'];
         $cssVersion = 1;
 
         foreach ($cssFiles as $cssFile) {
@@ -76,19 +66,23 @@ final class View
         exit;
     }
 
+    public function portalCardContent(string $body): string
+    {
+        return $this->render('partials/portal-card', [
+            'body' => $this->bootstrapMarkup($body),
+        ]);
+    }
+
     public function portalCard(string $body): string
     {
-        $body = $this->bootstrapMarkup($body);
         $context = $_SESSION['hotspot'] ?? [];
         $routerIdentity = is_array($context) ? (string) ($context['router_identity'] ?? '') : '';
         $theme = $this->themes->resolveByRouterIdentity($routerIdentity);
 
         return $this->themes->render(
             $theme,
-            $this->render('partials/portal-card', ['body' => $body]),
-            [
-                'portal.name' => (string) ($this->config['app_name'] ?? 'PixiePoint Wi-Fi'),
-            ],
+            $this->portalCardContent($body),
+            ['portal.name' => (string) ($this->config['app_name'] ?? 'PixiePoint Wi-Fi')],
         );
     }
 
@@ -119,17 +113,12 @@ final class View
         $html = preg_replace('/<input(?![^>]*\bclass=)([^>]*)>/i', '<input class="form-control"$1>', $html) ?? $html;
         $html = preg_replace('/<select(?![^>]*\bclass=)([^>]*)>/i', '<select class="form-select"$1>', $html) ?? $html;
         $html = preg_replace('/<textarea(?![^>]*\bclass=)([^>]*)>/i', '<textarea class="form-control"$1>', $html) ?? $html;
-        $html = preg_replace_callback(
-            '/<label([^>]*)>/i',
-            static function (array $match): string {
-                if (str_contains($match[1], 'class=')) {
-                    return $match[0];
-                }
-
-                return '<label class="form-label"' . $match[1] . '>';
-            },
-            $html,
-        ) ?? $html;
+        $html = preg_replace_callback('/<label([^>]*)>/i', static function (array $match): string {
+            if (str_contains($match[1], 'class=')) {
+                return $match[0];
+            }
+            return '<label class="form-label"' . $match[1] . '>';
+        }, $html) ?? $html;
         $html = str_replace('<table>', '<div class="table-responsive"><table class="table table-hover align-middle mb-0">', $html);
 
         return str_replace('</table>', '</table></div>', $html);
