@@ -85,13 +85,13 @@ final class View
 
         return $this->themeEngine->render(
             $theme,
-            'index.html',
+            'login.html',
             $this->portalAdapter,
             [
                 'portal' => [
                     'name' => (string) ($this->config['app_name'] ?? 'PixiePoint Wi-Fi'),
+                    'content' => $this->portalCardContent($body),
                 ],
-                'content' => $this->portalCardContent($body),
             ],
             [
                 'voucher_login' => true,
