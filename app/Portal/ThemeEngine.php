@@ -101,17 +101,15 @@ final class ThemeEngine
                     return $match[0];
                 }
 
-                $content = $this->inlineCssUrls($content, $slug, $path);
-
-                return '<style data-pixiepoint-theme-asset="' . e($path) . '">' . $content . '</style>';
+                return '<style data-pixiepoint-theme-asset="' . e($path) . '">' . $this->inlineCssUrls($content, $slug, $path) . '</style>';
             },
             $html,
         ) ?? $html;
 
         $html = preg_replace_callback(
-            '/<script\b([^>]*\bsrc=["\'])' . $quotedAssetUrl . '\/([^"\']+)(["\'][^>]*)>\s*<\/script>/i',
+            '/<script\b([^>]*)\bsrc=(["\'])' . $quotedAssetUrl . '\/([^"\']+)\2([^>]*)>\s*<\/script>/i',
             function (array $match) use ($slug): string {
-                $path = trim(rawurldecode($match[2]));
+                $path = trim(rawurldecode($match[3]));
                 $content = $this->readAsset($slug, $path);
                 if ($content === null) {
                     return $match[0];
@@ -119,7 +117,7 @@ final class ThemeEngine
 
                 $content = str_replace('</script', '<\\/script', $content);
 
-                return '<script' . $match[1] . 'inline' . substr($match[3], 0, 0) . '>' . $content . '</script>';
+                return '<script' . $match[1] . $match[4] . '>' . $content . '</script>';
             },
             $html,
         ) ?? $html;
