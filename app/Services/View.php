@@ -4,21 +4,18 @@ declare(strict_types=1);
 
 namespace PixiePoint\App\Services;
 
-use PixiePoint\App\Portal\Adapters\MikroTikAdapter;
-use PixiePoint\App\Portal\ThemeContext;
+use PixiePoint\App\Portal\Adapters\PlatformAdapter;
 use PixiePoint\App\Portal\ThemeEngine;
 use RuntimeException;
 
 final class View
 {
-    private MikroTikAdapter $portalAdapter;
-
     public function __construct(
         private array $config,
         private PortalThemeManager $themes,
         private ThemeEngine $themeEngine,
+        private PlatformAdapter $portalAdapter,
     ) {
-        $this->portalAdapter = new MikroTikAdapter();
     }
 
     public function render(string $view, array $data = []): string
