@@ -8,10 +8,12 @@
   let started = false,
     retryTimer = 0,
     voucherResolved = false;
+
   function status(message) {
     const e = document.getElementById('boot-status');
     if (e) e.textContent = message;
   }
+
   function request(url, type) {
     return new Promise(function (resolve, reject) {
       const x = new XMLHttpRequest();
@@ -25,6 +27,7 @@
       x.send();
     });
   }
+
   function randomVoucher() {
     const a = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789', b = new Uint8Array(6);
     if (window.crypto && crypto.getRandomValues) crypto.getRandomValues(b);
@@ -33,6 +36,7 @@
     for (let i = 0; i < b.length; i++) v += a[b[i] % a.length];
     return v;
   }
+
   function setVoucher(voucher, force) {
     if (!isLogin) return;
     const input = document.getElementById('compat-voucher');
@@ -42,15 +46,18 @@
     input.value = voucher;
     voucherResolved = true;
   }
+
   function applyDeviceProfile(p) {
     if (!isLogin || !p || !p.ok) return;
     const v = String(p.saved_voucher || '').trim();
     if (v) { setVoucher(v, true); return; }
     if (!voucherResolved) setVoucher(randomVoucher(), false);
   }
+
   function ensureVoucherFallback() {
     if (isLogin && !voucherResolved) setVoucher(randomVoucher(), false);
   }
+
   function loadStyle(href, id) {
     return new Promise(function (resolve, reject) {
       if (id && document.getElementById(id)) return resolve();
@@ -63,6 +70,7 @@
       document.head.appendChild(l);
     });
   }
+
   function loadScript(src, id) {
     return new Promise(function (resolve, reject) {
       if (id && document.getElementById(id)) return resolve();
@@ -74,6 +82,7 @@
       document.head.appendChild(s);
     });
   }
+
   async function loadLoginMarkup() {
     const root = document.getElementById('pixiepoint-root');
     if (!root) throw new Error('Portal root missing');
@@ -107,6 +116,33 @@
       };
     });
   }
+
+  async function loadStatusMarkup() {
+    const root = document.getElementById('pixiepoint-root');
+    if (!root) throw new Error('Portal root missing');
+    const c = window.PIXIEPOINT_SESSION || {},
+      q = new URLSearchParams({
+        fragment: '1',
+        router_identity: c.routerIdentity || '',
+        server_address: c.serverAddress || '',
+        client_ip: c.ip || '',
+        interface: c.interfaceName || '',
+        v: String(version),
+      });
+    root.innerHTML = await request(`${hostedOrigin}/hotspot/status?${q.toString()}`, 'text/html');
+
+    window.PIXIEPOINT_VENDOS = Array.from(root.querySelectorAll('#pp-vendo option')).map(function (o) {
+      return {
+        id: o.value,
+        name: o.textContent.trim(),
+        baseUrl: o.dataset.baseUrl || '',
+        passwordMode: o.dataset.passwordMode || 'blank',
+        chargingEnabled: o.dataset.charging === '1',
+        eloadEnabled: o.dataset.eload === '1',
+      };
+    });
+  }
+
   async function loadPortal() {
     if (started) return;
     started = true;
@@ -121,6 +157,7 @@
         await loadLoginMarkup();
         await loadScript(`${hostedOrigin}/assets/juanfi-compat.js?v=${version}`, 'pixiepoint-app');
       } else if (isStatus) {
+        await loadStatusMarkup();
         await loadScript(`${hostedOrigin}/assets/session-portal.js?v=${version}`, 'pixiepoint-session');
       }
       await loadScript(`${hostedOrigin}/assets/device-info.js?v=${version}`, 'pixiepoint-device-info');
@@ -135,6 +172,7 @@
       retryTimer = setTimeout(check, 4000);
     }
   }
+
   function check() {
     if (started) return;
     const x = new XMLHttpRequest();
@@ -156,6 +194,7 @@
     };
     x.send();
   }
+
   window.addEventListener('pixiepoint:device-profile', function (e) { applyDeviceProfile(e.detail || {}); });
   window.addEventListener('online', check);
   check();
