@@ -4,12 +4,15 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ theme.name }} · PixiePoint</title>
-    <link rel="stylesheet" href="{{ theme.url }}/theme.css">
+    <link rel="stylesheet" href="{{ theme.asset_url }}/theme.css">
 </head>
 <body>
+    {{> layout/header}}
+
     <main class="portal-theme-shell">
         {{{ content }}}
     </main>
-    <script src="{{ theme.url }}/theme.js"></script>
+
+    {{> layout/footer}}
 </body>
 </html>
