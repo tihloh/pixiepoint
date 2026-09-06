@@ -38,8 +38,9 @@ final class App
         $this->db->exec(<<<'SQL'
 CREATE TABLE IF NOT EXISTS users (id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,name VARCHAR(160) NOT NULL,email VARCHAR(254) NOT NULL UNIQUE,password_hash VARCHAR(255) NULL,google_sub VARCHAR(255) NULL UNIQUE,avatar_url VARCHAR(1000) NULL,active TINYINT(1) NOT NULL DEFAULT 1,platform_role VARCHAR(32) NOT NULL DEFAULT 'member',points BIGINT NOT NULL DEFAULT 0,account_api_key CHAR(48) NULL,created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 CREATE TABLE IF NOT EXISTS admins (id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,name VARCHAR(160) NOT NULL,email VARCHAR(254) NOT NULL UNIQUE,password_hash VARCHAR(255) NOT NULL,created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-CREATE TABLE IF NOT EXISTS routers (id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,name VARCHAR(160) NOT NULL,identity VARCHAR(160) NOT NULL UNIQUE,hardware_id VARCHAR(128) NULL,public_host VARCHAR(255),location VARCHAR(255),api_key CHAR(48) NOT NULL UNIQUE,enabled TINYINT(1) NOT NULL DEFAULT 1,last_seen_at DATETIME,created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-CREATE TABLE IF NOT EXISTS vendos (id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,owner_user_id BIGINT UNSIGNED NULL,router_id BIGINT UNSIGNED NOT NULL,name VARCHAR(160) NOT NULL,base_url VARCHAR(255) NOT NULL,server_ip VARCHAR(45) NULL,client_subnet VARCHAR(64) NULL,interface_name VARCHAR(128) NULL,password_mode VARCHAR(32) NOT NULL DEFAULT 'blank',charging_enabled TINYINT(1) NOT NULL DEFAULT 0,eload_enabled TINYINT(1) NOT NULL DEFAULT 0,debug_enabled TINYINT(1) NOT NULL DEFAULT 0,enabled TINYINT(1) NOT NULL DEFAULT 1,created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,INDEX idx_vendos_owner (owner_user_id),INDEX idx_vendos_router (router_id),FOREIGN KEY(owner_user_id) REFERENCES users(id) ON DELETE SET NULL,FOREIGN KEY(router_id) REFERENCES routers(id) ON DELETE CASCADE) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+CREATE TABLE IF NOT EXISTS portal_themes (id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,name VARCHAR(160) NOT NULL,slug VARCHAR(160) NOT NULL UNIQUE,version VARCHAR(64) NULL,description VARCHAR(500) NULL,enabled TINYINT(1) NOT NULL DEFAULT 1,created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+CREATE TABLE IF NOT EXISTS routers (id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,name VARCHAR(160) NOT NULL,identity VARCHAR(160) NOT NULL UNIQUE,hardware_id VARCHAR(128) NULL,public_host VARCHAR(255),location VARCHAR(255),portal_theme_id BIGINT UNSIGNED NULL,api_key CHAR(48) NOT NULL UNIQUE,enabled TINYINT(1) NOT NULL DEFAULT 1,last_seen_at DATETIME,created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+CREATE TABLE IF NOT EXISTS vendos (id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,owner_user_id BIGINT UNSIGNED NULL,router_id BIGINT UNSIGNED NOT NULL,name VARCHAR(160) NOT NULL,base_url VARCHAR(255) NOT NULL,server_ip VARCHAR(45) NULL,client_subnet VARCHAR(64) NULL,interface_name VARCHAR(128) NULL,portal_theme_id BIGINT UNSIGNED NULL,password_mode VARCHAR(32) NOT NULL DEFAULT 'blank',charging_enabled TINYINT(1) NOT NULL DEFAULT 0,eload_enabled TINYINT(1) NOT NULL DEFAULT 0,debug_enabled TINYINT(1) NOT NULL DEFAULT 0,enabled TINYINT(1) NOT NULL DEFAULT 1,created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,INDEX idx_vendos_owner (owner_user_id),INDEX idx_vendos_router (router_id),FOREIGN KEY(owner_user_id) REFERENCES users(id) ON DELETE SET NULL,FOREIGN KEY(router_id) REFERENCES routers(id) ON DELETE CASCADE) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 CREATE TABLE IF NOT EXISTS vendo_settings (setting_key VARCHAR(64) PRIMARY KEY,setting_value VARCHAR(255) NOT NULL,updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 CREATE TABLE IF NOT EXISTS vouchers (id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,router_id BIGINT UNSIGNED NULL,code VARCHAR(128) NOT NULL UNIQUE,password VARCHAR(255) NOT NULL,label VARCHAR(255),duration_minutes INT UNSIGNED NOT NULL DEFAULT 60,data_limit_mb BIGINT UNSIGNED,max_devices INT UNSIGNED NOT NULL DEFAULT 1,max_uses INT UNSIGNED NOT NULL DEFAULT 1,uses INT UNSIGNED NOT NULL DEFAULT 0,expires_at DATETIME,enabled TINYINT(1) NOT NULL DEFAULT 1,created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,INDEX idx_vouchers_router (router_id),FOREIGN KEY(router_id) REFERENCES routers(id) ON DELETE SET NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 CREATE TABLE IF NOT EXISTS devices (id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,uuid CHAR(36) NULL UNIQUE,user_id BIGINT UNSIGNED NULL,mac CHAR(17) NULL UNIQUE,last_voucher VARCHAR(128) NULL,last_ip VARCHAR(45),user_agent VARCHAR(500),merged_into_device_id BIGINT UNSIGNED NULL,first_seen_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,last_seen_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,INDEX idx_devices_user (user_id),INDEX idx_devices_merged (merged_into_device_id),FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE SET NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -54,8 +55,10 @@ SQL);
         $this->db->exec('ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url VARCHAR(1000) NULL AFTER google_sub');
         $this->db->exec('ALTER TABLE users ADD COLUMN IF NOT EXISTS account_api_key CHAR(48) NULL AFTER points');
         $this->db->exec('ALTER TABLE routers ADD COLUMN IF NOT EXISTS hardware_id VARCHAR(128) NULL AFTER identity');
+        $this->db->exec('ALTER TABLE routers ADD COLUMN IF NOT EXISTS portal_theme_id BIGINT UNSIGNED NULL AFTER location');
         $this->db->exec('ALTER TABLE vendos ADD COLUMN IF NOT EXISTS server_ip VARCHAR(45) NULL AFTER base_url');
         $this->db->exec('ALTER TABLE vendos ADD COLUMN IF NOT EXISTS client_subnet VARCHAR(64) NULL AFTER server_ip');
+        $this->db->exec('ALTER TABLE vendos ADD COLUMN IF NOT EXISTS portal_theme_id BIGINT UNSIGNED NULL AFTER interface_name');
         $this->db->exec('ALTER TABLE vendos ADD COLUMN IF NOT EXISTS debug_enabled TINYINT(1) NOT NULL DEFAULT 0 AFTER eload_enabled');
         $this->db->exec('ALTER TABLE vouchers ADD COLUMN IF NOT EXISTS router_id BIGINT UNSIGNED NULL AFTER id');
         $this->db->exec('ALTER TABLE devices ADD COLUMN IF NOT EXISTS uuid CHAR(36) NULL AFTER id');
@@ -66,8 +69,6 @@ SQL);
         $this->db->exec('ALTER TABLE sessions ADD COLUMN IF NOT EXISTS user_id BIGINT UNSIGNED NULL AFTER id');
         $this->db->exec('ALTER TABLE router_login_events ADD COLUMN IF NOT EXISTS points_earned BIGINT UNSIGNED NOT NULL DEFAULT 0 AFTER is_extension');
 
-        // Existing ordinary accounts become members. Ownership is represented by
-        // router_members rather than a platform-wide role.
         $this->db->exec("UPDATE users SET platform_role='member' WHERE platform_role='user'");
         $this->db->exec("UPDATE users SET account_api_key=LOWER(HEX(RANDOM_BYTES(24))) WHERE account_api_key IS NULL OR account_api_key=''");
         $this->db->exec("UPDATE devices SET uuid=UUID() WHERE uuid IS NULL OR uuid=''");
@@ -80,9 +81,11 @@ SQL);
             'CREATE UNIQUE INDEX idx_users_google_sub ON users (google_sub)',
             'CREATE UNIQUE INDEX idx_users_account_api_key ON users (account_api_key)',
             'CREATE UNIQUE INDEX idx_routers_hardware_id ON routers (hardware_id)',
+            'CREATE INDEX idx_routers_portal_theme ON routers (portal_theme_id)',
             'CREATE UNIQUE INDEX idx_devices_uuid ON devices (uuid)',
             'CREATE INDEX idx_devices_merged ON devices (merged_into_device_id)',
             'CREATE INDEX idx_vendos_server_ip ON vendos (server_ip)',
+            'CREATE INDEX idx_vendos_portal_theme ON vendos (portal_theme_id)',
             'CREATE INDEX idx_vouchers_router ON vouchers (router_id)',
         ] as $sql) {
             try {
@@ -96,7 +99,6 @@ SQL);
         } catch (PDOException) {
         }
 
-        // Only backfill vouchers whose observed history unambiguously points to one router.
         $this->db->exec(<<<'SQL'
 UPDATE vouchers v
 JOIN (
