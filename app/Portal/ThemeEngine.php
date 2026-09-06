@@ -23,45 +23,13 @@ final class ThemeEngine
         array $features = [],
     ): string {
         $slug = (string) ($theme['slug'] ?? '');
-        $context = new ThemeContext($data, $features);
-        $html = $this->renderFile($slug, $entry, $context, []);
-
-        $html = $this->inlineLocalAssets($html, $slug);
-
-        return $adapter->transform($html, $context);
-    }
-
-    /** @param array<string,bool> $features */
-    private function renderFile(string $slug, string $relativePath, ThemeContext $context, array $stack): string
-    {
-        $path = $this->themes->filePath($slug, $relativePath);
+        $path = $this->themes->filePath($slug, $entry);
         if ($path === null) {
-            throw new RuntimeException('Portal theme file not found: ' . $relativePath);
+            throw new RuntimeException('Portal theme file not found: ' . $entry);
         }
 
-        $key = $slug . ':' . $relativePath;
-        if (in_array($key, $stack, true)) {
-            throw new RuntimeException('Circular portal theme component reference: ' . $relativePath);
-        }
-        $stack[] = $key;
-
+        $context = new ThemeContext($data, $features);
         $html = (string) file_get_contents($path);
-
-        $html = preg_replace_callback(
-            '/\{\{>\s*([^\s}]+)\s*\}\}/',
-            function (array $match) use ($slug, $context, $stack): string {
-                $component = trim($match[1]);
-                $requirements = $this->themes->componentRequirements($slug, $component);
-                foreach ($requirements as $feature) {
-                    if (!(bool) ($context->features[$feature] ?? false)) {
-                        return '';
-                    }
-                }
-
-                return $this->renderFile($slug, 'components/' . $component . '.html', $context, $stack);
-            },
-            $html,
-        ) ?? $html;
 
         $values = [
             'theme.url' => $this->themes->assetUrl($slug),
@@ -69,8 +37,7 @@ final class ThemeEngine
             'theme.name' => (string) ($this->themes->find($slug)['name'] ?? $slug),
         ];
 
-        $merged = $this->flatten($context->data);
-        foreach ($merged as $key => $value) {
+        foreach ($this->flatten($context->data) as $key => $value) {
             $values[$key] = is_scalar($value) ? (string) $value : '';
         }
 
@@ -80,11 +47,15 @@ final class ThemeEngine
             $html,
         ) ?? $html;
 
-        return preg_replace_callback(
+        $html = preg_replace_callback(
             '/\{\{\s*([a-zA-Z0-9_.-]+)\s*\}\}/',
             static fn (array $m): string => e($values[$m[1]] ?? ''),
             $html,
         ) ?? $html;
+
+        $html = $this->inlineLocalAssets($html, $slug);
+
+        return $adapter->transform($html, $context);
     }
 
     private function inlineLocalAssets(string $html, string $slug): string
@@ -122,7 +93,7 @@ final class ThemeEngine
             $html,
         ) ?? $html;
 
-        $html = preg_replace_callback(
+        return preg_replace_callback(
             '/\b(src|href)=("|\')' . $quotedAssetUrl . '\/([^"\']+)(\2)/i',
             function (array $match) use ($slug): string {
                 $path = trim(rawurldecode($match[3]));
@@ -135,8 +106,6 @@ final class ThemeEngine
             },
             $html,
         ) ?? $html;
-
-        return $html;
     }
 
     private function inlineCssUrls(string $css, string $slug, string $cssPath): string
