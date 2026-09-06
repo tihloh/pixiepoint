@@ -158,7 +158,7 @@ final class HotspotController
                 'account' => $account,
                 'points' => $this->points->balanceForDevice($deviceId, $userId),
                 'ip' => $context['ip'] !== '' ? $context['ip'] : (string) ($device['last_ip'] ?? '—'),
-                'mac' => (string) ($device['mac'] ?? $mac),
+                'mac' => $mac,
                 'last_voucher' => trim((string) ($device['last_voucher'] ?? '')),
                 'uuid' => (string) ($device['uuid'] ?? ''),
             ];
