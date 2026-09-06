@@ -6,10 +6,17 @@
             <h1 id="pp-session-title" class="h3 mb-2">You're connected</h1>
             <p id="pp-session-description" class="muted mb-4">Live Wi-Fi session.</p>
             <div id="pp-session-details" class="context mb-3">
-                <div><small>Device</small><span id="pp-session-device">—</span></div>
+                <div><small>Device</small><span id="pp-session-device">{{ portal.device.account }}</span></div>
                 <div><small>Time left</small><span id="pp-time-left">Unlimited</span></div>
                 <div><small>Data in</small><span id="pp-data-in">0 B</span></div>
                 <div><small>Data out</small><span id="pp-data-out">0 B</span></div>
+            </div>
+            <div id="pp-device-info" class="context mb-3">
+                <div><small>Points</small><strong id="pp-device-points">{{ portal.device.points }}</strong></div>
+                <div><small>IP address</small><span id="pp-device-ip">{{ portal.device.ip }}</span></div>
+                <div><small>MAC address</small><span id="pp-device-mac">{{ portal.device.mac }}</span></div>
+                <div><small>Last voucher</small><span id="pp-device-voucher">{{ portal.device.last_voucher }}</span></div>
+                <div><small>Device UUID</small><span id="pp-device-uuid">{{ portal.device.uuid }}</span></div>
             </div>
             <select id="pp-vendo" class="d-none">{{{ portal.vendo_options }}}</select>
             <button id="pp-extend" class="button secondary full mb-3" type="button" hidden>Extend time</button>
