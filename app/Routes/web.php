@@ -74,7 +74,7 @@ return static function (RouteManager $routes, array $c): void {
     (require dirname(__DIR__) . '/Profile/routes.php')($routes, $c);
 
     $adminRoot = dirname(__DIR__) . '/Admin';
-    foreach (['Users', 'Permissions', 'Groups', 'Routers', 'Vendos', 'Vouchers', 'Devices', 'Sessions', 'Sales', 'Logs'] as $feature) {
+    foreach (['Users', 'Permissions', 'Groups', 'Routers', 'Vendos', 'Vouchers', 'Devices', 'Sessions', 'Sales', 'Logs', 'PortalThemes'] as $feature) {
         (require $adminRoot . '/' . $feature . '/routes.php')($routes, $c);
     }
 };
