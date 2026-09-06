@@ -1,0 +1,11 @@
+{
+  "name": "Light",
+  "slug": "light",
+  "version": "1.0.0",
+  "description": "Clean light PixiePoint portal theme",
+  "entry": "login.html",
+  "pages": {
+    "login": "login.html",
+    "status": "status.html"
+  }
+}
