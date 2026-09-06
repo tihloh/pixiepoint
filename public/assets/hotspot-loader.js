@@ -19,19 +19,14 @@
       x.timeout = 7000;
       if (type) x.setRequestHeader('Accept', type);
       x.onload = function () {
-        x.status >= 200 && x.status < 300
-          ? resolve(x.responseText)
-          : reject(new Error('HTTP ' + x.status));
+        x.status >= 200 && x.status < 300 ? resolve(x.responseText) : reject(new Error('HTTP ' + x.status));
       };
-      x.onerror = x.ontimeout = function () {
-        reject(new Error('Request failed'));
-      };
+      x.onerror = x.ontimeout = function () { reject(new Error('Request failed')); };
       x.send();
     });
   }
   function randomVoucher() {
-    const a = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789',
-      b = new Uint8Array(6);
+    const a = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789', b = new Uint8Array(6);
     if (window.crypto && crypto.getRandomValues) crypto.getRandomValues(b);
     else for (let i = 0; i < b.length; i++) b[i] = Math.floor(Math.random() * 256);
     let v = 'PP';
@@ -42,9 +37,7 @@
     if (!isLogin) return;
     const input = document.getElementById('compat-voucher');
     if (!input) return;
-    voucher = String(voucher || '')
-      .trim()
-      .toUpperCase();
+    voucher = String(voucher || '').trim().toUpperCase();
     if (!voucher || (!force && input.value.trim() !== '')) return;
     input.value = voucher;
     voucherResolved = true;
@@ -52,10 +45,7 @@
   function applyDeviceProfile(p) {
     if (!isLogin || !p || !p.ok) return;
     const v = String(p.saved_voucher || '').trim();
-    if (v) {
-      setVoucher(v, true);
-      return;
-    }
+    if (v) { setVoucher(v, true); return; }
     if (!voucherResolved) setVoucher(randomVoucher(), false);
   }
   function ensureVoucherFallback() {
@@ -97,18 +87,25 @@
         v: String(version),
       });
     root.innerHTML = await request(`${hostedOrigin}/hotspot/compat?${q.toString()}`, 'text/html');
-    window.PIXIEPOINT_VENDOS = Array.from(root.querySelectorAll('#compat-vendo option')).map(
-      function (o) {
-        return {
-          id: o.value,
-          name: o.textContent.trim(),
-          baseUrl: o.dataset.baseUrl || '',
-          passwordMode: o.dataset.passwordMode || 'blank',
-          chargingEnabled: o.dataset.charging === '1',
-          eloadEnabled: o.dataset.eload === '1',
-        };
-      },
-    );
+
+    ['chap-login', 'pap-login'].forEach(function (id) {
+      const form = document.getElementById(id);
+      if (!form) return;
+      form.action = c.loginUrl || '';
+      const dst = form.elements.namedItem('dst');
+      if (dst) dst.value = c.originalUrl || '';
+    });
+
+    window.PIXIEPOINT_VENDOS = Array.from(root.querySelectorAll('#compat-vendo option')).map(function (o) {
+      return {
+        id: o.value,
+        name: o.textContent.trim(),
+        baseUrl: o.dataset.baseUrl || '',
+        passwordMode: o.dataset.passwordMode || 'blank',
+        chargingEnabled: o.dataset.charging === '1',
+        eloadEnabled: o.dataset.eload === '1',
+      };
+    });
   }
   async function loadPortal() {
     if (started) return;
@@ -116,28 +113,17 @@
     status('Hosted portal found · loading…');
     try {
       await Promise.all([
-        loadStyle(
-          `https://cdn.jsdelivr.net/npm/bootstrap@${bootstrapVersion}/dist/css/bootstrap.min.css`,
-          'pixiepoint-bootstrap-css',
-        ),
+        loadStyle(`https://cdn.jsdelivr.net/npm/bootstrap@${bootstrapVersion}/dist/css/bootstrap.min.css`, 'pixiepoint-bootstrap-css'),
         loadStyle(`${hostedOrigin}/assets/app.css?v=${version}`, 'pixiepoint-css'),
       ]);
-      await loadScript(
-        `https://cdn.jsdelivr.net/npm/bootstrap@${bootstrapVersion}/dist/js/bootstrap.bundle.min.js`,
-        'pixiepoint-bootstrap-js',
-      );
+      await loadScript(`https://cdn.jsdelivr.net/npm/bootstrap@${bootstrapVersion}/dist/js/bootstrap.bundle.min.js`, 'pixiepoint-bootstrap-js');
       if (isLogin) {
         await loadLoginMarkup();
         await loadScript(`${hostedOrigin}/assets/juanfi-compat.js?v=${version}`, 'pixiepoint-app');
-      } else if (isStatus)
-        await loadScript(
-          `${hostedOrigin}/assets/session-portal.js?v=${version}`,
-          'pixiepoint-session',
-        );
-      await loadScript(
-        `${hostedOrigin}/assets/device-info.js?v=${version}`,
-        'pixiepoint-device-info',
-      );
+      } else if (isStatus) {
+        await loadScript(`${hostedOrigin}/assets/session-portal.js?v=${version}`, 'pixiepoint-session');
+      }
+      await loadScript(`${hostedOrigin}/assets/device-info.js?v=${version}`, 'pixiepoint-device-info');
       if (isLogin) {
         if (window.PIXIEPOINT_DEVICE_PROFILE) applyDeviceProfile(window.PIXIEPOINT_DEVICE_PROFILE);
         setTimeout(ensureVoucherFallback, 1500);
@@ -157,31 +143,20 @@
     x.setRequestHeader('Accept', 'application/json');
     x.onload = function () {
       let h = null;
-      try {
-        h = JSON.parse(x.responseText);
-      } catch (_) {}
-      if (x.status >= 200 && x.status < 300 && h && h.ready === true) {
-        loadPortal();
-        return;
-      }
+      try { h = JSON.parse(x.responseText); } catch (_) {}
+      if (x.status >= 200 && x.status < 300 && h && h.ready === true) { loadPortal(); return; }
       status('Hosted portal unavailable · retrying…');
       clearTimeout(retryTimer);
       retryTimer = setTimeout(check, 4000);
     };
     x.onerror = x.ontimeout = function () {
-      status(
-        navigator.onLine === false
-          ? 'No network connection · retrying…'
-          : 'Hosted portal unavailable · retrying…',
-      );
+      status(navigator.onLine === false ? 'No network connection · retrying…' : 'Hosted portal unavailable · retrying…');
       clearTimeout(retryTimer);
       retryTimer = setTimeout(check, 4000);
     };
     x.send();
   }
-  window.addEventListener('pixiepoint:device-profile', function (e) {
-    applyDeviceProfile(e.detail || {});
-  });
+  window.addEventListener('pixiepoint:device-profile', function (e) { applyDeviceProfile(e.detail || {}); });
   window.addEventListener('online', check);
   check();
 })();
