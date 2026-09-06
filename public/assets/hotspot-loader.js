@@ -29,6 +29,16 @@
     });
   }
 
+  function resolvedMac(context) {
+    const c = context || {};
+    const raw = String(c.mac || '').trim();
+    if (raw && !raw.includes('$(')) return raw;
+
+    const escaped = String(c.macEsc || '').trim();
+    if (!escaped || escaped.includes('$(')) return '';
+    try { return decodeURIComponent(escaped); } catch (_) { return escaped; }
+  }
+
   function randomVoucher() {
     const a = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789', b = new Uint8Array(6);
     if (window.crypto && crypto.getRandomValues) crypto.getRandomValues(b);
@@ -94,7 +104,7 @@
         server_address: c.serverAddress || '',
         client_ip: c.ip || '',
         interface: c.interfaceName || '',
-        mac: c.mac || '',
+        mac: resolvedMac(c),
         v: String(version),
       });
     root.innerHTML = await request(`${hostedOrigin}/hotspot/compat?${q.toString()}`, 'text/html');
@@ -142,7 +152,7 @@
         server_address: c.serverAddress || '',
         client_ip: c.ip || '',
         interface: c.interfaceName || '',
-        mac: c.mac || '',
+        mac: resolvedMac(c),
         v: String(version),
       });
     root.innerHTML = await request(`${hostedOrigin}/hotspot/status?${q.toString()}`, 'text/html');
