@@ -51,17 +51,16 @@ final class HotspotController
 
         $debug = [];
         if ($this->api->hasDebugTarget($context['routerIdentity'])) {
-            $matching = $this->api->debugForHotspot(
-                $context['routerIdentity'],
-                $context['serverAddress'],
-                $context['ip'],
-                $context['interfaceName'],
-            );
             $debug = [
                 'raw' => $raw,
                 'processed' => $context,
                 'validationErrors' => $errors,
-                'matching' => $matching,
+                'matching' => $this->api->debugForHotspot(
+                    $context['routerIdentity'],
+                    $context['serverAddress'],
+                    $context['ip'],
+                    $context['interfaceName'],
+                ),
             ];
         }
 
@@ -98,6 +97,56 @@ final class HotspotController
                 'member_login' => true,
                 'coin_slot' => !empty($vendos),
                 'points' => true,
+            ],
+        );
+        exit;
+    }
+
+    public function status(): never
+    {
+        header('Content-Type: text/html; charset=utf-8');
+        header('Access-Control-Allow-Origin: *');
+        header('Cache-Control: no-store');
+
+        $raw = [
+            'router_identity' => (string) ($_GET['router_identity'] ?? ''),
+            'server_address' => (string) ($_GET['server_address'] ?? ''),
+            'client_ip' => (string) ($_GET['client_ip'] ?? ''),
+            'interface' => (string) ($_GET['interface'] ?? ''),
+        ];
+        [$data] = $this->validateQuery($raw);
+        $context = [
+            'routerIdentity' => $data['router_identity'],
+            'serverAddress' => $data['server_address'],
+            'ip' => $data['client_ip'],
+            'interfaceName' => $data['interface'],
+        ];
+
+        $vendos = $context['routerIdentity'] === ''
+            ? []
+            : $this->api->forHotspot(
+                $context['routerIdentity'],
+                $context['serverAddress'],
+                $context['ip'],
+                $context['interfaceName'],
+            );
+
+        $theme = $this->themes->resolveByRouterIdentity(
+            $context['routerIdentity'],
+            isset($vendos[0]['id']) ? (int) $vendos[0]['id'] : null,
+        );
+
+        echo $this->themeEngine->render(
+            $theme,
+            'status.html',
+            $this->portalAdapter,
+            [
+                'portal' => [
+                    'name' => (string) ($vendos[0]['name'] ?? 'PixiePoint'),
+                ],
+            ],
+            [
+                'coin_slot' => !empty($vendos),
             ],
         );
         exit;
