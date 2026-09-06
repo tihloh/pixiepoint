@@ -33,24 +33,8 @@ final class HotspotController
         $vendos = $this->api->forHotspot($context['routerIdentity'], $context['serverAddress'], $context['ip'], $context['interfaceName']);
         $theme = $this->themes->resolveByRouterIdentity($context['routerIdentity'], isset($vendos[0]['id']) ? (int) $vendos[0]['id'] : null);
         $device = $this->portalDevice($context);
-
         $options = $this->vendoOptions($vendos);
-        $debug = [];
-        $raw = [
-            'router_identity' => $context['routerIdentity'],
-            'server_address' => $context['serverAddress'],
-            'client_ip' => $context['ip'],
-            'interface' => $context['interfaceName'],
-            'mac' => $context['mac'],
-        ];
-        if ($this->api->hasDebugTarget($context['routerIdentity'])) {
-            $debug = [
-                'raw' => $raw,
-                'processed' => $context,
-                'validationErrors' => [],
-                'matching' => $this->api->debugForHotspot($context['routerIdentity'], $context['serverAddress'], $context['ip'], $context['interfaceName']),
-            ];
-        }
+        $debug = $this->debugDetails($context);
 
         $this->headers('text/html; charset=utf-8');
         echo $this->themeEngine->render($theme, 'login.html', $this->portalAdapter, [
@@ -58,7 +42,7 @@ final class HotspotController
                 'name' => (string) ($vendos[0]['name'] ?? 'PixiePoint'),
                 'vendo_options' => $options,
                 'device' => $device,
-                'debug' => $debug ? '1' : '',
+                'debug' => $debug,
             ],
             'context' => $context,
         ], [
@@ -76,6 +60,7 @@ final class HotspotController
         $vendos = $this->api->forHotspot($context['routerIdentity'], $context['serverAddress'], $context['ip'], $context['interfaceName']);
         $theme = $this->themes->resolveByRouterIdentity($context['routerIdentity'], isset($vendos[0]['id']) ? (int) $vendos[0]['id'] : null);
         $device = $this->portalDevice($context);
+        $debug = $this->debugDetails($context);
 
         $this->headers('text/html; charset=utf-8');
         echo $this->themeEngine->render($theme, 'status.html', $this->portalAdapter, [
@@ -83,7 +68,9 @@ final class HotspotController
                 'name' => (string) ($vendos[0]['name'] ?? 'PixiePoint'),
                 'vendo_options' => $this->vendoOptions($vendos),
                 'device' => $device,
+                'debug' => $debug,
             ],
+            'context' => $context,
         ], [
             'coin_slot' => !empty($vendos),
             'points' => true,
@@ -109,6 +96,31 @@ final class HotspotController
         $this->headers('application/json; charset=utf-8');
         echo json_encode(['ok' => true, 'vendos' => $this->api->forHotspot($d['router_identity'], $d['server_address'], $d['client_ip'], $d['interface'])], JSON_UNESCAPED_SLASHES);
         exit;
+    }
+
+    /** @param array{routerIdentity:string,serverAddress:string,ip:string,interfaceName:string,mac:string} $context */
+    private function debugDetails(array $context): array
+    {
+        if (!$this->api->hasDebugTarget($context['routerIdentity'])) {
+            return [];
+        }
+
+        return [
+            'raw' => [
+                'router_identity' => $context['routerIdentity'],
+                'server_address' => $context['serverAddress'],
+                'client_ip' => $context['ip'],
+                'interface' => $context['interfaceName'],
+                'mac' => $context['mac'],
+            ],
+            'processed' => $context,
+            'matching' => $this->api->debugForHotspot(
+                $context['routerIdentity'],
+                $context['serverAddress'],
+                $context['ip'],
+                $context['interfaceName'],
+            ),
+        ];
     }
 
     /** @param array{routerIdentity:string,serverAddress:string,ip:string,interfaceName:string,mac:string} $context */
