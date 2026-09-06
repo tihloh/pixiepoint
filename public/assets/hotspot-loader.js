@@ -4,7 +4,8 @@
     bootstrapVersion = '5.3.8',
     version = Date.now();
   const isLogin = !!window.PIXIEPOINT_CONTEXT,
-    isStatus = !!window.PIXIEPOINT_SESSION;
+    isStatus = !!window.PIXIEPOINT_SESSION,
+    serverRendered = !!window.PIXIEPOINT_SERVER_RENDERED;
   let started = false,
     retryTimer = 0,
     voucherResolved = false;
@@ -118,6 +119,19 @@
     });
   }
 
+  function readServerRenderedVendos(root) {
+    window.PIXIEPOINT_VENDOS = Array.from(root.querySelectorAll('#compat-vendo option, #pp-vendo option')).map(function (o) {
+      return {
+        id: o.value,
+        name: o.textContent.trim(),
+        baseUrl: o.dataset.baseUrl || '',
+        passwordMode: o.dataset.passwordMode || 'blank',
+        chargingEnabled: o.dataset.charging === '1',
+        eloadEnabled: o.dataset.eload === '1',
+      };
+    });
+  }
+
   async function loadStatusMarkup() {
     const root = document.getElementById('pixiepoint-root');
     if (!root) throw new Error('Portal root missing');
@@ -132,17 +146,7 @@
         v: String(version),
       });
     root.innerHTML = await request(`${hostedOrigin}/hotspot/status?${q.toString()}`, 'text/html');
-
-    window.PIXIEPOINT_VENDOS = Array.from(root.querySelectorAll('#pp-vendo option')).map(function (o) {
-      return {
-        id: o.value,
-        name: o.textContent.trim(),
-        baseUrl: o.dataset.baseUrl || '',
-        passwordMode: o.dataset.passwordMode || 'blank',
-        chargingEnabled: o.dataset.charging === '1',
-        eloadEnabled: o.dataset.eload === '1',
-      };
-    });
+    readServerRenderedVendos(root);
   }
 
   async function loadPortal() {
@@ -155,17 +159,32 @@
         loadStyle(`${hostedOrigin}/assets/app.css?v=${version}`, 'pixiepoint-css'),
       ]);
       await loadScript(`https://cdn.jsdelivr.net/npm/bootstrap@${bootstrapVersion}/dist/js/bootstrap.bundle.min.js`, 'pixiepoint-bootstrap-js');
-      if (isLogin) {
+
+      const root = document.querySelector('#pp-page') || document.getElementById('pixiepoint-root') || document.body;
+      if (serverRendered) {
+        readServerRenderedVendos(root);
+        if (isLogin) {
+          ['chap-login', 'pap-login'].forEach(function (id) {
+            const form = document.getElementById(id), c = window.PIXIEPOINT_CONTEXT || {};
+            if (!form) return;
+            form.action = c.loginUrl || '';
+            const dst = form.elements.namedItem('dst');
+            if (dst) dst.value = c.originalUrl || '';
+          });
+        }
+      } else if (isLogin) {
         await loadLoginMarkup();
-        await loadScript(`${hostedOrigin}/assets/juanfi-compat.js?v=${version}`, 'pixiepoint-app');
-        await loadScript(`${hostedOrigin}/assets/device-info.js?v=${version}`, 'pixiepoint-device-info');
       } else if (isStatus) {
         await loadStatusMarkup();
-        await loadScript(`${hostedOrigin}/assets/session-portal.js?v=${version}`, 'pixiepoint-session');
       }
+
       if (isLogin) {
+        await loadScript(`${hostedOrigin}/assets/juanfi-compat.js?v=${version}`, 'pixiepoint-app');
+        await loadScript(`${hostedOrigin}/assets/device-info.js?v=${version}`, 'pixiepoint-device-info');
         if (window.PIXIEPOINT_DEVICE_PROFILE) applyDeviceProfile(window.PIXIEPOINT_DEVICE_PROFILE);
         setTimeout(ensureVoucherFallback, 1500);
+      } else if (isStatus) {
+        await loadScript(`${hostedOrigin}/assets/session-portal.js?v=${version}`, 'pixiepoint-session');
       }
     } catch (_) {
       started = false;
