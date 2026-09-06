@@ -6,20 +6,14 @@ namespace PixiePoint\App\Services;
 
 use RuntimeException;
 
-/**
- * Small PHP view renderer used by both the portal and management interface.
- *
- * Views remain ordinary PHP files so markup stays easy to inspect and edit.
- */
 final class View
 {
-    public function __construct(private array $config)
-    {
+    public function __construct(
+        private array $config,
+        private PortalThemeManager $themes,
+    ) {
     }
 
-    /**
-     * Renders a view from app/Views using a slash-delimited view name.
-     */
     public function render(string $view, array $data = []): string
     {
         $view = trim(str_replace('\\', '/', $view), '/');
@@ -34,9 +28,6 @@ final class View
         );
     }
 
-    /**
-     * Renders an explicit PHP view file, including feature-local admin views.
-     */
     public function renderFile(string $file, array $data = []): string
     {
         if (
@@ -53,11 +44,7 @@ final class View
         return (string) ob_get_clean();
     }
 
-    /**
-     * Renders the application layout and ends the current request.
-     *
-     * @param array<string, bool> $access Navigation permissions for management pages.
-     */
+    /** @param array<string, bool> $access */
     public function page(
         string $title,
         string $content,
@@ -89,22 +76,22 @@ final class View
         exit;
     }
 
-    /**
-     * Wraps public hotspot content in the shared portal card layout.
-     */
     public function portalCard(string $body): string
     {
-        return $this->render('partials/portal-card', [
-            'body' => $this->bootstrapMarkup($body),
-        ]);
+        $body = $this->bootstrapMarkup($body);
+        $context = $_SESSION['hotspot'] ?? [];
+        $routerIdentity = is_array($context) ? (string) ($context['router_identity'] ?? '') : '';
+        $theme = $this->themes->resolveByRouterIdentity($routerIdentity);
+
+        return $this->themes->render(
+            $theme,
+            $this->render('partials/portal-card', ['body' => $body]),
+            [
+                'portal.name' => (string) ($this->config['app_name'] ?? 'PixiePoint Wi-Fi'),
+            ],
+        );
     }
 
-    /**
-     * Maps PixiePoint's small semantic CSS vocabulary to Bootstrap classes.
-     *
-     * This keeps feature views readable without repeating long Bootstrap class
-     * lists throughout every template.
-     */
     private function bootstrapMarkup(string $html): string
     {
         $replacements = [
@@ -129,25 +116,9 @@ final class View
         ];
 
         $html = strtr($html, $replacements);
-
-        $html = preg_replace(
-            '/<input(?![^>]*\\bclass=)([^>]*)>/i',
-            '<input class="form-control"$1>',
-            $html,
-        ) ?? $html;
-
-        $html = preg_replace(
-            '/<select(?![^>]*\\bclass=)([^>]*)>/i',
-            '<select class="form-select"$1>',
-            $html,
-        ) ?? $html;
-
-        $html = preg_replace(
-            '/<textarea(?![^>]*\\bclass=)([^>]*)>/i',
-            '<textarea class="form-control"$1>',
-            $html,
-        ) ?? $html;
-
+        $html = preg_replace('/<input(?![^>]*\bclass=)([^>]*)>/i', '<input class="form-control"$1>', $html) ?? $html;
+        $html = preg_replace('/<select(?![^>]*\bclass=)([^>]*)>/i', '<select class="form-select"$1>', $html) ?? $html;
+        $html = preg_replace('/<textarea(?![^>]*\bclass=)([^>]*)>/i', '<textarea class="form-control"$1>', $html) ?? $html;
         $html = preg_replace_callback(
             '/<label([^>]*)>/i',
             static function (array $match): string {
@@ -159,12 +130,7 @@ final class View
             },
             $html,
         ) ?? $html;
-
-        $html = str_replace(
-            '<table>',
-            '<div class="table-responsive"><table class="table table-hover align-middle mb-0">',
-            $html,
-        );
+        $html = str_replace('<table>', '<div class="table-responsive"><table class="table table-hover align-middle mb-0">', $html);
 
         return str_replace('</table>', '</table></div>', $html);
     }
