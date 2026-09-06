@@ -41,15 +41,16 @@ final class ThemeEngine
             $values[$key] = is_scalar($value) ? (string) $value : '';
         }
 
+        // Theme placeholders are intentionally simple:
+        //   {{ portal.name }}            -> escaped text
+        //   {{ html:portal.vendo_options }} -> trusted HTML
         $html = preg_replace_callback(
-            '/\{\{\{\s*([a-zA-Z0-9_.-]+)\s*\}\}\}/',
-            static fn (array $m): string => (string) ($values[$m[1]] ?? ''),
-            $html,
-        ) ?? $html;
+            '/\{\{\s*(html:)?([a-zA-Z0-9_.-]+)\s*\}\}/',
+            static function (array $m) use ($values): string {
+                $value = (string) ($values[$m[2]] ?? '');
 
-        $html = preg_replace_callback(
-            '/\{\{\s*([a-zA-Z0-9_.-]+)\s*\}\}/',
-            static fn (array $m): string => e($values[$m[1]] ?? ''),
+                return $m[1] !== null && $m[1] !== '' ? $value : e($value);
+            },
             $html,
         ) ?? $html;
 
