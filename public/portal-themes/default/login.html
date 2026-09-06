@@ -1,0 +1,57 @@
+<main id="pp-page" class="portal-theme-shell">
+    <section id="pp-login-card" class="portal-card">
+        <div id="pp-login">
+            <div id="pp-brand" class="brand">{{ portal.name }}</div>
+            <p id="pp-description" class="muted">Connect to Wi-Fi</p>
+
+            <div id="pp-alert" class="alert" hidden></div>
+
+            <div id="pp-coin-slot">
+                <label for="pp-vendo">Coin slot</label>
+                <select id="pp-vendo">{{{ portal.vendo_options }}}</select>
+                <small id="pp-health">Checking the local coin slot…</small>
+                <button id="pp-topup" type="button" disabled>Insert coin</button>
+                <button id="pp-rates" type="button" disabled>View rates</button>
+            </div>
+
+            <form id="pp-voucher-form">
+                <label for="pp-voucher">Voucher</label>
+                <input id="pp-voucher" autocomplete="one-time-code" autocapitalize="characters" required>
+                <button id="pp-connect" type="submit">Connect</button>
+            </form>
+
+            <div id="pp-tools">
+                <button id="pp-charging" type="button" hidden>Phone charging</button>
+                <button id="pp-eload" type="button" hidden>Buy e-load</button>
+            </div>
+
+            <div id="pp-transaction" hidden>
+                <strong id="pp-code">—</strong>
+                <span id="pp-amount">₱0</span>
+                <span id="pp-time">—</span>
+                <div id="pp-progress-bar" style="width:100%"></div>
+                <span id="pp-countdown">Waiting…</span>
+                <p id="pp-progress">Waiting for coins…</p>
+                <button id="pp-finish" type="button" disabled>Done &amp; connect</button>
+                <button id="pp-cancel" type="button">Cancel</button>
+            </div>
+
+            <div id="pp-rate-list" hidden></div>
+            <div id="pp-charger-list" hidden></div>
+            <div id="pp-eload-panel" hidden><div id="pp-eload-products">Loading products…</div></div>
+        </div>
+    </section>
+
+    <form id="chap-login" action="$(link-login-only)" method="post" hidden>
+        <input name="username">
+        <input name="password">
+        <input name="dst" value="$(link-orig)">
+        <input name="popup" value="true">
+    </form>
+    <form id="pap-login" action="$(link-login-only)" method="post" hidden>
+        <input name="username">
+        <input name="password">
+        <input name="dst" value="$(link-orig)">
+        <input name="popup" value="true">
+    </form>
+</main>
