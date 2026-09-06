@@ -43,11 +43,23 @@
                     <button id="compat-cancel" class="button secondary" type="button">Cancel</button>
                 </div>
             </div>
-            <div id="compat-rate-list" hidden></div>
             <div id="compat-charger-list" hidden></div>
             <div id="compat-eload-panel" hidden><div id="compat-eload-products">Loading products…</div></div>
         </div>
     </section>
+    <div class="modal fade" id="compat-rates-modal" tabindex="-1" aria-labelledby="compat-rates-title" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 id="compat-rates-title" class="modal-title fs-5">Wi-Fi Rates</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="compat-rate-list">Loading rates…</div>
+                </div>
+            </div>
+        </div>
+    </div>
     <form id="chap-login" method="post" hidden>
         <input name="username"><input name="password"><input name="dst"><input name="popup" value="true">
     </form>
