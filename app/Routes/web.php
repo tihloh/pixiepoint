@@ -33,6 +33,7 @@ return static function (RouteManager $routes, array $c): void {
     })->name('hotspot.health');
 
     $routes->get('/hotspot/compat', [$c['vendos.hotspot'], 'portal'])->name('hotspot.compat');
+    $routes->get('/hotspot/status', [$c['vendos.hotspot'], 'status'])->name('hotspot.status');
     $routes->get('/hotspot/device-info', [$c['device_info'], 'show'])->name('hotspot.device_info');
     $routes->post('/hotspot/device-voucher', [$c['device_info'], 'saveVoucher'])->name('hotspot.device_voucher');
     $routes->post('/hotspot/authenticate', [$c['hotspot'], 'authenticate'])->name('hotspot.authenticate');
