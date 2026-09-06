@@ -6,12 +6,6 @@
     <meta name="theme-color" content="#07111f" />
     <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate" />
     <title>PixiePoint Wi-Fi</title>
-    <style>
-      html,
-      body { min-height: 100%; margin: 0; }
-      body { display: grid; place-items: center; background: #07111f; color: #eef4ff; font: 16px system-ui; text-align: center; }
-      p { color: #9fb0c7; }
-    </style>
   </head>
   <body>
     <main id="pixiepoint-root">
@@ -23,6 +17,7 @@
     <script>
       window.PIXIEPOINT_CONTEXT = {
         mac: '$(mac)',
+        macEsc: '$(mac-esc)',
         ip: '$(ip)',
         username: '$(username)',
         routerIdentity: '$(identity)',
@@ -36,6 +31,6 @@
       window.PIXIEPOINT_CHAP = { id: '$(chap-id)', challenge: '$(chap-challenge)' };
       window.PIXIEPOINT_BOOTSTRAP = true;
     </script>
-    <script src="https://hs.portalx.win/assets/hotspot-loader.js?v=20260906-7"></script>
+    <script src="https://hs.portalx.win/assets/hotspot-loader.js?v=20260906-8"></script>
   </body>
 </html>
