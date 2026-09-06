@@ -109,12 +109,10 @@
   const brand = document.getElementById('pp-brand');
   const sessionTitle = document.getElementById('pp-session-title');
   const sessionDescription = document.getElementById('pp-session-description');
-  const sessionDevice = document.getElementById('pp-session-device');
   const timeLeftElement = document.getElementById('pp-time-left');
   const dataInElement = document.getElementById('pp-data-in');
   const dataOutElement = document.getElementById('pp-data-out');
   const disconnectForm = document.getElementById('pp-disconnect-form');
-  const disconnectButton = document.getElementById('pp-disconnect');
   const endSessionButton = document.getElementById('pp-end-session');
   const extendButton = document.getElementById('pp-extend');
   const extendBox = document.getElementById('pp-extend-box');
@@ -131,7 +129,6 @@
   if (brand) brand.textContent = session.portalName || brand.textContent;
   if (sessionTitle) sessionTitle.textContent = 'You\'re connected';
   if (sessionDescription) sessionDescription.textContent = 'Live Wi-Fi session.';
-  if (sessionDevice) sessionDevice.textContent = session.mac || 'This device';
   if (timeLeftElement) timeLeftElement.textContent = number(session.sessionTimeLeft) ? duration(number(session.sessionTimeLeft)) : 'Unlimited';
   if (dataInElement) dataInElement.textContent = bytes(session.bytesIn);
   if (dataOutElement) dataOutElement.textContent = bytes(session.bytesOut);
@@ -258,7 +255,7 @@
           updateExtensionDetails(data);
           extendProgressBar.style.width = '100%';
           extendCountdown.textContent = 'Renewed';
-          extendStatus.textContent = 'Coin received. Insert another coin or wait for the timer.';
+          extendStatus.textContent = 'Coin received. Insert another coin or press Done.';
         } else if (errorCode === 'coin.is.reading') {
           extendStatus.textContent = 'Verifying coin, please wait…';
         } else if (errorCode === 'coin.not.inserted') {
