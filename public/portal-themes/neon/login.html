@@ -11,16 +11,6 @@
                 <select id="compat-vendo" class="form-select">{{{ portal.vendo_options }}}</select>
                 <small id="compat-health" class="compat-status">Checking the local Vendo…</small>
             </div>
-            <div id="pp-device-info" class="table-responsive mb-3">
-                <table class="table table-sm align-middle mb-0">
-                    <tbody>
-                        <tr><th scope="row">Device</th><td id="pp-device-account" class="text-end">{{ portal.device.account }}</td></tr>
-                        <tr><th scope="row">Points</th><td id="pp-device-points" class="text-end fw-semibold">{{ portal.device.points }}</td></tr>
-                        <tr><th scope="row">IP address</th><td id="pp-device-ip" class="text-end text-break">{{ portal.device.ip }}</td></tr>
-                        <tr><th scope="row">MAC address</th><td id="pp-device-mac" class="text-end text-break">{{ portal.device.mac }}</td></tr>
-                    </tbody>
-                </table>
-            </div>
             <form id="compat-voucher-form" class="compat-voucher mb-3">
                 <label for="compat-voucher" class="form-label">Voucher</label>
                 <div class="input-group">
@@ -55,6 +45,17 @@
             </div>
             <div id="compat-charger-list" hidden></div>
             <div id="compat-eload-panel" hidden><div id="compat-eload-products">Loading products…</div></div>
+
+            <div id="pp-device-info" class="table-responsive mt-4">
+                <table class="table table-sm align-middle mb-0">
+                    <tbody>
+                        <tr><th scope="row">Device</th><td id="pp-device-account" class="text-end">{{ portal.device.account }}</td></tr>
+                        <tr><th scope="row">Points</th><td id="pp-device-points" class="text-end fw-semibold">{{ portal.device.points }}</td></tr>
+                        <tr><th scope="row">IP address</th><td id="pp-device-ip" class="text-end text-break">{{ portal.device.ip }}</td></tr>
+                        <tr><th scope="row">MAC address</th><td id="pp-device-mac" class="text-end text-break">{{ portal.device.mac }}</td></tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </section>
     <div class="modal fade" id="compat-rates-modal" tabindex="-1" aria-labelledby="compat-rates-title" aria-hidden="true">
