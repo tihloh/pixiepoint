@@ -5,19 +5,27 @@
             <div id="pp-brand" class="brand mb-3">{{ portal.name }}</div>
             <h1 id="pp-session-title" class="h3 mb-2">You're connected</h1>
             <p id="pp-session-description" class="muted mb-4">Live Wi-Fi session.</p>
-            <div id="pp-session-details" class="context mb-3">
-                <div><small>Device</small><span id="pp-session-device">{{ portal.device.account }}</span></div>
-                <div><small>Time left</small><span id="pp-time-left">Unlimited</span></div>
-                <div><small>Data in</small><span id="pp-data-in">0 B</span></div>
-                <div><small>Data out</small><span id="pp-data-out">0 B</span></div>
+
+            <div id="pp-session-details" class="table-responsive mb-3">
+                <table class="table table-sm align-middle mb-0">
+                    <tbody>
+                        <tr><th scope="row">Device</th><td id="pp-session-device" class="text-end">{{ portal.device.account }}</td></tr>
+                        <tr><th scope="row">Time left</th><td id="pp-time-left" class="text-end">Unlimited</td></tr>
+                        <tr><th scope="row">Data used</th><td id="pp-data-total" class="text-end">0 B</td></tr>
+                    </tbody>
+                </table>
             </div>
-            <div id="pp-device-info" class="context mb-3">
-                <div><small>Points</small><strong id="pp-device-points">{{ portal.device.points }}</strong></div>
-                <div><small>IP address</small><span id="pp-device-ip">{{ portal.device.ip }}</span></div>
-                <div><small>MAC address</small><span id="pp-device-mac">{{ portal.device.mac }}</span></div>
-                <div><small>Last voucher</small><span id="pp-device-voucher">{{ portal.device.last_voucher }}</span></div>
-                <div><small>Device UUID</small><span id="pp-device-uuid">{{ portal.device.uuid }}</span></div>
+
+            <div id="pp-device-info" class="table-responsive mb-3">
+                <table class="table table-sm align-middle mb-0">
+                    <tbody>
+                        <tr><th scope="row">Points</th><td id="pp-device-points" class="text-end fw-semibold">{{ portal.device.points }}</td></tr>
+                        <tr><th scope="row">IP address</th><td id="pp-device-ip" class="text-end text-break">{{ portal.device.ip }}</td></tr>
+                        <tr><th scope="row">MAC address</th><td id="pp-device-mac" class="text-end text-break">{{ portal.device.mac }}</td></tr>
+                    </tbody>
+                </table>
             </div>
+
             <select id="pp-vendo" class="d-none">{{{ portal.vendo_options }}}</select>
             <button id="pp-extend" class="button secondary full mb-3" type="button" hidden>Extend time</button>
             <div id="pp-extend-box" class="compat-transaction mb-3" hidden>
