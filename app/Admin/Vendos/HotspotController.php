@@ -78,7 +78,7 @@ final class HotspotController
                 . ' data-charging="' . ($vendo['chargingEnabled'] ? '1' : '0') . '"'
                 . ' data-eload="' . ($vendo['eloadEnabled'] ? '1' : '0') . '"'
                 . ($index === 0 ? ' selected' : '')
-                . '>' . e($vendo['businessName']) . '</option>';
+                . '>' . e($vendo['name']) . '</option>';
         }
 
         echo $this->themeEngine->render(
@@ -87,8 +87,7 @@ final class HotspotController
             $this->portalAdapter,
             [
                 'portal' => [
-                    'name' => 'PixiePoint Wi-Fi',
-                    'business_name' => (string) ($vendos[0]['businessName'] ?? 'PixiePoint'),
+                    'name' => (string) ($vendos[0]['name'] ?? 'PixiePoint'),
                     'vendo_options' => $options,
                     'debug' => $debug ? '1' : '',
                 ],
