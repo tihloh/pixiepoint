@@ -26,6 +26,8 @@ final class ThemeEngine
         $context = new ThemeContext($data, $features);
         $html = $this->renderFile($slug, $entry, $context, []);
 
+        $html = $this->inlineLocalAssets($html, $slug);
+
         return $adapter->transform($html, $context);
     }
 
@@ -83,6 +85,152 @@ final class ThemeEngine
             static fn (array $m): string => e($values[$m[1]] ?? ''),
             $html,
         ) ?? $html;
+    }
+
+    private function inlineLocalAssets(string $html, string $slug): string
+    {
+        $assetUrl = rtrim($this->themes->assetUrl($slug), '/');
+        $quotedAssetUrl = preg_quote($assetUrl, '/');
+
+        $html = preg_replace_callback(
+            '/<link\b(?=[^>]*\brel=["\']stylesheet["\'])([^>]*\bhref=["\'])' . $quotedAssetUrl . '\/([^"\']+)(["\'][^>]*)>/i',
+            function (array $match) use ($slug): string {
+                $path = trim(rawurldecode($match[2]));
+                $content = $this->readAsset($slug, $path);
+                if ($content === null) {
+                    return $match[0];
+                }
+
+                $content = $this->inlineCssUrls($content, $slug, $path);
+
+                return '<style data-pixiepoint-theme-asset="' . e($path) . '">' . $content . '</style>';
+            },
+            $html,
+        ) ?? $html;
+
+        $html = preg_replace_callback(
+            '/<script\b([^>]*\bsrc=["\'])' . $quotedAssetUrl . '\/([^"\']+)(["\'][^>]*)>\s*<\/script>/i',
+            function (array $match) use ($slug): string {
+                $path = trim(rawurldecode($match[2]));
+                $content = $this->readAsset($slug, $path);
+                if ($content === null) {
+                    return $match[0];
+                }
+
+                $content = str_replace('</script', '<\\/script', $content);
+
+                return '<script' . $match[1] . 'inline' . substr($match[3], 0, 0) . '>' . $content . '</script>';
+            },
+            $html,
+        ) ?? $html;
+
+        $html = preg_replace_callback(
+            '/\b(src|href)=("|\')' . $quotedAssetUrl . '\/([^"\']+)(\2)/i',
+            function (array $match) use ($slug): string {
+                $path = trim(rawurldecode($match[3]));
+                $dataUri = $this->assetDataUri($slug, $path);
+                if ($dataUri === null) {
+                    return $match[0];
+                }
+
+                return $match[1] . '=' . $match[2] . $dataUri . $match[4];
+            },
+            $html,
+        ) ?? $html;
+
+        return $html;
+    }
+
+    private function inlineCssUrls(string $css, string $slug, string $cssPath): string
+    {
+        $directory = trim(str_replace('\\', '/', dirname($cssPath)), '.');
+        $directory = trim($directory, '/');
+        $assetBase = $directory === '' ? '' : $directory . '/';
+
+        return preg_replace_callback(
+            '/url\((\s*["\']?)(?!data:|https?:|\/\/|#)([^"\')\s]+)(["\']?\s*)\)/i',
+            function (array $match) use ($slug, $assetBase): string {
+                $path = $this->normalizeAssetPath($assetBase . rawurldecode(trim($match[2])));
+                $dataUri = $this->assetDataUri($slug, $path);
+                if ($dataUri === null) {
+                    return $match[0];
+                }
+
+                return 'url(' . $match[1] . $dataUri . $match[3] . ')';
+            },
+            $css,
+        ) ?? $css;
+    }
+
+    private function readAsset(string $slug, string $path): ?string
+    {
+        $file = $this->themes->filePath($slug, $path);
+        if ($file === null) {
+            return null;
+        }
+
+        $content = file_get_contents($file);
+
+        return $content === false ? null : $content;
+    }
+
+    private function assetDataUri(string $slug, string $path): ?string
+    {
+        $path = $this->normalizeAssetPath($path);
+        $file = $this->themes->filePath($slug, $path);
+        if ($file === null) {
+            return null;
+        }
+
+        $content = file_get_contents($file);
+        if ($content === false) {
+            return null;
+        }
+
+        $mime = function_exists('mime_content_type') ? mime_content_type($file) : null;
+        if (!is_string($mime) || $mime === '') {
+            $mime = $this->mimeType($path);
+        }
+
+        return 'data:' . $mime . ';base64,' . base64_encode($content);
+    }
+
+    private function normalizeAssetPath(string $path): string
+    {
+        $segments = [];
+        foreach (explode('/', str_replace('\\', '/', $path)) as $segment) {
+            if ($segment === '' || $segment === '.') {
+                continue;
+            }
+            if ($segment === '..') {
+                array_pop($segments);
+                continue;
+            }
+            $segments[] = $segment;
+        }
+
+        return implode('/', $segments);
+    }
+
+    private function mimeType(string $path): string
+    {
+        return match (strtolower((string) pathinfo($path, PATHINFO_EXTENSION))) {
+            'css' => 'text/css',
+            'js', 'mjs' => 'text/javascript',
+            'html', 'htm' => 'text/html',
+            'svg' => 'image/svg+xml',
+            'png' => 'image/png',
+            'jpg', 'jpeg' => 'image/jpeg',
+            'gif' => 'image/gif',
+            'webp' => 'image/webp',
+            'avif' => 'image/avif',
+            'ico' => 'image/x-icon',
+            'woff' => 'font/woff',
+            'woff2' => 'font/woff2',
+            'ttf' => 'font/ttf',
+            'otf' => 'font/otf',
+            default => 'application/octet-stream',
+        };
     }
 
     /** @return array<string,mixed> */
