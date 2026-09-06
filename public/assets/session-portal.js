@@ -110,8 +110,7 @@
   const sessionTitle = document.getElementById('pp-session-title');
   const sessionDescription = document.getElementById('pp-session-description');
   const timeLeftElement = document.getElementById('pp-time-left');
-  const dataInElement = document.getElementById('pp-data-in');
-  const dataOutElement = document.getElementById('pp-data-out');
+  const dataTotalElement = document.getElementById('pp-data-total');
   const disconnectForm = document.getElementById('pp-disconnect-form');
   const endSessionButton = document.getElementById('pp-end-session');
   const extendButton = document.getElementById('pp-extend');
@@ -130,9 +129,7 @@
   if (sessionTitle) sessionTitle.textContent = 'You\'re connected';
   if (sessionDescription) sessionDescription.textContent = 'Live Wi-Fi session.';
   if (timeLeftElement) timeLeftElement.textContent = number(session.sessionTimeLeft) ? duration(number(session.sessionTimeLeft)) : 'Unlimited';
-  if (dataInElement) dataInElement.textContent = bytes(session.bytesIn);
-  if (dataOutElement) dataOutElement.textContent = bytes(session.bytesOut);
-  if (extendVoucher) extendVoucher.textContent = session.username || '—';
+  if (dataTotalElement) dataTotalElement.textContent = bytes(number(session.bytesIn) + number(session.bytesOut));
   if (disconnectForm) {
     disconnectForm.action = session.logoutUrl || '#';
     disconnectForm.addEventListener('submit', function (event) {
