@@ -79,7 +79,7 @@ final class Application
             'router.registration' => new RouterRegistrationController($app->db,$logs),
             'router.agent' => new RouterAgentController($app->db,$routerQueue),
             'admin.vendos' => new VendosController($app->db,$auth,$view,$logs,$themes),
-            'vendos.hotspot' => new VendoHotspotController($vendoApi,$view,$themes),
+            'vendos.hotspot' => new VendoHotspotController($vendoApi,$view,$themes,$themeEngine,$portalAdapter),
             'admin.vouchers' => new VouchersController($app->db,$auth,$view,$logs),
             'admin.devices' => new DevicesController($app->db,$auth,$view,$logs),
             'admin.sessions' => new SessionsController($app->db,$auth,$view,$logs),
