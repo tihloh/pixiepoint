@@ -5,24 +5,6 @@
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <meta name="theme-color" content="#07111f" />
     <title>PixiePoint Wi-Fi</title>
-    <style>
-      html,
-      body {
-        height: 100%;
-        margin: 0;
-      }
-      body {
-        display: grid;
-        place-items: center;
-        background: #07111f;
-        color: #eef4ff;
-        font: 16px system-ui;
-        text-align: center;
-      }
-      p {
-        color: #9fb0c7;
-      }
-    </style>
   </head>
   <body>
     <main id="pixiepoint-root">
@@ -34,6 +16,7 @@
       window.PIXIEPOINT_SESSION = {
         username: '$(username)',
         mac: '$(mac)',
+        macEsc: '$(mac-esc)',
         ip: '$(ip)',
         routerIdentity: '$(identity)',
         serverAddress: '$(server-address)',
@@ -47,6 +30,6 @@
         loginUrl: '$(link-login)',
       };
     </script>
-    <script src="https://hs.portalx.win/assets/hotspot-loader.js?v=20260906-5"></script>
+    <script src="https://hs.portalx.win/assets/hotspot-loader.js?v=20260906-8"></script>
   </body>
 </html>
