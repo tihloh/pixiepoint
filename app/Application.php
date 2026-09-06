@@ -55,12 +55,12 @@ final class Application
             $app->db,
         );
 
-        $view = new View($app->config);
+        $themes = new PortalThemeManager($app->db, $root);
+        $view = new View($app->config, $themes);
         $google = new GoogleOAuth($app->db, $app->config, $prefab['users']);
         $devices = new DeviceIdentity($app->db);
         $networkDevices = new NetworkDeviceIdentity($app->db);
         $points = new PointWallet($app->db);
-        $themes = new PortalThemeManager($app->db, $root);
         $logs = $prefab['logs'];
         $routes = $prefab['routes'];
         $vendoApi = new VendoApi($app->db);
@@ -94,7 +94,6 @@ final class Application
                 $auth,
                 $view,
                 $devices,
-                $themes,
             ),
             'device_info' => new DeviceInfoController(
                 $app->db,
