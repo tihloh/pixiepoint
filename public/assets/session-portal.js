@@ -129,7 +129,7 @@
   if (sessionTitle) sessionTitle.textContent = 'You\'re connected';
   if (sessionDescription) sessionDescription.textContent = 'Live Wi-Fi session.';
   if (timeLeftElement) timeLeftElement.textContent = number(session.sessionTimeLeft) ? duration(number(session.sessionTimeLeft)) : 'Unlimited';
-  if (dataTotalElement) dataTotalElement.textContent = bytes(number(session.bytesIn) + number(session.bytesOut));
+  if (dataTotalElement) dataTotalElement.textContent = `${bytes(session.bytesIn)} / ${bytes(session.bytesOut)}`;
   if (disconnectForm) {
     disconnectForm.action = session.logoutUrl || '#';
     disconnectForm.addEventListener('submit', function (event) {
