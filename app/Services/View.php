@@ -77,29 +77,10 @@ final class View
         ]);
     }
 
+    /** Wrap legacy portal-card content without coupling account screens to hotspot themes. */
     public function portalCard(string $body): string
     {
-        $context = $_SESSION['hotspot'] ?? [];
-        $routerIdentity = is_array($context) ? (string) ($context['router_identity'] ?? '') : '';
-        $theme = $this->themes->resolveByRouterIdentity($routerIdentity);
-
-        return $this->themeEngine->render(
-            $theme,
-            'login.html',
-            $this->portalAdapter,
-            [
-                'portal' => [
-                    'name' => (string) ($this->config['app_name'] ?? 'PixiePoint Wi-Fi'),
-                    'content' => $this->portalCardContent($body),
-                ],
-            ],
-            [
-                'voucher_login' => true,
-                'member_login' => true,
-                'coin_slot' => false,
-                'points' => true,
-            ],
-        );
+        return '<div class="portal-theme-shell"><div class="portal-card">' . $body . '</div></div>';
     }
 
     private function bootstrapMarkup(string $html): string
