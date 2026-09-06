@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace PixiePoint\App\Admin\Vendos;
 
 use PDO;
-use PixiePoint\App\Services\BusinessName;
 
 final class Api
 {
@@ -31,7 +30,7 @@ final class Api
             'debugTargetIds' => array_map(static fn (array $v): string => (string) $v['id'], $targets),
             'candidates' => array_map(function (array $v) use ($normalizedServer, $clientIp, $interface): array {
                 return[
-                    'id' => (string) $v['id'],'name' => $v['name'],'businessName' => $v['business_name'],'debugEnabled' => (bool) ($v['debug_enabled'] ?? false),'serverIp' => (string) ($v['server_ip'] ?? ''),'clientSubnet' => (string) ($v['client_subnet'] ?? ''),'interface' => (string) ($v['interface_name'] ?? ''),'baseUrl' => rtrim((string) $v['base_url'], '/'),
+                    'id' => (string) $v['id'],'name' => $v['name'],'debugEnabled' => (bool) ($v['debug_enabled'] ?? false),'serverIp' => (string) ($v['server_ip'] ?? ''),'clientSubnet' => (string) ($v['client_subnet'] ?? ''),'interface' => (string) ($v['interface_name'] ?? ''),'baseUrl' => rtrim((string) $v['base_url'], '/'),
                     'serverMatch' => $normalizedServer !== '' && (string) ($v['server_ip'] ?? '') === $normalizedServer,
                     'subnetMatch' => $clientIp !== '' && trim((string) ($v['client_subnet'] ?? '')) !== '' && $this->ipInCidr($clientIp, (string) $v['client_subnet']),
                     'interfaceMatch' => $interface !== '' && (string) ($v['interface_name'] ?? '') === $interface,
@@ -56,11 +55,6 @@ final class Api
         $stmt = $this->db->prepare('SELECT v.id,v.name,v.base_url,v.server_ip,v.client_subnet,v.interface_name,v.password_mode,v.charging_enabled,v.eload_enabled,v.debug_enabled FROM vendos v JOIN routers r ON r.id=v.router_id WHERE v.enabled=1 AND r.enabled=1 AND r.identity=? ORDER BY v.name');
         $stmt->execute([$routerIdentity]);
         $candidates = $stmt->fetchAll();
-        $businessNames = new BusinessName($this->db);
-        foreach ($candidates as &$vendo) {
-            $vendo['business_name'] = $businessNames->vendo((int) $vendo['id']);
-        }
-        unset($vendo);
 
         $rows = $candidates;
         $serverIp = $this->normalizeServerAddress($serverIp);
@@ -85,8 +79,7 @@ final class Api
 
         $selected = array_map(static fn (array $v): array => [
             'id' => (string) $v['id'],
-            'name' => $v['name'],
-            'businessName' => $v['business_name'],
+            'name' => (string) $v['name'],
             'baseUrl' => rtrim((string) $v['base_url'], '/'),
             'serverIp' => (string) ($v['server_ip'] ?? ''),
             'clientSubnet' => (string) ($v['client_subnet'] ?? ''),
