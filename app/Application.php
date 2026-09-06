@@ -1,13 +1,12 @@
 <?php
 
-declare(strict_types=1);
-
 namespace PixiePoint\App;
 
 use PixiePoint\App\Admin\Devices\Controller as DevicesController;
 use PixiePoint\App\Admin\Groups\Controller as GroupsController;
 use PixiePoint\App\Admin\Logs\Controller as LogsController;
 use PixiePoint\App\Admin\Permissions\Controller as PermissionsController;
+use PixiePoint\App\Admin\PortalThemes\Controller as PortalThemesController;
 use PixiePoint\App\Admin\Routers\AgentController as RouterAgentController;
 use PixiePoint\App\Admin\Routers\CommandQueue as RouterCommandQueue;
 use PixiePoint\App\Admin\Routers\Controller as RoutersController;
@@ -34,6 +33,7 @@ use PixiePoint\App\Services\DeviceIdentity;
 use PixiePoint\App\Services\GoogleOAuth;
 use PixiePoint\App\Services\NetworkDeviceIdentity;
 use PixiePoint\App\Services\PointWallet;
+use PixiePoint\App\Services\PortalThemeManager;
 use PixiePoint\App\Services\PrefabKernel;
 use PixiePoint\App\Services\View;
 use Tihloh\Prefab\Routes\RouteMatch;
@@ -60,6 +60,7 @@ final class Application
         $devices = new DeviceIdentity($app->db);
         $networkDevices = new NetworkDeviceIdentity($app->db);
         $points = new PointWallet($app->db);
+        $themes = new PortalThemeManager($app->db, $root);
         $logs = $prefab['logs'];
         $routes = $prefab['routes'];
         $vendoApi = new VendoApi($app->db);
@@ -93,6 +94,7 @@ final class Application
                 $auth,
                 $view,
                 $devices,
+                $themes,
             ),
             'device_info' => new DeviceInfoController(
                 $app->db,
@@ -126,10 +128,11 @@ final class Application
             'admin.routers' => new RoutersController($app->db, $auth, $view, $logs),
             'admin.router-team' => new RouterTeamController($app->db, $auth, $view, $logs),
             'admin.selection' => new SelectionController($app->db, $auth),
+            'admin.portal-themes' => new PortalThemesController($app->db, $auth, $view, $logs, $themes),
             'router.registration' => new RouterRegistrationController($app->db, $logs),
             'router.agent' => new RouterAgentController($app->db, $routerQueue),
             'admin.vendos' => new VendosController($app->db, $auth, $view, $logs),
-            'vendos.hotspot' => new VendoHotspotController($vendoApi, $view),
+            'vendos.hotspot' => new VendoHotspotController($vendoApi, $view, $themes),
             'admin.vouchers' => new VouchersController($app->db, $auth, $view, $logs),
             'admin.devices' => new DevicesController($app->db, $auth, $view, $logs),
             'admin.sessions' => new SessionsController($app->db, $auth, $view, $logs),
