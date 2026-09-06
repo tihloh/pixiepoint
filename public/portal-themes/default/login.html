@@ -14,7 +14,7 @@
             <form id="compat-voucher-form" class="compat-voucher mb-3">
                 <label for="compat-voucher" class="form-label">Voucher</label>
                 <div class="input-group">
-                    <input id="compat-voucher" class="form-control" autocomplete="one-time-code" autocapitalize="characters" required>
+                    <input id="compat-voucher" class="form-control" value="{{ portal.device.last_voucher }}" autocomplete="one-time-code" autocapitalize="characters" required>
                     <button id="compat-connect" class="button" type="submit">Connect</button>
                 </div>
             </form>
