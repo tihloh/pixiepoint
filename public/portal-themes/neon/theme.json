@@ -1,6 +1,27 @@
 {
   "name": "Neon",
   "slug": "neon",
-  "version": "1.0.0",
-  "description": "A bright, high-contrast sample portal theme"
+  "version": "1.1.0",
+  "description": "A bright, high-contrast sample portal theme",
+  "entry": "index.html",
+  "components": {
+    "layout/header": {
+      "requires": []
+    },
+    "layout/footer": {
+      "requires": []
+    },
+    "authentication/voucher-login": {
+      "requires": ["voucher_login"]
+    },
+    "authentication/member-login": {
+      "requires": ["member_login"]
+    },
+    "vending/coin-slot": {
+      "requires": ["coin_slot"]
+    },
+    "rewards/points": {
+      "requires": ["points"]
+    }
+  }
 }
