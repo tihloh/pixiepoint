@@ -133,11 +133,11 @@
     rpc('/health')
       .then(function (result) {
         if (!result.ok) throw new Error('HTTP ' + result.status);
-        setReady(true, (selected.businessName || selected.name) + ' is ready');
+        setReady(true, selected.name + ' is ready');
         alertMessage('');
       })
       .catch(function () {
-        setReady(false, (selected.businessName || selected.name) + ' is unavailable');
+        setReady(false, selected.name + ' is unavailable');
         alertMessage(
           'PixiePoint is online, but this browser cannot reach the local coin slot. Check its power, Wi-Fi connection, and address.',
         );
@@ -164,7 +164,7 @@
     vendos.forEach(function (vendo) {
       var option = document.createElement('option');
       option.value = vendo.id;
-      option.textContent = vendo.businessName || vendo.name;
+      option.textContent = vendo.name;
       if (vendo.interfaceName && vendo.interfaceName === context.interfaceName)
         option.selected = true;
       select.appendChild(option);
@@ -470,6 +470,16 @@
   }
 
   function showRates() {
+    var list = $('compat-rate-list');
+    var modalElement = $('compat-rates-modal');
+    if (!list || !modalElement) return;
+
+    list.textContent = 'Loading rates…';
+    var modal = window.bootstrap && bootstrap.Modal
+      ? bootstrap.Modal.getOrCreateInstance(modalElement)
+      : null;
+    if (modal) modal.show();
+
     rpc('/getRates?rateType=1&date=' + encodeURIComponent(new Date().toISOString()), 'GET')
       .then(function (result) {
         if (!result.ok) throw new Error('Rates are unavailable.');
@@ -486,11 +496,10 @@
             });
         }
 
-        var list = $('compat-rate-list');
         list.textContent = '';
         rates.forEach(function (rate) {
           var row = document.createElement('div');
-          row.className = 'compat-rate';
+          row.className = 'compat-rate py-2 border-bottom';
           row.textContent =
             '₱' +
             (rate.amount || rate.price || rate.coin || '—') +
@@ -502,10 +511,9 @@
 
         if (!rates.length && typeof data.raw === 'string') list.textContent = data.raw;
         if (!rates.length && typeof data.raw !== 'string') list.textContent = 'No rates were returned.';
-        list.hidden = false;
       })
       .catch(function (error) {
-        alertMessage(error.message);
+        list.textContent = error.message;
       });
   }
 
