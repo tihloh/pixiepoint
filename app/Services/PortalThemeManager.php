@@ -10,12 +10,19 @@ use RuntimeException;
 final class PortalThemeManager
 {
     private string $root;
+    private string $baseUrl;
 
     public function __construct(
         private PDO $db,
         string $projectRoot,
+        string $baseUrl = '',
     ) {
         $this->root = rtrim($projectRoot, '/\\') . '/public/portal-themes';
+        $this->baseUrl = rtrim(trim($baseUrl), '/');
+        if ($this->baseUrl === '') {
+            $this->baseUrl = $this->requestBaseUrl();
+        }
+
         if (!is_dir($this->root)) {
             @mkdir($this->root, 0775, true);
         }
@@ -89,9 +96,11 @@ final class PortalThemeManager
         }
 
         $html = (string) file_get_contents($file);
+        $themeUrl = $this->baseUrl . '/portal-themes/' . $slug;
         $values = [
             'content' => $content,
-            'theme.url' => '/portal-themes/' . $slug,
+            'theme.url' => $themeUrl,
+            'theme.asset_url' => $themeUrl,
             'theme.name' => (string) ($theme['name'] ?? $slug),
             'theme.slug' => $slug,
         ];
@@ -163,5 +172,14 @@ final class PortalThemeManager
         }
 
         return $slug;
+    }
+
+    private function requestBaseUrl(): string
+    {
+        $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || ((int) ($_SERVER['SERVER_PORT'] ?? 0) === 443);
+        $scheme = $https ? 'https' : 'http';
+        $host = trim((string) ($_SERVER['HTTP_HOST'] ?? $_SERVER['SERVER_NAME'] ?? 'localhost'));
+
+        return $scheme . '://' . $host;
     }
 }
