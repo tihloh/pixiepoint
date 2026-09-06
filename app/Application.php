@@ -74,7 +74,7 @@ final class Application
             'admin.portal-themes' => new PortalThemesController($app->db,$auth,$view,$logs,$themes),
             'router.registration' => new RouterRegistrationController($app->db,$logs),
             'router.agent' => new RouterAgentController($app->db,$routerQueue),
-            'admin.vendos' => new VendosController($app->db,$auth,$view,$logs),
+            'admin.vendos' => new VendosController($app->db,$auth,$view,$logs,$themes),
             'vendos.hotspot' => new VendoHotspotController($vendoApi,$view,$themes),
             'admin.vouchers' => new VouchersController($app->db,$auth,$view,$logs),
             'admin.devices' => new DevicesController($app->db,$auth,$view,$logs),
@@ -100,9 +100,6 @@ final class Application
 
     private static function startSession(array $config): void
     {
-        session_save_path(sys_get_temp_dir());
-        session_name($config['session_name'] ?? 'pixiepoint_session');
-        session_set_cookie_params(['httponly'=>true,'secure'=>(bool)($config['cookie_secure']??true)&&(!empty($_SERVER['HTTPS'])&&$_SERVER['HTTPS']!=='off'),'samesite'=>'Lax','path'=>'/']);
-        session_start();
+        session_save_path(sys_get_temp_dir());session_name($config['session_name']??'pixiepoint_session');session_set_cookie_params(['httponly'=>true,'secure'=>(bool)($config['cookie_secure']??true)&&(!empty($_SERVER['HTTPS'])&&$_SERVER['HTTPS']!=='off'),'samesite'=>'Lax','path'=>'/']);session_start();
     }
 }
