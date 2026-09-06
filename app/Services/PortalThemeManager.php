@@ -37,6 +37,63 @@ final class PortalThemeManager
         )->fetchAll();
     }
 
+    /** @return array<string,mixed>|null */
+    public function find(string $slug): ?array
+    {
+        $stmt = $this->db->prepare(
+            'SELECT id,name,slug,version,description,enabled FROM portal_themes WHERE slug=? LIMIT 1',
+        );
+        $stmt->execute([$slug]);
+        $theme = $stmt->fetch();
+
+        return $theme ?: null;
+    }
+
+    public function filePath(string $slug, string $relativePath): ?string
+    {
+        $slug = $this->safeSlug($slug);
+        $relativePath = ltrim(str_replace('\\', '/', $relativePath), '/');
+        if ($relativePath === '' || str_contains($relativePath, '..') || !preg_match('/^[a-zA-Z0-9._\/-]+$/', $relativePath)) {
+            return null;
+        }
+
+        $themeRoot = $this->root . '/' . $slug;
+        $path = realpath($themeRoot . '/' . $relativePath);
+        $realRoot = realpath($themeRoot);
+        if ($path === false || $realRoot === false || !str_starts_with($path, $realRoot . DIRECTORY_SEPARATOR) || !is_file($path)) {
+            return null;
+        }
+
+        return $path;
+    }
+
+    public function assetUrl(string $slug): string
+    {
+        return $this->baseUrl . '/portal-themes/' . $this->safeSlug($slug);
+    }
+
+    /** @return array<int,string> */
+    public function componentRequirements(string $slug, string $component): array
+    {
+        $theme = $this->find($slug);
+        $components = $theme ? $this->manifest($slug)['components'] ?? [] : [];
+        $definition = is_array($components) ? ($components[$component] ?? []) : [];
+        if (!is_array($definition)) {
+            return [];
+        }
+
+        $requires = $definition['requires'] ?? [];
+        if (is_string($requires)) {
+            return [$requires];
+        }
+
+        if (!is_array($requires)) {
+            return [];
+        }
+
+        return array_values(array_filter(array_map('strval', $requires), static fn (string $value): bool => $value !== ''));
+    }
+
     public function resolve(int $routerId, ?int $vendoId = null): array
     {
         if ($vendoId !== null && $vendoId > 0) {
@@ -82,45 +139,6 @@ final class PortalThemeManager
         return $this->resolve($routerId, $vendoId);
     }
 
-    public function render(array $theme, string $content, array $data = []): string
-    {
-        $slug = $this->safeSlug((string) ($theme['slug'] ?? ''));
-        $file = $this->root . '/' . $slug . '/index.html';
-        if (!is_file($file)) {
-            $fallback = $this->defaultTheme();
-            $slug = $this->safeSlug($fallback['slug']);
-            $file = $this->root . '/' . $slug . '/index.html';
-        }
-        if (!is_file($file)) {
-            throw new RuntimeException('Portal theme entry file is missing.');
-        }
-
-        $html = (string) file_get_contents($file);
-        $themeUrl = $this->baseUrl . '/portal-themes/' . $slug;
-        $values = [
-            'content' => $content,
-            'theme.url' => $themeUrl,
-            'theme.asset_url' => $themeUrl,
-            'theme.name' => (string) ($theme['name'] ?? $slug),
-            'theme.slug' => $slug,
-        ];
-        foreach ($data as $key => $value) {
-            $values[(string) $key] = is_scalar($value) ? (string) $value : '';
-        }
-
-        $html = preg_replace_callback(
-            '/\{\{\{\s*([a-zA-Z0-9_.-]+)\s*\}\}\}/',
-            static fn (array $m): string => $values[$m[1]] ?? '',
-            $html,
-        ) ?? $html;
-
-        return preg_replace_callback(
-            '/\{\{\s*([a-zA-Z0-9_.-]+)\s*\}\}/',
-            static fn (array $m): string => e($values[$m[1]] ?? ''),
-            $html,
-        ) ?? $html;
-    }
-
     private function sync(): void
     {
         $dirs = glob($this->root . '/*', GLOB_ONLYDIR) ?: [];
@@ -130,15 +148,7 @@ final class PortalThemeManager
                 continue;
             }
 
-            $manifest = [];
-            $file = $dir . '/theme.json';
-            if (is_file($file)) {
-                $decoded = json_decode((string) file_get_contents($file), true);
-                if (is_array($decoded)) {
-                    $manifest = $decoded;
-                }
-            }
-
+            $manifest = $this->manifest($slug);
             $name = trim((string) ($manifest['name'] ?? $slug));
             $version = trim((string) ($manifest['version'] ?? '1.0.0'));
             $description = trim((string) ($manifest['description'] ?? ''));
@@ -149,6 +159,20 @@ final class PortalThemeManager
             );
             $stmt->execute([$name, $slug, $version, $description ?: null]);
         }
+    }
+
+    /** @return array<string,mixed> */
+    private function manifest(string $slug): array
+    {
+        $slug = $this->safeSlug($slug);
+        $file = $this->root . '/' . $slug . '/theme.json';
+        if (!is_file($file)) {
+            return [];
+        }
+
+        $decoded = json_decode((string) file_get_contents($file), true);
+
+        return is_array($decoded) ? $decoded : [];
     }
 
     private function defaultTheme(): array
@@ -176,10 +200,9 @@ final class PortalThemeManager
 
     private function requestBaseUrl(): string
     {
-        $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || ((int) ($_SERVER['SERVER_PORT'] ?? 0) === 443);
-        $scheme = $https ? 'https' : 'http';
-        $host = trim((string) ($_SERVER['HTTP_HOST'] ?? $_SERVER['SERVER_NAME'] ?? 'localhost'));
+        $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+        $host = trim((string) ($_SERVER['HTTP_HOST'] ?? ''));
 
-        return $scheme . '://' . $host;
+        return $host !== '' ? $scheme . '://' . $host : '';
     }
 }
