@@ -22,141 +22,64 @@ final class HotspotController
 
     public function portal(): never
     {
-        header('Content-Type: text/html; charset=utf-8');
-        header('Access-Control-Allow-Origin: *');
-        header('Cache-Control: no-store');
+        $context = $this->hotspotContext();
+        $vendos = $this->api->forHotspot($context['routerIdentity'], $context['serverAddress'], $context['ip'], $context['interfaceName']);
+        $theme = $this->themes->resolveByRouterIdentity($context['routerIdentity'], isset($vendos[0]['id']) ? (int) $vendos[0]['id'] : null);
 
-        $raw = [
-            'router_identity' => (string) ($_GET['router_identity'] ?? ''),
-            'server_address' => (string) ($_GET['server_address'] ?? ''),
-            'client_ip' => (string) ($_GET['client_ip'] ?? ''),
-            'interface' => (string) ($_GET['interface'] ?? ''),
-        ];
-        [$data, $errors] = $this->validateQuery($raw);
-        $context = [
-            'routerIdentity' => $data['router_identity'],
-            'serverAddress' => $data['server_address'],
-            'ip' => $data['client_ip'],
-            'interfaceName' => $data['interface'],
-        ];
-
-        $vendos = $context['routerIdentity'] === ''
-            ? []
-            : $this->api->forHotspot(
-                $context['routerIdentity'],
-                $context['serverAddress'],
-                $context['ip'],
-                $context['interfaceName'],
-            );
-
+        $options = $this->vendoOptions($vendos);
         $debug = [];
+        $raw = [
+            'router_identity' => $context['routerIdentity'],
+            'server_address' => $context['serverAddress'],
+            'client_ip' => $context['ip'],
+            'interface' => $context['interfaceName'],
+        ];
         if ($this->api->hasDebugTarget($context['routerIdentity'])) {
             $debug = [
                 'raw' => $raw,
                 'processed' => $context,
-                'validationErrors' => $errors,
-                'matching' => $this->api->debugForHotspot(
-                    $context['routerIdentity'],
-                    $context['serverAddress'],
-                    $context['ip'],
-                    $context['interfaceName'],
-                ),
+                'validationErrors' => [],
+                'matching' => $this->api->debugForHotspot($context['routerIdentity'], $context['serverAddress'], $context['ip'], $context['interfaceName']),
             ];
         }
 
-        $theme = $this->themes->resolveByRouterIdentity(
-            $context['routerIdentity'],
-            isset($vendos[0]['id']) ? (int) $vendos[0]['id'] : null,
-        );
-
-        $options = '';
-        foreach ($vendos as $index => $vendo) {
-            $options .= '<option value="' . e($vendo['id']) . '"'
-                . ' data-base-url="' . e($vendo['baseUrl']) . '"'
-                . ' data-password-mode="' . e($vendo['passwordMode']) . '"'
-                . ' data-charging="' . ($vendo['chargingEnabled'] ? '1' : '0') . '"'
-                . ' data-eload="' . ($vendo['eloadEnabled'] ? '1' : '0') . '"'
-                . ($index === 0 ? ' selected' : '')
-                . '>' . e($vendo['name']) . '</option>';
-        }
-
-        echo $this->themeEngine->render(
-            $theme,
-            'login.html',
-            $this->portalAdapter,
-            [
-                'portal' => [
-                    'name' => (string) ($vendos[0]['name'] ?? 'PixiePoint'),
-                    'vendo_options' => $options,
-                    'debug' => $debug ? '1' : '',
-                ],
-                'context' => $context,
+        $this->headers('text/html; charset=utf-8');
+        echo $this->themeEngine->render($theme, 'login.html', $this->portalAdapter, [
+            'portal' => [
+                'name' => (string) ($vendos[0]['name'] ?? 'PixiePoint'),
+                'vendo_options' => $options,
+                'debug' => $debug ? '1' : '',
             ],
-            [
-                'voucher_login' => true,
-                'member_login' => true,
-                'coin_slot' => !empty($vendos),
-                'points' => true,
-            ],
-        );
+            'context' => $context,
+        ], [
+            'voucher_login' => true,
+            'member_login' => true,
+            'coin_slot' => !empty($vendos),
+            'points' => true,
+        ]);
         exit;
     }
 
     public function status(): never
     {
-        header('Content-Type: text/html; charset=utf-8');
-        header('Access-Control-Allow-Origin: *');
-        header('Cache-Control: no-store');
+        $context = $this->hotspotContext();
+        $vendos = $this->api->forHotspot($context['routerIdentity'], $context['serverAddress'], $context['ip'], $context['interfaceName']);
+        $theme = $this->themes->resolveByRouterIdentity($context['routerIdentity'], isset($vendos[0]['id']) ? (int) $vendos[0]['id'] : null);
 
-        $raw = [
-            'router_identity' => (string) ($_GET['router_identity'] ?? ''),
-            'server_address' => (string) ($_GET['server_address'] ?? ''),
-            'client_ip' => (string) ($_GET['client_ip'] ?? ''),
-            'interface' => (string) ($_GET['interface'] ?? ''),
-        ];
-        [$data] = $this->validateQuery($raw);
-        $context = [
-            'routerIdentity' => $data['router_identity'],
-            'serverAddress' => $data['server_address'],
-            'ip' => $data['client_ip'],
-            'interfaceName' => $data['interface'],
-        ];
-
-        $vendos = $context['routerIdentity'] === ''
-            ? []
-            : $this->api->forHotspot(
-                $context['routerIdentity'],
-                $context['serverAddress'],
-                $context['ip'],
-                $context['interfaceName'],
-            );
-
-        $theme = $this->themes->resolveByRouterIdentity(
-            $context['routerIdentity'],
-            isset($vendos[0]['id']) ? (int) $vendos[0]['id'] : null,
-        );
-
-        echo $this->themeEngine->render(
-            $theme,
-            'status.html',
-            $this->portalAdapter,
-            [
-                'portal' => [
-                    'name' => (string) ($vendos[0]['name'] ?? 'PixiePoint'),
-                ],
+        $this->headers('text/html; charset=utf-8');
+        echo $this->themeEngine->render($theme, 'status.html', $this->portalAdapter, [
+            'portal' => [
+                'name' => (string) ($vendos[0]['name'] ?? 'PixiePoint'),
+                'vendo_options' => $this->vendoOptions($vendos),
             ],
-            [
-                'coin_slot' => !empty($vendos),
-            ],
-        );
+        ], [
+            'coin_slot' => !empty($vendos),
+        ]);
         exit;
     }
 
     public function index(): never
     {
-        header('Content-Type: application/json; charset=utf-8');
-        header('Access-Control-Allow-Origin: *');
-        header('Cache-Control: no-store');
         $raw = [
             'router_identity' => (string) ($_GET['router_identity'] ?? ''),
             'server_address' => (string) ($_GET['server_address'] ?? ''),
@@ -169,11 +92,50 @@ final class HotspotController
             echo json_encode(['ok' => false, 'errors' => $errors, 'vendos' => []]);
             exit;
         }
-        echo json_encode([
-            'ok' => true,
-            'vendos' => $this->api->forHotspot($d['router_identity'], $d['server_address'], $d['client_ip'], $d['interface']),
-        ], JSON_UNESCAPED_SLASHES);
+        $this->headers('application/json; charset=utf-8');
+        echo json_encode(['ok' => true, 'vendos' => $this->api->forHotspot($d['router_identity'], $d['server_address'], $d['client_ip'], $d['interface'])], JSON_UNESCAPED_SLASHES);
         exit;
+    }
+
+    /** @param array<int,array<string,mixed>> $vendos */
+    private function vendoOptions(array $vendos): string
+    {
+        $options = '';
+        foreach ($vendos as $index => $vendo) {
+            $options .= '<option value="' . e($vendo['id']) . '"'
+                . ' data-base-url="' . e($vendo['baseUrl']) . '"'
+                . ' data-password-mode="' . e($vendo['passwordMode']) . '"'
+                . ' data-charging="' . ($vendo['chargingEnabled'] ? '1' : '0') . '"'
+                . ' data-eload="' . ($vendo['eloadEnabled'] ? '1' : '0') . '"'
+                . ($index === 0 ? ' selected' : '')
+                . '>' . e($vendo['name']) . '</option>';
+        }
+        return $options;
+    }
+
+    /** @return array{routerIdentity:string,serverAddress:string,ip:string,interfaceName:string} */
+    private function hotspotContext(): array
+    {
+        $raw = [
+            'router_identity' => (string) ($_GET['router_identity'] ?? ''),
+            'server_address' => (string) ($_GET['server_address'] ?? ''),
+            'client_ip' => (string) ($_GET['client_ip'] ?? ''),
+            'interface' => (string) ($_GET['interface'] ?? ''),
+        ];
+        [$data] = $this->validateQuery($raw);
+        return [
+            'routerIdentity' => $data['router_identity'],
+            'serverAddress' => $data['server_address'],
+            'ip' => $data['client_ip'],
+            'interfaceName' => $data['interface'],
+        ];
+    }
+
+    private function headers(string $contentType): void
+    {
+        header('Content-Type: ' . $contentType);
+        header('Access-Control-Allow-Origin: *');
+        header('Cache-Control: no-store');
     }
 
     /** @return array{0:array{router_identity:string,server_address:string,client_ip:string,interface:string},1:array<string,array<int,string>>} */
@@ -192,7 +154,6 @@ final class HotspotController
         if ($data['router_identity'] === '') {
             $errors['router_identity'] = ['The router identity field is required.'];
         }
-
         return [$data, $errors];
     }
 }
