@@ -255,17 +255,16 @@
     if (window.PIXIEPOINT_BOOTSTRAP) {
       var password = selected && selected.passwordMode === 'voucher' ? voucher : '';
       var chap = window.PIXIEPOINT_CHAP || {};
-      var form;
-
-      if (chap.id && $('chap-login')) {
-        form = $('chap-login');
-        form.username.value = voucher;
-        form.password.value = hexMD5(chap.id + password + chap.challenge);
-      } else {
-        form = $('pap-login');
-        form.username.value = voucher;
-        form.password.value = password;
+      var form = chap.id ? $('chap-login') : $('pap-login');
+      if (!form || !form.username || !form.password) {
+        alertMessage('The hotspot login form is unavailable. Please reload the Wi-Fi portal.');
+        return;
       }
+
+      form.username.value = voucher;
+      form.password.value = chap.id
+        ? hexMD5(chap.id + password + chap.challenge)
+        : password;
       form.submit();
       return;
     }
@@ -475,145 +474,63 @@
     if (!list || !modalElement) return;
 
     list.textContent = 'Loading rates…';
-    var modal = window.bootstrap && bootstrap.Modal
-      ? bootstrap.Modal.getOrCreateInstance(modalElement)
-      : null;
+    var modal = window.bootstrap ? window.bootstrap.Modal.getOrCreateInstance(modalElement) : null;
     if (modal) modal.show();
 
-    rpc('/getRates?rateType=1&date=' + encodeURIComponent(new Date().toISOString()), 'GET')
+    rpc('/getRates', 'GET')
       .then(function (result) {
-        if (!result.ok) throw new Error('Rates are unavailable.');
         var data = responseData(result);
-        var rates = Array.isArray(data) ? data : data.rates || [];
-
-        if (!rates.length && typeof data.raw === 'string') {
-          rates = data.raw
-            .split('|')
-            .filter(Boolean)
-            .map(function (row) {
-              var column = row.split('#');
-              return { amount: column[0], minutes: column[3], data: column[4] };
-            });
+        if (!result.ok) throw new Error(data.message || 'Unable to load rates.');
+        var rates = Array.isArray(data.rates) ? data.rates : Array.isArray(data) ? data : [];
+        if (!rates.length) {
+          list.textContent = 'No rates available.';
+          return;
         }
-
-        list.textContent = '';
+        list.innerHTML = '';
         rates.forEach(function (rate) {
           var row = document.createElement('div');
           row.className = 'compat-rate py-2 border-bottom';
-          row.textContent =
-            '₱' +
-            (rate.amount || rate.price || rate.coin || '—') +
-            ' · ' +
-            (rate.time || rate.minutes || rate.duration || '—') +
-            (rate.data ? ' · ' + rate.data + ' MB' : '');
+          var amount = rate.amount ?? rate.price ?? rate.coin ?? '';
+          var time = rate.time ?? rate.minutes ?? rate.duration ?? '';
+          row.innerHTML = '<div class="d-flex justify-content-between gap-3"><span>' +
+            String(time) + '</span><strong>₱' + String(amount) + '</strong></div>';
           list.appendChild(row);
         });
-
-        if (!rates.length && typeof data.raw === 'string') list.textContent = data.raw;
-        if (!rates.length && typeof data.raw !== 'string') list.textContent = 'No rates were returned.';
       })
       .catch(function (error) {
-        list.textContent = error.message;
+        list.textContent = error.message || 'Unable to load rates.';
       });
   }
 
-  function showCharging() {
-    rpc('/getChargingStation', 'GET', { date: Date.now() })
-      .then(function (result) {
-        if (!result.ok) throw new Error('Charging stations are unavailable.');
-        var data = responseData(result);
-        var raw = typeof data.raw === 'string' ? data.raw : '';
-        var list = $('compat-charger-list');
-        list.textContent = '';
-
-        raw
-          .split('|')
-          .filter(Boolean)
-          .forEach(function (value, index) {
-            var column = value.split('#');
-            if (column[1] === '-1') return;
-
-            var row = document.createElement('div');
-            var button = document.createElement('button');
-            row.className = 'compat-rate';
-            row.appendChild(
-              document.createTextNode(
-                (column[0] || 'Charging port ' + (index + 1)) +
-                  (Number(column[3]) * 1000 > Date.now() ? ' · In use' : ' · Available'),
-              ),
-            );
-            button.className = 'button secondary';
-            button.type = 'button';
-            button.textContent = 'Add charging time';
-            button.disabled = Number(column[3]) * 1000 > Date.now();
-            button.addEventListener('click', function () {
-              beginTopup({ voucher: column[0], chargerPort: index, mode: 'charger' });
-            });
-            row.appendChild(button);
-            list.appendChild(row);
-          });
-
-        if (!list.childNodes.length) list.textContent = 'No charging ports are configured.';
-        list.hidden = false;
-      })
-      .catch(function (error) {
-        alertMessage(error.message);
+  function install() {
+    var form = $('compat-voucher-form');
+    if (form) {
+      form.addEventListener('submit', function (event) {
+        event.preventDefault();
+        login(currentVoucher());
       });
-  }
-
-  function showEload() {
-    var panel = $('compat-eload-panel');
-    var products = $('compat-eload-products');
-    panel.hidden = false;
-    products.textContent = 'Contacting the JuanFi e-load service…';
-
-    rpc('/eload/rates', 'GET', { date: Date.now() })
-      .then(function (result) {
-        if (!result.ok) throw new Error('E-load rates are unavailable.');
-        var data = responseData(result);
-        if (data.raw === 'disabled') throw new Error('E-load is disabled on this vendo.');
-        products.textContent =
-          'The vendo returned its compressed product catalog. Full product checkout requires binary catalog decoding and will remain unavailable until it passes a physical-device test.';
-      })
-      .catch(function (error) {
-        products.textContent = error.message;
-      });
-  }
-
-  window.addEventListener('message', function (event) {
-    var data = event.data || {};
-    if (data.type === 'pixiepoint:init') {
-      parentOrigin = event.origin;
-      init(data);
-    } else if (data.type === 'pixiepoint:response' && pending[data.id]) {
-      var request = pending[data.id];
-      clearTimeout(request.timeout);
-      delete pending[data.id];
-      data.error ? request.reject(new Error(data.error)) : request.resolve(data.result || {});
     }
-  });
 
-  $('compat-vendo').addEventListener('change', selectVendo);
-  $('compat-topup').addEventListener('click', function () {
-    beginTopup({ voucher: currentVoucher(), mode: 'internet' });
-  });
-  $('compat-finish').addEventListener('click', function () {
-    finishTopup(false);
-  });
-  $('compat-cancel').addEventListener('click', function () {
-    cancelTopup(false);
-  });
-  $('compat-rates').addEventListener('click', showRates);
-  $('compat-charging').addEventListener('click', showCharging);
-  $('compat-eload').addEventListener('click', showEload);
-  $('compat-voucher-form').addEventListener('submit', function (event) {
-    event.preventDefault();
-    login(currentVoucher());
-  });
+    var topup = $('compat-topup');
+    if (topup) topup.onclick = function () { beginTopup({ mode: 'internet' }); };
+    var rates = $('compat-rates');
+    if (rates) rates.onclick = showRates;
+    var finish = $('compat-finish');
+    if (finish) finish.onclick = function () { finishTopup(false); };
+    var cancel = $('compat-cancel');
+    if (cancel) cancel.onclick = function () { cancelTopup(false); };
 
-  if (window.PIXIEPOINT_BOOTSTRAP) {
-    init({ context: window.PIXIEPOINT_CONTEXT || {}, vendos: window.PIXIEPOINT_VENDOS || [] });
-  } else {
-    window.parent.postMessage({ type: 'pixiepoint:ready' }, '*');
+    window.addEventListener('message', function (event) {
+      var message = event.data || {};
+      if (!message || message.type !== 'pixiepoint:response' || !message.id) return;
+      var entry = pending[message.id];
+      if (!entry) return;
+      delete pending[message.id];
+      clearTimeout(entry.timeout);
+      entry.resolve({ ok: !!message.ok, status: message.status || 200, body: message.body });
+    });
   }
+
+  install();
+  init(window.PIXIEPOINT_CONTEXT_DATA || {});
 })();
