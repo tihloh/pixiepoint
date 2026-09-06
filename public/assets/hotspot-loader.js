@@ -93,6 +93,7 @@
         server_address: c.serverAddress || '',
         client_ip: c.ip || '',
         interface: c.interfaceName || '',
+        mac: c.mac || '',
         v: String(version),
       });
     root.innerHTML = await request(`${hostedOrigin}/hotspot/compat?${q.toString()}`, 'text/html');
