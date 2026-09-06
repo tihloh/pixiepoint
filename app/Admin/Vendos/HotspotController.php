@@ -4,10 +4,14 @@ declare(strict_types=1);
 
 namespace PixiePoint\App\Admin\Vendos;
 
+use PDO;
 use PixiePoint\App\Portal\Adapters\PlatformAdapter;
 use PixiePoint\App\Portal\ThemeEngine;
+use PixiePoint\App\Services\NetworkDeviceIdentity;
+use PixiePoint\App\Services\PointWallet;
 use PixiePoint\App\Services\PortalThemeManager;
 use PixiePoint\App\Services\View;
+use Throwable;
 
 final class HotspotController
 {
@@ -17,6 +21,9 @@ final class HotspotController
         private PortalThemeManager $themes,
         private ThemeEngine $themeEngine,
         private PlatformAdapter $portalAdapter,
+        private PDO $db,
+        private NetworkDeviceIdentity $networkDevices,
+        private PointWallet $points,
     ) {
     }
 
@@ -65,15 +72,25 @@ final class HotspotController
         $context = $this->hotspotContext();
         $vendos = $this->api->forHotspot($context['routerIdentity'], $context['serverAddress'], $context['ip'], $context['interfaceName']);
         $theme = $this->themes->resolveByRouterIdentity($context['routerIdentity'], isset($vendos[0]['id']) ? (int) $vendos[0]['id'] : null);
+        $device = $this->statusDevice($context);
 
         $this->headers('text/html; charset=utf-8');
         echo $this->themeEngine->render($theme, 'status.html', $this->portalAdapter, [
             'portal' => [
                 'name' => (string) ($vendos[0]['name'] ?? 'PixiePoint'),
                 'vendo_options' => $this->vendoOptions($vendos),
+                'device' => [
+                    'account' => (string) ($device['account'] ?? 'Guest device'),
+                    'points' => (string) ($device['points'] ?? 0),
+                    'ip' => (string) ($device['ip'] ?? $context['ip'] ?: '—'),
+                    'mac' => (string) ($device['mac'] ?? '—'),
+                    'last_voucher' => (string) ($device['last_voucher'] ?? ''),
+                    'uuid' => (string) ($device['uuid'] ?? '—'),
+                ],
             ],
         ], [
             'coin_slot' => !empty($vendos),
+            'points' => true,
         ]);
         exit;
     }
@@ -97,6 +114,48 @@ final class HotspotController
         exit;
     }
 
+    /** @param array{routerIdentity:string,serverAddress:string,ip:string,interfaceName:string} $context */
+    private function statusDevice(array $context): array
+    {
+        $mac = client_mac($context['mac'] ?? '');
+        if ($mac === '') {
+            return [];
+        }
+
+        try {
+            $device = $this->networkDevices->resolve(
+                $mac,
+                implode('|', array_filter([$context['routerIdentity'], $context['interfaceName']], static fn (string $value): bool => $value !== '')) ?: 'global',
+                $context['ip'],
+            );
+            if (!$device) {
+                return [];
+            }
+
+            $deviceId = (int) $device['id'];
+            $userId = !empty($device['user_id']) ? (int) $device['user_id'] : null;
+            $account = 'Guest device';
+            if ($userId) {
+                $stmt = $this->db->prepare('SELECT name FROM users WHERE id=? AND active=1 LIMIT 1');
+                $stmt->execute([$userId]);
+                if ($name = $stmt->fetchColumn()) {
+                    $account = (string) $name;
+                }
+            }
+
+            return [
+                'account' => $account,
+                'points' => $this->points->balanceForDevice($deviceId, $userId),
+                'ip' => $context['ip'] !== '' ? $context['ip'] : (string) ($device['last_ip'] ?? ''),
+                'mac' => (string) ($device['mac'] ?? $mac),
+                'last_voucher' => trim((string) ($device['last_voucher'] ?? '')),
+                'uuid' => (string) ($device['uuid'] ?? ''),
+            ];
+        } catch (Throwable) {
+            return [];
+        }
+    }
+
     /** @param array<int,array<string,mixed>> $vendos */
     private function vendoOptions(array $vendos): string
     {
@@ -113,7 +172,7 @@ final class HotspotController
         return $options;
     }
 
-    /** @return array{routerIdentity:string,serverAddress:string,ip:string,interfaceName:string} */
+    /** @return array{routerIdentity:string,serverAddress:string,ip:string,interfaceName:string,mac:string} */
     private function hotspotContext(): array
     {
         $raw = [
@@ -121,6 +180,7 @@ final class HotspotController
             'server_address' => (string) ($_GET['server_address'] ?? ''),
             'client_ip' => (string) ($_GET['client_ip'] ?? ''),
             'interface' => (string) ($_GET['interface'] ?? ''),
+            'mac' => (string) ($_GET['mac'] ?? ''),
         ];
         [$data] = $this->validateQuery($raw);
         return [
@@ -128,6 +188,7 @@ final class HotspotController
             'serverAddress' => $data['server_address'],
             'ip' => $data['client_ip'],
             'interfaceName' => $data['interface'],
+            'mac' => client_mac($data['mac']),
         ];
     }
 
@@ -138,12 +199,12 @@ final class HotspotController
         header('Cache-Control: no-store');
     }
 
-    /** @return array{0:array{router_identity:string,server_address:string,client_ip:string,interface:string},1:array<string,array<int,string>>} */
+    /** @return array{0:array<string,string>,1:array<string,array<int,string>>} */
     private function validateQuery(array $raw): array
     {
         $data = [];
         $errors = [];
-        foreach (['router_identity' => 160, 'server_address' => 45, 'client_ip' => 45, 'interface' => 128] as $key => $max) {
+        foreach (['router_identity' => 160, 'server_address' => 45, 'client_ip' => 45, 'interface' => 128, 'mac' => 32] as $key => $max) {
             $value = trim((string) ($raw[$key] ?? ''));
             if (strlen($value) > $max) {
                 $errors[$key] = ['The ' . $key . ' field is too long.'];
