@@ -2,9 +2,6 @@
 
 declare(strict_types=1);
 
-use PixiePoint\App\Services\PortalThemeManager;
-use PixiePoint\App\Services\View;
-
 namespace PixiePoint\App\Admin\Vendos;
 
 use PixiePoint\App\Services\PortalThemeManager;
@@ -39,48 +36,26 @@ final class HotspotController
         ];
         $vendos = $context['routerIdentity'] === ''
             ? []
-            : $this->api->forHotspot(
-                $context['routerIdentity'],
-                $context['serverAddress'],
-                $context['ip'],
-                $context['interfaceName'],
-            );
+            : $this->api->forHotspot($context['routerIdentity'], $context['serverAddress'], $context['ip'], $context['interfaceName']);
         $debug = [];
         if ($this->api->hasDebugTarget($context['routerIdentity'])) {
-            $matching = $this->api->debugForHotspot(
-                $context['routerIdentity'],
-                $context['serverAddress'],
-                $context['ip'],
-                $context['interfaceName'],
-            );
-            $debug = [
-                'raw' => $raw,
-                'processed' => $context,
-                'validationErrors' => $errors,
-                'matching' => $matching,
-            ];
+            $matching = $this->api->debugForHotspot($context['routerIdentity'], $context['serverAddress'], $context['ip'], $context['interfaceName']);
+            $debug = ['raw' => $raw,'processed' => $context,'validationErrors' => $errors,'matching' => $matching];
         }
 
-        $content = $this->view->render('hotspot/compatibility', [
+        $content = $this->view->portalCardContent($this->view->render('hotspot/compatibility', [
             'context' => $context,
             'vendos' => $vendos,
             'debug' => $debug,
-        ]);
+        ]));
         $theme = $this->themes->resolveByRouterIdentity(
             $context['routerIdentity'],
             isset($vendos[0]['id']) ? (int) $vendos[0]['id'] : null,
         );
-        echo $this->themes->render(
-            $theme,
-            $this->view->portalCardContent($content),
-            [
-                'portal.name' => 'PixiePoint Wi-Fi',
-            ],
-        );
+        echo $this->themes->render($theme, $content, ['portal.name' => 'PixiePoint Wi-Fi']);
         exit;
     }
 
-    /** Legacy JSON endpoint retained for integrations; the captive portal no longer uses it. */
     public function index(): never
     {
         header('Content-Type: application/json; charset=utf-8');
