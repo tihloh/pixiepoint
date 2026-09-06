@@ -25,6 +25,7 @@ final class HotspotController
         header('Content-Type: text/html; charset=utf-8');
         header('Access-Control-Allow-Origin: *');
         header('Cache-Control: no-store');
+
         $raw = [
             'router_identity' => (string) ($_GET['router_identity'] ?? ''),
             'server_address' => (string) ($_GET['server_address'] ?? ''),
@@ -38,38 +39,65 @@ final class HotspotController
             'ip' => $data['client_ip'],
             'interfaceName' => $data['interface'],
         ];
+
         $vendos = $context['routerIdentity'] === ''
             ? []
-            : $this->api->forHotspot($context['routerIdentity'], $context['serverAddress'], $context['ip'], $context['interfaceName']);
+            : $this->api->forHotspot(
+                $context['routerIdentity'],
+                $context['serverAddress'],
+                $context['ip'],
+                $context['interfaceName'],
+            );
+
         $debug = [];
         if ($this->api->hasDebugTarget($context['routerIdentity'])) {
-            $matching = $this->api->debugForHotspot($context['routerIdentity'], $context['serverAddress'], $context['ip'], $context['interfaceName']);
-            $debug = ['raw' => $raw,'processed' => $context,'validationErrors' => $errors,'matching' => $matching];
+            $matching = $this->api->debugForHotspot(
+                $context['routerIdentity'],
+                $context['serverAddress'],
+                $context['ip'],
+                $context['interfaceName'],
+            );
+            $debug = [
+                'raw' => $raw,
+                'processed' => $context,
+                'validationErrors' => $errors,
+                'matching' => $matching,
+            ];
         }
 
-        $content = $this->view->portalCardContent($this->view->render('hotspot/compatibility', [
-            'context' => $context,
-            'vendos' => $vendos,
-            'debug' => $debug,
-        ]));
         $theme = $this->themes->resolveByRouterIdentity(
             $context['routerIdentity'],
             isset($vendos[0]['id']) ? (int) $vendos[0]['id'] : null,
         );
+
+        $options = '';
+        foreach ($vendos as $index => $vendo) {
+            $options .= '<option value="' . e($vendo['id']) . '"'
+                . ' data-base-url="' . e($vendo['baseUrl']) . '"'
+                . ' data-password-mode="' . e($vendo['passwordMode']) . '"'
+                . ' data-charging="' . ($vendo['chargingEnabled'] ? '1' : '0') . '"'
+                . ' data-eload="' . ($vendo['eloadEnabled'] ? '1' : '0') . '"'
+                . ($index === 0 ? ' selected' : '')
+                . '>' . e($vendo['businessName']) . '</option>';
+        }
+
         echo $this->themeEngine->render(
             $theme,
-            'index.html',
+            'login.html',
             $this->portalAdapter,
             [
                 'portal' => [
                     'name' => 'PixiePoint Wi-Fi',
+                    'business_name' => (string) ($vendos[0]['businessName'] ?? 'PixiePoint'),
+                    'vendo_options' => $options,
+                    'debug' => $debug ? '1' : '',
                 ],
-                'content' => $content,
+                'context' => $context,
             ],
             [
                 'voucher_login' => true,
                 'member_login' => true,
-                'coin_slot' => false,
+                'coin_slot' => !empty($vendos),
                 'points' => true,
             ],
         );
@@ -81,14 +109,22 @@ final class HotspotController
         header('Content-Type: application/json; charset=utf-8');
         header('Access-Control-Allow-Origin: *');
         header('Cache-Control: no-store');
-        $raw = ['router_identity' => (string) ($_GET['router_identity'] ?? ''),'server_address' => (string) ($_GET['server_address'] ?? ''),'client_ip' => (string) ($_GET['client_ip'] ?? ''),'interface' => (string) ($_GET['interface'] ?? '')];
-        [$d,$errors] = $this->validateQuery($raw);
+        $raw = [
+            'router_identity' => (string) ($_GET['router_identity'] ?? ''),
+            'server_address' => (string) ($_GET['server_address'] ?? ''),
+            'client_ip' => (string) ($_GET['client_ip'] ?? ''),
+            'interface' => (string) ($_GET['interface'] ?? ''),
+        ];
+        [$d, $errors] = $this->validateQuery($raw);
         if ($errors) {
             http_response_code(422);
-            echo json_encode(['ok' => false,'errors' => $errors,'vendos' => []]);
+            echo json_encode(['ok' => false, 'errors' => $errors, 'vendos' => []]);
             exit;
         }
-        echo json_encode(['ok' => true,'vendos' => $this->api->forHotspot($d['router_identity'], $d['server_address'], $d['client_ip'], $d['interface'])], JSON_UNESCAPED_SLASHES);
+        echo json_encode([
+            'ok' => true,
+            'vendos' => $this->api->forHotspot($d['router_identity'], $d['server_address'], $d['client_ip'], $d['interface']),
+        ], JSON_UNESCAPED_SLASHES);
         exit;
     }
 
@@ -97,7 +133,7 @@ final class HotspotController
     {
         $data = [];
         $errors = [];
-        foreach (['router_identity' => 160,'server_address' => 45,'client_ip' => 45,'interface' => 128] as $key => $max) {
+        foreach (['router_identity' => 160, 'server_address' => 45, 'client_ip' => 45, 'interface' => 128] as $key => $max) {
             $value = trim((string) ($raw[$key] ?? ''));
             if (strlen($value) > $max) {
                 $errors[$key] = ['The ' . $key . ' field is too long.'];
@@ -109,6 +145,6 @@ final class HotspotController
             $errors['router_identity'] = ['The router identity field is required.'];
         }
 
-        return [$data,$errors];
+        return [$data, $errors];
     }
 }
