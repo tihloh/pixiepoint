@@ -71,7 +71,7 @@ return static function (RouteManager $routes, array $c): void {
     $routes->redirect('/admin/logout', '/logout');
     $routes->redirect('/admin', '/dashboard');
     $routes->get('/dashboard', [$c['dashboard'], 'index'])->name('dashboard')->auth()->middleware('prefab.access');
-    $routes->post('/devices/claim', [$c['dashboard'], 'claimDevice'])->name('devices.claim');
+    $routes->post('/devices/claim', [$c['dashboard'], 'claimDevice'])->name('devices.claim')->auth()->middleware('prefab.access');
 
     $routes
         ->get('/admin/select/router', [$c['admin.selection'], 'router'])
