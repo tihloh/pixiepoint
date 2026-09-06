@@ -4,14 +4,21 @@ declare(strict_types=1);
 
 namespace PixiePoint\App\Services;
 
+use PixiePoint\App\Portal\Adapters\MikroTikAdapter;
+use PixiePoint\App\Portal\ThemeContext;
+use PixiePoint\App\Portal\ThemeEngine;
 use RuntimeException;
 
 final class View
 {
+    private MikroTikAdapter $portalAdapter;
+
     public function __construct(
         private array $config,
         private PortalThemeManager $themes,
+        private ThemeEngine $themeEngine,
     ) {
+        $this->portalAdapter = new MikroTikAdapter();
     }
 
     public function render(string $view, array $data = []): string
@@ -79,10 +86,22 @@ final class View
         $routerIdentity = is_array($context) ? (string) ($context['router_identity'] ?? '') : '';
         $theme = $this->themes->resolveByRouterIdentity($routerIdentity);
 
-        return $this->themes->render(
+        return $this->themeEngine->render(
             $theme,
-            $this->portalCardContent($body),
-            ['portal.name' => (string) ($this->config['app_name'] ?? 'PixiePoint Wi-Fi')],
+            'index.html',
+            $this->portalAdapter,
+            [
+                'portal' => [
+                    'name' => (string) ($this->config['app_name'] ?? 'PixiePoint Wi-Fi'),
+                ],
+                'content' => $this->portalCardContent($body),
+            ],
+            [
+                'voucher_login' => true,
+                'member_login' => true,
+                'coin_slot' => false,
+                'points' => true,
+            ],
         );
     }
 
