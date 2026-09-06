@@ -11,7 +11,7 @@
 <div class="heading">
     <div>
         <h1>Vendos</h1>
-        <p class="muted">Configure coin slots and how each vendo is identified from its MikroTik hotspot.</p>
+        <p class="muted">Configure each Vendo and the Wi-Fi identity presented to customers.</p>
     </div>
     <?php if ($canManageVendos): ?>
         <button class="button" type="button" data-bs-toggle="modal" data-bs-target="#vendoModal" data-mode="create">Add vendo</button>
@@ -22,15 +22,14 @@
 
 <section class="panel">
     <h2>Configured vendos</h2>
-    <p class="muted">Wi-Fi name uses the vendo's own name when set. Leave it blank to use the selected router's Wi-Fi name: <strong><?= e($routerBusinessName ?: 'Not set') ?></strong></p>
+    <p class="muted">The Vendo name is also its business / Wi-Fi name.</p>
     <div class="table-responsive">
         <table class="table align-middle">
-            <thead><tr><th>Name</th><th>Wi-Fi name</th><th>Router</th><th>Server IP</th><th>Client subnet</th><th>Interface</th><th>Vendo address</th><th>Theme</th><th>Status</th><?php if ($canManageVendos): ?><th class="text-end">Action</th><?php endif; ?></tr></thead>
+            <thead><tr><th>Name / Wi-Fi</th><th>Router</th><th>Server IP</th><th>Client subnet</th><th>Interface</th><th>Vendo address</th><th>Theme</th><th>Status</th><?php if ($canManageVendos): ?><th class="text-end">Action</th><?php endif; ?></tr></thead>
             <tbody>
                 <?php foreach ($vendos as $v): ?>
                     <tr>
                         <td><strong><?= e($v['name']) ?></strong><?php if (!empty($v['debug_enabled'])): ?><div class="small text-warning">Debug enabled</div><?php endif; ?></td>
-                        <td><strong><?= e($v['business_name'] ?: 'Not set') ?></strong><div class="small text-body-secondary"><?= e($v['business_name_override'] !== '' ? 'Vendo name' : 'Router name') ?></div></td>
                         <td><?= e($v['router_name']) ?><div class="small text-body-secondary"><?= e($v['router_identity']) ?></div></td>
                         <td class="code"><?= e($v['server_ip'] ?: 'Not set') ?></td>
                         <td class="code"><?= e($v['client_subnet'] ?: '—') ?></td>
@@ -41,12 +40,12 @@
                         <?php if ($canManageVendos): ?>
                             <td class="text-end"><div class="d-inline-flex gap-1">
                                 <form method="post" class="d-inline"><input type="hidden" name="_csrf" value="<?= e($csrf) ?>"><input type="hidden" name="action" value="toggle_debug"><input type="hidden" name="id" value="<?= e($v['id']) ?>"><input type="hidden" name="debug_enabled" value="<?= !empty($v['debug_enabled']) ? '0' : '1' ?>"><button class="btn btn-sm <?= !empty($v['debug_enabled']) ? 'btn-warning' : 'btn-outline-secondary' ?>" type="submit">Debug: <?= !empty($v['debug_enabled']) ? 'On' : 'Off' ?></button></form>
-                                <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="modal" data-bs-target="#vendoModal" data-mode="edit" data-id="<?= e($v['id']) ?>" data-name="<?= e($v['name']) ?>" data-business-name="<?= e($v['business_name_override']) ?>" data-router="<?= e($v['router_id']) ?>" data-theme="<?= e($v['portal_theme_id'] ?? 0) ?>" data-url="<?= e(preg_replace('~^https?://~i','',$v['base_url'])) ?>" data-server-ip="<?= e($v['server_ip'] ?? '') ?>" data-subnet="<?= e($v['client_subnet'] ?? '') ?>" data-interface="<?= e($v['interface_name'] ?? '') ?>" data-password-mode="<?= e($v['password_mode']) ?>" data-charging="<?= $v['charging_enabled'] ? '1' : '0' ?>" data-eload="<?= $v['eload_enabled'] ? '1' : '0' ?>" data-enabled="<?= $v['enabled'] ? '1' : '0' ?>">Edit</button>
+                                <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="modal" data-bs-target="#vendoModal" data-mode="edit" data-id="<?= e($v['id']) ?>" data-name="<?= e($v['name']) ?>" data-router="<?= e($v['router_id']) ?>" data-theme="<?= e($v['portal_theme_id'] ?? 0) ?>" data-url="<?= e(preg_replace('~^https?://~i','',$v['base_url'])) ?>" data-server-ip="<?= e($v['server_ip'] ?? '') ?>" data-subnet="<?= e($v['client_subnet'] ?? '') ?>" data-interface="<?= e($v['interface_name'] ?? '') ?>" data-password-mode="<?= e($v['password_mode']) ?>" data-charging="<?= $v['charging_enabled'] ? '1' : '0' ?>" data-eload="<?= $v['eload_enabled'] ? '1' : '0' ?>" data-enabled="<?= $v['enabled'] ? '1' : '0' ?>">Edit</button>
                             </div></td>
                         <?php endif; ?>
                     </tr>
                 <?php endforeach; ?>
-                <?php if (!$vendos): ?><tr><td colspan="<?= $canManageVendos ? 10 : 9 ?>" class="empty">No vendos configured. Use Add vendo to link your first coin-slot controller.</td></tr><?php endif; ?>
+                <?php if (!$vendos): ?><tr><td colspan="<?= $canManageVendos ? 9 : 8 ?>" class="empty">No vendos configured. Use Add vendo to link your first coin-slot controller.</td></tr><?php endif; ?>
             </tbody>
         </table>
     </div>
@@ -58,10 +57,9 @@
         <div class="modal-header"><div><h2 class="modal-title fs-5 mb-1" id="vendoModalTitle">Add vendo</h2><p class="small text-body-secondary mb-0">Link a coin-slot controller to its MikroTik hotspot.</p></div><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
         <div class="modal-body"><input type="hidden" name="_csrf" value="<?= e($csrf) ?>"><input type="hidden" name="action" value="create"><input type="hidden" name="id" value="0">
             <div class="row g-3">
-                <div class="col-md-6"><label>Name</label><input name="name" required maxlength="160"><small class="text-body-secondary">Friendly name of this coin slot.</small></div>
+                <div class="col-md-6"><label>Name / Wi-Fi name</label><input name="name" required maxlength="160"><small class="text-body-secondary">This single name is used as the Vendo and customer-facing Wi-Fi/business name.</small></div>
                 <div class="col-md-6"><label>Router</label><select name="router_id" required><option value="">Select router</option><?php foreach ($routers as $r): ?><option value="<?= e($r['id']) ?>"><?= e($r['name']) ?> · <?= e($r['identity']) ?></option><?php endforeach; ?></select></div>
                 <div class="col-md-6"><label>Portal theme</label><select name="portal_theme_id"><option value="0">Inherit router theme</option><?php foreach ($themes as $theme): ?><option value="<?= e($theme['id']) ?>"><?= e($theme['name']) ?></option><?php endforeach; ?></select><small class="text-body-secondary">Blank/inherit uses the selected router theme.</small></div>
-                <div class="col-md-6"><label>Business / Wi-Fi name</label><input name="business_name" maxlength="255" placeholder="Optional Vendo-level override"></div>
                 <div class="col-md-6"><label>Server IP</label><input name="server_ip" placeholder="10.0.3.1" required maxlength="45"><small class="text-body-secondary">Primary identifier: MikroTik $(server-address).</small></div>
                 <div class="col-md-6"><label>Client subnet</label><input name="client_subnet" placeholder="Optional, e.g. 10.0.3.0/24" maxlength="64"></div>
                 <div class="col-md-6"><label>Vendo address</label><input name="base_url" placeholder="10.0.3.2" required maxlength="255"></div>
@@ -76,6 +74,6 @@
     </form></div></div>
 </div>
 <script>
-document.getElementById('vendoModal').addEventListener('show.bs.modal',function(event){const button=event.relatedTarget;const isEdit=button&&button.dataset.mode==='edit';const form=this.querySelector('form');form.reset();form.querySelector('[name="action"]').value=isEdit?'update':'create';form.querySelector('[name="id"]').value=isEdit?button.dataset.id:'0';form.querySelector('[name="name"]').value=isEdit?button.dataset.name:'';form.querySelector('[name="business_name"]').value=isEdit?button.dataset.businessName:'';form.querySelector('[name="router_id"]').value=isEdit?button.dataset.router:'';form.querySelector('[name="portal_theme_id"]').value=isEdit?button.dataset.theme:'0';form.querySelector('[name="server_ip"]').value=isEdit?button.dataset.serverIp:'';form.querySelector('[name="client_subnet"]').value=isEdit?button.dataset.subnet:'';form.querySelector('[name="base_url"]').value=isEdit?button.dataset.url:'';form.querySelector('[name="interface_name"]').value=isEdit?button.dataset.interface:'';form.querySelector('[name="password_mode"]').value=isEdit?button.dataset.passwordMode:'blank';form.querySelector('[name="charging_enabled"]').checked=isEdit&&button.dataset.charging==='1';form.querySelector('[name="eload_enabled"]').checked=isEdit&&button.dataset.eload==='1';form.querySelector('[name="enabled"]').checked=isEdit?button.dataset.enabled==='1':true;document.getElementById('vendo-enabled-wrap').hidden=!isEdit;document.getElementById('vendoModalTitle').textContent=isEdit?'Edit vendo':'Add vendo';document.getElementById('vendo-submit').textContent=isEdit?'Save changes':'Add vendo';});
+document.getElementById('vendoModal').addEventListener('show.bs.modal',function(event){const button=event.relatedTarget;const isEdit=button&&button.dataset.mode==='edit';const form=this.querySelector('form');form.reset();form.querySelector('[name="action"]').value=isEdit?'update':'create';form.querySelector('[name="id"]').value=isEdit?button.dataset.id:'0';form.querySelector('[name="name"]').value=isEdit?button.dataset.name:'';form.querySelector('[name="router_id"]').value=isEdit?button.dataset.router:'';form.querySelector('[name="portal_theme_id"]').value=isEdit?button.dataset.theme:'0';form.querySelector('[name="server_ip"]').value=isEdit?button.dataset.serverIp:'';form.querySelector('[name="client_subnet"]').value=isEdit?button.dataset.subnet:'';form.querySelector('[name="base_url"]').value=isEdit?button.dataset.url:'';form.querySelector('[name="interface_name"]').value=isEdit?button.dataset.interface:'';form.querySelector('[name="password_mode"]').value=isEdit?button.dataset.passwordMode:'blank';form.querySelector('[name="charging_enabled"]').checked=isEdit&&button.dataset.charging==='1';form.querySelector('[name="eload_enabled"]').checked=isEdit&&button.dataset.eload==='1';form.querySelector('[name="enabled"]').checked=isEdit?button.dataset.enabled==='1':true;document.getElementById('vendo-enabled-wrap').hidden=!isEdit;document.getElementById('vendoModalTitle').textContent=isEdit?'Edit vendo':'Add vendo';document.getElementById('vendo-submit').textContent=isEdit?'Save changes':'Add vendo';});
 </script>
 <?php endif; ?>
