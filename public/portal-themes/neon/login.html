@@ -1,3 +1,4 @@
+<link rel="stylesheet" href="{{ theme.asset_url }}/theme.css">
 <main id="pp-page" class="neon-shell">
     <section id="pp-login-card" class="portal-card">
         <div id="compat-app">
@@ -24,8 +25,7 @@
                 <button id="compat-eload" class="button secondary" type="button" hidden>Buy e-load</button>
             </div>
             <div id="compat-transaction" class="compat-transaction" hidden>
-                <small>Your voucher</small>
-                <strong id="compat-code">—</strong>
+                <small>Your voucher</small><strong id="compat-code">—</strong>
                 <div class="context">
                     <div><small>Coin total</small><span id="compat-amount">₱0</span></div>
                     <div><small>Time</small><span id="compat-time">—</span></div>
@@ -43,4 +43,10 @@
             <div id="compat-eload-panel" hidden><div id="compat-eload-products">Loading products…</div></div>
         </div>
     </section>
+    <form id="chap-login" method="post" hidden>
+        <input name="username"><input name="password"><input name="dst"><input name="popup" value="true">
+    </form>
+    <form id="pap-login" method="post" hidden>
+        <input name="username"><input name="password"><input name="dst"><input name="popup" value="true">
+    </form>
 </main>
