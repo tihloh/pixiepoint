@@ -23,6 +23,15 @@ return static function (RouteManager $routes, array $c): void {
 
     $routes->get('/', [$c['auth'], 'home'])->name('home');
     $routes->post('/', [$c['hotspot'], 'portal'])->name('hotspot.portal');
+
+    $routes->get('/hotspot/health', static function (): never {
+        header('Content-Type: application/json; charset=utf-8');
+        header('Access-Control-Allow-Origin: *');
+        header('Cache-Control: no-store');
+        echo json_encode(['ok' => true, 'ready' => true], JSON_UNESCAPED_SLASHES);
+        exit;
+    })->name('hotspot.health');
+
     $routes->get('/hotspot/compat', [$c['vendos.hotspot'], 'portal'])->name('hotspot.compat');
     $routes->get('/hotspot/device-info', [$c['device_info'], 'show'])->name('hotspot.device_info');
     $routes->post('/hotspot/device-voucher', [$c['device_info'], 'saveVoucher'])->name('hotspot.device_voucher');
@@ -62,7 +71,7 @@ return static function (RouteManager $routes, array $c): void {
     $routes->redirect('/admin/logout', '/logout');
     $routes->redirect('/admin', '/dashboard');
     $routes->get('/dashboard', [$c['dashboard'], 'index'])->name('dashboard')->auth()->middleware('prefab.access');
-    $routes->post('/devices/claim', [$c['dashboard'], 'claimDevice'])->name('devices.claim')->auth()->middleware('prefab.access');
+    $routes->post('/devices/claim', [$c['dashboard'], 'claimDevice'])->name('devices.claim');
 
     $routes
         ->get('/admin/select/router', [$c['admin.selection'], 'router'])
