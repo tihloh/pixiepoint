@@ -1,3 +1,4 @@
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css">
 <link rel="stylesheet" href="{{ theme.asset_url }}/theme.css">
 <main id="pp-page" class="neon-shell">
     <section id="pp-status-card" class="portal-card p-4">
@@ -5,57 +6,28 @@
             <div id="pp-brand" class="brand mb-3">{{ portal.name }}</div>
             <h1 id="pp-session-title" class="h3 mb-2">You're connected</h1>
             <p id="pp-session-description" class="muted mb-4">Live Wi-Fi session.</p>
-
-            <div id="pp-session-details" class="table-responsive mb-3">
-                <table class="table table-sm align-middle mb-0">
-                    <tbody>
-                        <tr><th scope="row">Device</th><td id="pp-session-device" class="text-end">{{ portal.device.account }}</td></tr>
-                        <tr><th scope="row">Time left</th><td id="pp-time-left" class="text-end">Unlimited</td></tr>
-                        <tr><th scope="row">Data used in/out</th><td id="pp-data-total" class="text-end">0 B / 0 B</td></tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <div id="pp-device-info" class="table-responsive mb-3">
-                <table class="table table-sm align-middle mb-0">
-                    <tbody>
-                        <tr><th scope="row">Points</th><td id="pp-device-points" class="text-end fw-semibold">{{ portal.device.points }}</td></tr>
-                        <tr><th scope="row">IP address</th><td id="pp-device-ip" class="text-end text-break">{{ portal.device.ip }}</td></tr>
-                        <tr><th scope="row">MAC address</th><td id="pp-device-mac" class="text-end text-break">{{ portal.device.mac }}</td></tr>
-                    </tbody>
-                </table>
-            </div>
-
+            <div id="pp-session-details" class="table-responsive mb-3"><table class="table table-sm align-middle mb-0"><tbody>
+                <tr><th scope="row">Device</th><td id="pp-session-device" class="text-end">{{ portal.device.account }}</td></tr>
+                <tr><th scope="row">Time left</th><td id="pp-time-left" class="text-end">Unlimited</td></tr>
+                <tr><th scope="row">Data used in/out</th><td id="pp-data-total" class="text-end">0 B / 0 B</td></tr>
+            </tbody></table></div>
+            <div id="pp-device-info" class="table-responsive mb-3"><table class="table table-sm align-middle mb-0"><tbody>
+                <tr><th scope="row">Points</th><td id="pp-device-points" class="text-end fw-semibold">{{ portal.device.points }}</td></tr>
+                <tr><th scope="row">IP address</th><td id="pp-device-ip" class="text-end text-break">{{ portal.device.ip }}</td></tr>
+                <tr><th scope="row">MAC address</th><td id="pp-device-mac" class="text-end text-break">{{ portal.device.mac }}</td></tr>
+            </tbody></table></div>
             <select id="pp-vendo" class="d-none">{{ html:portal.vendo_options }}</select>
             <button id="pp-extend" class="button secondary full mb-3" type="button" hidden>Extend time</button>
             <div id="pp-extend-box" class="compat-transaction mb-3" hidden>
-                <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
-                    <div>
-                        <small class="d-block">Extend current voucher</small>
-                        <strong id="pp-extend-voucher" class="d-block">—</strong>
-                    </div>
-                    <small id="pp-extend-countdown" class="compat-countdown text-nowrap">Waiting…</small>
-                </div>
+                <div class="d-flex justify-content-between align-items-start gap-3 mb-3"><div><small class="d-block">Extend current voucher</small><strong id="pp-extend-voucher" class="d-block">—</strong></div><small id="pp-extend-countdown" class="compat-countdown text-nowrap">Waiting…</small></div>
                 <div class="progress mb-3"><div id="pp-extend-progress-bar" class="progress-bar" style="width:100%"></div></div>
-                <div class="context mb-3">
-                    <div><small>Coin total</small><span id="pp-extend-amount">₱0</span></div>
-                    <div><small>Added time</small><span id="pp-extend-time">—</span></div>
-                </div>
+                <div class="context mb-3"><div><small>Coin total</small><span id="pp-extend-amount">₱0</span></div><div><small>Added time</small><span id="pp-extend-time">—</span></div></div>
                 <p id="pp-extend-status" class="muted mb-3">Activating coin slot…</p>
-                <div class="actions">
-                    <button id="pp-extend-finish" class="button" type="button" disabled>Done</button>
-                    <button id="pp-extend-cancel" class="button secondary" type="button">Cancel</button>
-                </div>
+                <div class="actions"><button id="pp-extend-finish" class="button" type="button" disabled>Done</button><button id="pp-extend-cancel" class="button secondary" type="button">Cancel</button></div>
             </div>
-            <div id="pp-session-actions" class="actions">
-                <form id="pp-disconnect-form" method="post"><button id="pp-disconnect" class="button secondary" type="submit">Disconnect</button></form>
-                <button id="pp-end-session" class="button secondary" type="button">End session</button>
-            </div>
+            <div id="pp-session-actions" class="actions"><form id="pp-disconnect-form" method="post"><button id="pp-disconnect" class="button secondary" type="submit">Disconnect</button></form><button id="pp-end-session" class="button secondary" type="button">End session</button></div>
         </div>
-        <div id="pp-disconnected" hidden>
-            <div id="pp-disconnected-title" class="h4 mb-2">Session ended</div>
-            <p id="pp-disconnected-message" class="muted mb-3">Your Wi-Fi session has ended.</p>
-            <a id="pp-login" class="button" href="#">Connect again</a>
-        </div>
+        <div id="pp-disconnected" hidden><div id="pp-disconnected-title" class="h4 mb-2">Session ended</div><p id="pp-disconnected-message" class="muted mb-3">Your Wi-Fi session has ended.</p><a id="pp-login" class="button" href="#">Connect again</a></div>
     </section>
 </main>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
