@@ -19,17 +19,6 @@
     display: block;
 }
 
-.compat-status.online,
-.compat-status.offline {
-}
-
-/* Functional panels rendered/controlled by juanfi-compat.js. */
-.compat-transaction,
-#compat-charger-list,
-#compat-eload-panel,
-#compat-rate-list {
-}
-
 .compat-countdown {
     font-variant-numeric: tabular-nums;
 }
