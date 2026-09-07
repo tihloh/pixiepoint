@@ -1,7 +1,6 @@
 (function () {
   'use strict';
   const hostedOrigin = window.PIXIEPOINT_HOSTED_ORIGIN || 'https://hs.portalx.win',
-    bootstrapVersion = '5.3.8',
     version = Date.now();
   const isLogin = !!window.PIXIEPOINT_CONTEXT,
     isStatus = !!window.PIXIEPOINT_SESSION,
@@ -164,11 +163,7 @@
     started = true;
     status('Hosted portal found · loading…');
     try {
-      await Promise.all([
-        loadStyle(`https://cdn.jsdelivr.net/npm/bootstrap@${bootstrapVersion}/dist/css/bootstrap.min.css`, 'pixiepoint-bootstrap-css'),
-        loadStyle(`${hostedOrigin}/assets/app.css?v=${version}`, 'pixiepoint-css'),
-      ]);
-      await loadScript(`https://cdn.jsdelivr.net/npm/bootstrap@${bootstrapVersion}/dist/js/bootstrap.bundle.min.js`, 'pixiepoint-bootstrap-js');
+      await loadStyle(`${hostedOrigin}/assets/app.css?v=${version}`, 'pixiepoint-css');
 
       const root = document.querySelector('#pp-page') || document.getElementById('pixiepoint-root') || document.body;
       if (serverRendered) {
