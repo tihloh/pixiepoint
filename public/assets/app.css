@@ -1,24 +1,42 @@
-/* PixiePoint functional UI contract.
- *
- * This file is intentionally framework-neutral.
- * Themes own all presentation, layout, colors, typography, spacing,
- * component geometry, and third-party CSS frameworks.
- */
+/* PixiePoint theme for Bootstrap 5.3. Bootstrap owns component geometry. */
+:root,[data-bs-theme='dark']{--bs-body-color:#eef4ff;--bs-body-bg:#07111f;--bs-secondary-color:#96a8c0;--bs-border-color:#2b4059;--bs-primary:#7c5cff;--bs-primary-rgb:124,92,255;--bs-success:#20d6b5;--bs-danger:#ff7187;--pixie-line:rgba(255,255,255,.08)}
+html,body{min-height:100%}
+body{background:radial-gradient(circle at 10% 0,#302265 0,transparent 31rem),var(--bs-body-bg)}
+.navbar{--bs-navbar-color:var(--bs-secondary-color);--bs-navbar-hover-color:var(--bs-body-color);--bs-navbar-brand-color:var(--bs-body-color);background:rgba(7,17,31,.93);border-color:var(--pixie-line)!important;backdrop-filter:blur(16px)}
+.card,.modal-content,.dropdown-menu,.list-group-item{--bs-card-bg:rgba(14,29,49,.96);--bs-card-border-color:var(--pixie-line);color:var(--bs-body-color);background-color:rgba(14,29,49,.96);border-color:var(--pixie-line)}
+.table{--bs-table-color:var(--bs-body-color);--bs-table-bg:transparent;--bs-table-border-color:var(--pixie-line)}
+.logo{width:36px;height:36px;flex:0 0 36px;display:grid;place-items:center;border-radius:11px;color:#06121f;background:var(--bs-success);font-size:15px;font-weight:900}
 
-/* Functional visibility state used by PixiePoint-owned scripts. */
-[hidden] {
-    display: none !important;
-}
+/* PixiePoint colors only; Bootstrap keeps button padding, height, line-height and centering. */
+.btn-primary{--bs-btn-color:#fff;--bs-btn-bg:#7c5cff;--bs-btn-border-color:#7c5cff;--bs-btn-hover-bg:#6c4df0;--bs-btn-hover-border-color:#6c4df0;--bs-btn-active-bg:#6043dc;--bs-btn-active-border-color:#6043dc;background-image:linear-gradient(135deg,#7c5cff,#538cff)}
+.btn-outline-secondary{--bs-btn-color:#c5d1e0;--bs-btn-border-color:#39516d;--bs-btn-hover-color:#fff;--bs-btn-hover-bg:#39516d;--bs-btn-hover-border-color:#39516d}
 
-/* Functional status/message state. Themes may restyle these selectors. */
-#compat-alert {
-    white-space: pre-wrap;
-}
+/* Captive/public portal fallback classes. These are intentionally separate from Bootstrap components. */
+.portal{width:100%;min-height:100vh;display:grid;place-items:center;padding:1.25rem;text-align:left}
+.portal>.card{width:min(520px,calc(100vw - 2rem))!important;max-width:520px}
+.brand{display:flex;align-items:center;gap:.7rem;margin-bottom:1.35rem}
+.brand strong{display:block;font-size:1.05rem;line-height:1.2}
+.button{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;min-height:42px;padding:.55rem .9rem;border:1px solid transparent;border-radius:.75rem;color:#fff;background:linear-gradient(135deg,#7c5cff,#538cff);font-weight:700;text-decoration:none;cursor:pointer}
+.button.secondary,.button.ghost{color:#c5d1e0;background:transparent;border-color:#39516d}
+.button.full{width:100%}
+.field{margin-bottom:.75rem}
+.field label{display:block;margin-bottom:.35rem;color:#c5d1e0;font-weight:700}
+.field input,.field select,.field textarea{width:100%;min-height:46px;padding:.55rem .75rem;color:var(--bs-body-color);background:#081423;border:1px solid #2b4059;border-radius:.75rem}
+.field input:focus,.field select:focus,.field textarea:focus{outline:0;border-color:#7c5cff;box-shadow:0 0 0 .25rem rgba(124,92,255,.15)}
+.muted{color:var(--bs-secondary-color)!important}
+.code{font-family:var(--bs-font-monospace)}
 
-.compat-status {
-    display: block;
-}
+.context{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.55rem;margin:.9rem 0}
+.context>div{min-width:0;padding:.75rem .7rem;border:1px solid var(--pixie-line);border-radius:.75rem;background:rgba(255,255,255,.03);text-align:center}
+.context small,.metric small{display:block;color:var(--bs-secondary-color)}
+.context span{display:block;margin-top:.1rem;overflow-wrap:anywhere}
+.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 1rem}
+.actions{display:flex;gap:.55rem;flex-wrap:wrap}
+.actions>form,.actions>.button{flex:1 1 0;min-width:0}.actions>form>button{width:100%}
 
-.compat-countdown {
-    font-variant-numeric: tabular-nums;
-}
+.google-button{width:100%;min-height:46px;margin-top:12px;padding:0 1rem;display:grid;grid-template-columns:24px 1fr 24px;align-items:center;border:1px solid #dadce0;border-radius:.75rem;color:#1f1f1f;background:#fff;font-family:Roboto,Arial,sans-serif;font-size:14px;font-weight:500;text-decoration:none}.google-button span{text-align:center}.google-icon{width:18px;height:18px}.auth-footer{margin-top:1rem;text-align:center}.auth-divider{display:flex;align-items:center;gap:.75rem;margin:1rem 0;color:var(--bs-secondary-color);font-size:.75rem}.auth-divider:before,.auth-divider:after{content:'';height:1px;flex:1;background:var(--bs-border-color)}
+.online-auth-info,.online-dashboard-help{display:grid;gap:.75rem}.online-auth-info>div,.online-dashboard-help>div{padding:.85rem;border:1px solid var(--pixie-line);border-radius:.85rem;background:rgba(255,255,255,.025)}.online-dashboard-help{grid-template-columns:repeat(auto-fit,minmax(210px,1fr))}
+.compat-status{display:block;margin-top:.25rem;color:var(--bs-secondary-color)}.compat-status.online{color:var(--bs-success)}.compat-status.offline{color:var(--bs-danger)}
+.compat-transaction,.compat-rate-list,.compat-inline{margin-top:.85rem;padding:.85rem;border:1px solid var(--pixie-line);border-radius:.75rem;background:rgba(255,255,255,.025)}
+.compat-rate{padding:.5rem 0;border-bottom:1px solid var(--pixie-line)}.compat-rate:last-child{border-bottom:0}.compat-tools{display:flex;flex-wrap:wrap;gap:.55rem;margin-top:.65rem}.compat-tools .button{flex:1 1 0;min-width:120px}.compat-countdown{color:var(--bs-secondary-color);font-variant-numeric:tabular-nums}.compat-coin-progress{height:.5rem;margin-top:.75rem;overflow:hidden;border-radius:999px;background:rgba(255,255,255,.08)}.compat-coin-progress-bar{width:100%;height:100%;border-radius:inherit;background:linear-gradient(90deg,#20d6b5,#7c5cff);transition:width .25s linear}
+@media(max-width:640px){.form-grid,.context{grid-template-columns:1fr}}
