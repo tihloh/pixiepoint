@@ -1,0 +1,21 @@
+/* PixiePoint hotspot functional UI contract.
+ *
+ * This stylesheet is only for PixiePoint-owned hotspot behavior.
+ * Portal themes own all visual presentation and third-party CSS.
+ */
+
+[hidden] {
+    display: none !important;
+}
+
+#compat-alert {
+    white-space: pre-wrap;
+}
+
+.compat-status {
+    display: block;
+}
+
+.compat-countdown {
+    font-variant-numeric: tabular-nums;
+}
