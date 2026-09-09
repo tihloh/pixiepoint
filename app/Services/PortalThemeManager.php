@@ -10,18 +10,12 @@ use RuntimeException;
 final class PortalThemeManager
 {
     private string $root;
-    private string $baseUrl;
 
     public function __construct(
         private PDO $db,
         string $projectRoot,
-        string $baseUrl = '',
     ) {
         $this->root = rtrim($projectRoot, '/\\') . '/app/Portal/Themes';
-        $this->baseUrl = rtrim(trim($baseUrl), '/');
-        if ($this->baseUrl === '') {
-            $this->baseUrl = $this->requestBaseUrl();
-        }
 
         if (!is_dir($this->root)) {
             @mkdir($this->root, 0775, true);
@@ -65,11 +59,6 @@ final class PortalThemeManager
         }
 
         return $path;
-    }
-
-    public function assetUrl(string $slug): string
-    {
-        return $this->baseUrl . '/portal-themes/' . $this->safeSlug($slug);
     }
 
     /** @return array<int,string> */
@@ -196,13 +185,5 @@ final class PortalThemeManager
         }
 
         return $slug;
-    }
-
-    private function requestBaseUrl(): string
-    {
-        $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-        $host = trim((string) ($_SERVER['HTTP_HOST'] ?? ''));
-
-        return $host !== '' ? $scheme . '://' . $host : '';
     }
 }
