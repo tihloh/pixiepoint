@@ -1,25 +1,20 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css">
-<link rel="stylesheet" href="{{ theme.asset_url }}/theme.css">
 <main id="pp-page" class="portal-theme-shell">
     <section id="pp-status-card" class="portal-card p-4">
         <div id="pp-session">
             <div id="pp-brand" class="brand mb-3">{{ portal.name }}</div>
             <h1 id="pp-session-title" class="h3 mb-2">You're connected</h1>
             <p id="pp-session-description" class="muted mb-4">Live Wi-Fi session.</p>
-            <div id="pp-session-details" class="table-responsive mb-3">
-                <table class="table table-sm align-middle mb-0"><tbody>
-                    <tr><th scope="row">Device</th><td id="pp-session-device" class="text-end">{{ portal.device.account }}</td></tr>
-                    <tr><th scope="row">Time left</th><td id="pp-time-left" class="text-end">Unlimited</td></tr>
-                    <tr><th scope="row">Data used in/out</th><td id="pp-data-total" class="text-end">0 B / 0 B</td></tr>
-                </tbody></table>
-            </div>
-            <div id="pp-device-info" class="table-responsive mb-3">
-                <table class="table table-sm align-middle mb-0"><tbody>
-                    <tr><th scope="row">Points</th><td id="pp-device-points" class="text-end fw-semibold">{{ portal.device.points }}</td></tr>
-                    <tr><th scope="row">IP address</th><td id="pp-device-ip" class="text-end text-break">{{ portal.device.ip }}</td></tr>
-                    <tr><th scope="row">MAC address</th><td id="pp-device-mac" class="text-end text-break">{{ portal.device.mac }}</td></tr>
-                </tbody></table>
-            </div>
+            <div id="pp-session-details" class="table-responsive mb-3"><table class="table table-sm align-middle mb-0"><tbody>
+                <tr><th scope="row">Device</th><td id="pp-session-device" class="text-end">{{ portal.device.account }}</td></tr>
+                <tr><th scope="row">Time left</th><td id="pp-time-left" class="text-end">Unlimited</td></tr>
+                <tr><th scope="row">Data used in/out</th><td id="pp-data-total" class="text-end">0 B / 0 B</td></tr>
+            </tbody></table></div>
+            <div id="pp-device-info" class="table-responsive mb-3"><table class="table table-sm align-middle mb-0"><tbody>
+                <tr><th scope="row">Points</th><td id="pp-device-points" class="text-end fw-semibold">{{ portal.device.points }}</td></tr>
+                <tr><th scope="row">IP address</th><td id="pp-device-ip" class="text-end text-break">{{ portal.device.ip }}</td></tr>
+                <tr><th scope="row">MAC address</th><td id="pp-device-mac" class="text-end text-break">{{ portal.device.mac }}</td></tr>
+            </tbody></table></div>
             <select id="pp-vendo" class="d-none">{{ html:portal.vendo_options }}</select>
             <button id="pp-extend" class="button secondary full mb-3" type="button" hidden>Extend time</button>
             <div id="pp-extend-box" class="compat-transaction mb-3" hidden>
@@ -35,4 +30,3 @@
     </section>
 </main>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
-<script src="{{ theme.asset_url }}/theme.js"></script>
