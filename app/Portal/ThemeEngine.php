@@ -57,48 +57,12 @@ final class ThemeEngine
         return $adapter->transform($html, $context);
     }
 
-    /** @param array<string,string> $values @param array<string,bool> $features */
-    private function appendDebugPanel(string $html, array $values, array $features, mixed $debug): string
-    {
-        if (!is_array($debug) || $debug === []) {
-            return $html;
-        }
-
-        $placeholderRows = '';
-        foreach ($values as $key => $value) {
-            $display = trim((string) $value);
-            if ($display === '') {
-                $display = '∅';
-            }
-            $placeholderRows .= '<tr><th scope="row">{{ ' . e($key) . ' }}</th><td><pre>' . e($display) . '</pre></td></tr>';
-        }
-
-        $featureRows = '';
-        foreach ($features as $key => $enabled) {
-            $featureRows .= '<tr><th scope="row">' . e((string) $key) . '</th><td>' . ($enabled ? 'true' : 'false') . '</td></tr>';
-        }
-
-        $debugJson = json_encode($debug, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
-        if (!is_string($debugJson)) {
-            $debugJson = '{}';
-        }
-
-        return $html
-            . '<section id="pp-debug" class="pp-debug" style="margin:24px auto;padding:16px;max-width:1000px;border:1px solid #888;border-radius:8px;background:rgba(0,0,0,.04);font:14px/1.45 system-ui,sans-serif;color:inherit;overflow:auto">'
-            . '<h2 style="margin:0 0 12px;font-size:18px">PixiePoint Debug</h2>'
-            . '<p style="margin:0 0 16px"><strong>Debug mode enabled.</strong> These are the values currently available to theme placeholders.</p>'
-            . '<h3 style="margin:16px 0 8px;font-size:15px">Available placeholders</h3>'
-            . '<table style="width:100%;border-collapse:collapse"><tbody>' . $placeholderRows . '</tbody></table>'
-            . '<h3 style="margin:16px 0 8px;font-size:15px">Features</h3>'
-            . '<table style="width:100%;border-collapse:collapse"><tbody>' . $featureRows . '</tbody></table>'
-            . '<h3 style="margin:16px 0 8px;font-size:15px">Debug details</h3>'
-            . '<details><summary style="cursor:pointer">Show raw debug payload</summary><pre style="white-space:pre-wrap;margin-top:8px">' . e($debugJson) . '</pre></details>'
-            . '</section>';
-    }
-
     private function inlineLocalAssets(string $html, string $slug): string
     {
         $assetUrl = rtrim($this->themes->assetUrl($slug), '/');
+        if ($assetUrl === '') {
+            return $html;
+        }
         $quotedAssetUrl = preg_quote($assetUrl, '/');
 
         $html = preg_replace_callback(
@@ -236,6 +200,45 @@ final class ThemeEngine
             'otf' => 'font/otf',
             default => 'application/octet-stream',
         };
+    }
+
+    /** @param array<string,mixed> $values @param array<string,bool> $features */
+    private function appendDebugPanel(string $html, array $values, array $features, mixed $debug): string
+    {
+        if (!is_array($debug) || $debug === []) {
+            return $html;
+        }
+
+        $placeholderRows = '';
+        foreach ($values as $key => $value) {
+            $display = trim((string) $value);
+            if ($display === '') {
+                $display = '∅';
+            }
+            $placeholderRows .= '<tr><th scope="row">{{ ' . e($key) . ' }}</th><td><pre>' . e($display) . '</pre></td></tr>';
+        }
+
+        $featureRows = '';
+        foreach ($features as $key => $enabled) {
+            $featureRows .= '<tr><th scope="row">' . e((string) $key) . '</th><td>' . ($enabled ? 'true' : 'false') . '</td></tr>';
+        }
+
+        $debugJson = json_encode($debug, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        if (!is_string($debugJson)) {
+            $debugJson = '{}';
+        }
+
+        return $html
+            . '<section id="pp-debug" class="pp-debug" style="margin:24px auto;padding:16px;max-width:1000px;border:1px solid #888;border-radius:8px;background:rgba(0,0,0,.04);font:14px/1.45 system-ui,sans-serif;color:inherit;overflow:auto">'
+            . '<h2 style="margin:0 0 12px;font-size:18px">PixiePoint Debug</h2>'
+            . '<p style="margin:0 0 16px"><strong>Debug mode enabled.</strong> These are the values currently available to theme placeholders.</p>'
+            . '<h3 style="margin:16px 0 8px;font-size:15px">Available placeholders</h3>'
+            . '<table style="width:100%;border-collapse:collapse"><tbody>' . $placeholderRows . '</tbody></table>'
+            . '<h3 style="margin:16px 0 8px;font-size:15px">Features</h3>'
+            . '<table style="width:100%;border-collapse:collapse"><tbody>' . $featureRows . '</tbody></table>'
+            . '<h3 style="margin:16px 0 8px;font-size:15px">Debug details</h3>'
+            . '<details><summary style="cursor:pointer">Show raw debug payload</summary><pre style="white-space:pre-wrap;margin-top:8px">' . e($debugJson) . '</pre></details>'
+            . '</section>';
     }
 
     /** @return array<string,mixed> */
