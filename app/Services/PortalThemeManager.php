@@ -17,7 +17,7 @@ final class PortalThemeManager
         string $projectRoot,
         string $baseUrl = '',
     ) {
-        $this->root = rtrim($projectRoot, '/\\') . '/public/portal-themes';
+        $this->root = rtrim($projectRoot, '/\\') . '/app/Portal/Themes';
         $this->baseUrl = rtrim(trim($baseUrl), '/');
         if ($this->baseUrl === '') {
             $this->baseUrl = $this->requestBaseUrl();
