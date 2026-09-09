@@ -1,256 +1,137 @@
 <?php
 
-declare(strict_types=1);
+namespace App\Portal;
 
-namespace PixiePoint\App\Portal;
-
-use PixiePoint\App\Portal\Adapters\PlatformAdapter;
-use PixiePoint\App\Services\PortalThemeManager;
 use RuntimeException;
 
-final class ThemeEngine
+class ThemeEngine
 {
-    public function __construct(private PortalThemeManager $themes)
+    private string $themesDirectory;
+
+    public function __construct(?string $themesDirectory = null)
     {
+        $this->themesDirectory = $themesDirectory
+            ?? dirname(__DIR__) . '/Portal/Themes';
     }
 
-    /** @param array<string,mixed> $data @param array<string,bool> $features */
-    public function render(
-        array $theme,
-        string $entry,
-        PlatformAdapter $adapter,
-        array $data = [],
-        array $features = [],
-    ): string {
-        $slug = (string) ($theme['slug'] ?? '');
-        $path = $this->themes->filePath($slug, $entry);
-        if ($path === null) {
-            throw new RuntimeException('Portal theme file not found: ' . $entry);
+    public function render(string $theme, string $page, array $data = []): string
+    {
+        $themeDirectory = $this->themeDirectory($theme);
+        $pagePath = $this->safePath($themeDirectory, $page . '.html');
+
+        if (!is_file($pagePath)) {
+            throw new RuntimeException('Portal theme page not found: ' . $theme . '/' . $page);
         }
 
-        $context = new ThemeContext($data, $features);
-        $html = (string) file_get_contents($path);
-
-        $values = [
-            'theme.url' => $this->themes->assetUrl($slug),
-            'theme.asset_url' => $this->themes->assetUrl($slug),
-            'theme.name' => (string) ($this->themes->find($slug)['name'] ?? $slug),
-        ];
-
-        foreach ($this->flatten($context->data) as $key => $value) {
-            $values[$key] = is_scalar($value) ? (string) $value : '';
+        $html = file_get_contents($pagePath);
+        if ($html === false) {
+            throw new RuntimeException('Unable to read portal theme page: ' . $pagePath);
         }
 
-        $html = preg_replace_callback(
-            '/\{\{\s*(html:)?([a-zA-Z0-9_.-]+)\s*\}\}/',
-            static function (array $m) use ($values): string {
-                $value = (string) ($values[$m[2]] ?? '');
+        $data['theme'] = array_merge($data['theme'] ?? [], [
+            'name' => $theme,
+            'url' => '',
+            'asset_url' => '',
+        ]);
 
-                return $m[1] !== null && $m[1] !== '' ? $value : e($value);
-            },
-            $html,
-        ) ?? $html;
-
-        $html = $this->inlineLocalAssets($html, $slug);
-        $html = $this->appendDebugPanel($html, $values, $features, $data['portal']['debug'] ?? null);
-
-        return $adapter->transform($html, $context);
+        $html = $this->replacePlaceholders($html, $data);
+        return $this->injectThemeAssets($html, $themeDirectory);
     }
 
-    /** @param array<string,string> $values @param array<string,bool> $features */
-    private function appendDebugPanel(string $html, array $values, array $features, mixed $debug): string
+    private function themeDirectory(string $theme): string
     {
-        if (!is_array($debug) || $debug === []) {
-            return $html;
+        $theme = trim($theme);
+        if ($theme === '' || !preg_match('/^[A-Za-z0-9_-]+$/', $theme)) {
+            throw new RuntimeException('Invalid portal theme name.');
         }
 
-        $placeholderRows = '';
-        foreach ($values as $key => $value) {
-            $display = trim((string) $value);
-            if ($display === '') {
-                $display = '∅';
+        $base = realpath($this->themesDirectory);
+        if ($base === false) {
+            throw new RuntimeException('Portal themes directory not found.');
+        }
+
+        $directory = realpath($base . DIRECTORY_SEPARATOR . $theme);
+        if ($directory === false || !is_dir($directory) || !str_starts_with($directory . DIRECTORY_SEPARATOR, $base . DIRECTORY_SEPARATOR)) {
+            throw new RuntimeException('Portal theme not found: ' . $theme);
+        }
+
+        return $directory;
+    }
+
+    private function safePath(string $base, string $relative): string
+    {
+        $path = $base . DIRECTORY_SEPARATOR . ltrim($relative, DIRECTORY_SEPARATOR);
+        $real = realpath($path);
+
+        if ($real === false || !str_starts_with($real, rtrim($base, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR)) {
+            throw new RuntimeException('Invalid portal theme path.');
+        }
+
+        return $real;
+    }
+
+    private function replacePlaceholders(string $html, array $data): string
+    {
+        return preg_replace_callback('/\{\{\s*([a-zA-Z0-9_.:-]+)\s*\}\}/', function (array $matches) use ($data): string {
+            $value = $this->getValue($data, $matches[1]);
+            return $this->escape((string) ($value ?? ''));
+        }, $html) ?? $html;
+    }
+
+    private function getValue(array $data, string $key): mixed
+    {
+        $value = $data;
+        foreach (explode('.', $key) as $part) {
+            if (!is_array($value) || !array_key_exists($part, $value)) {
+                return null;
             }
-            $placeholderRows .= '<tr><th scope="row">{{ ' . e($key) . ' }}</th><td><pre>' . e($display) . '</pre></td></tr>';
+            $value = $value[$part];
         }
-
-        $featureRows = '';
-        foreach ($features as $key => $enabled) {
-            $featureRows .= '<tr><th scope="row">' . e((string) $key) . '</th><td>' . ($enabled ? 'true' : 'false') . '</td></tr>';
-        }
-
-        $debugJson = json_encode($debug, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
-        if (!is_string($debugJson)) {
-            $debugJson = '{}';
-        }
-
-        return $html
-            . '<section id="pp-debug" class="pp-debug" style="margin:24px auto;padding:16px;max-width:1000px;border:1px solid #888;border-radius:8px;background:rgba(0,0,0,.04);font:14px/1.45 system-ui,sans-serif;color:inherit;overflow:auto">'
-            . '<h2 style="margin:0 0 12px;font-size:18px">PixiePoint Debug</h2>'
-            . '<p style="margin:0 0 16px"><strong>Debug mode enabled.</strong> These are the values currently available to theme placeholders.</p>'
-            . '<h3 style="margin:16px 0 8px;font-size:15px">Available placeholders</h3>'
-            . '<table style="width:100%;border-collapse:collapse"><tbody>' . $placeholderRows . '</tbody></table>'
-            . '<h3 style="margin:16px 0 8px;font-size:15px">Features</h3>'
-            . '<table style="width:100%;border-collapse:collapse"><tbody>' . $featureRows . '</tbody></table>'
-            . '<h3 style="margin:16px 0 8px;font-size:15px">Debug details</h3>'
-            . '<details><summary style="cursor:pointer">Show raw debug payload</summary><pre style="white-space:pre-wrap;margin-top:8px">' . e($debugJson) . '</pre></details>'
-            . '</section>';
+        return $value;
     }
 
-    private function inlineLocalAssets(string $html, string $slug): string
+    private function escape(string $value): string
     {
-        $assetUrl = rtrim($this->themes->assetUrl($slug), '/');
-        $quotedAssetUrl = preg_quote($assetUrl, '/');
-
-        $html = preg_replace_callback(
-            '/<link\b(?=[^>]*\brel=["\']stylesheet["\'])([^>]*\bhref=["\'])' . $quotedAssetUrl . '\/([^"\']+)(["\'][^>]*)>/i',
-            function (array $match) use ($slug): string {
-                $path = trim(rawurldecode($match[2]));
-                $content = $this->readAsset($slug, $path);
-                if ($content === null) {
-                    return $match[0];
-                }
-
-                return '<style data-pixiepoint-theme-asset="' . e($path) . '">' . $this->inlineCssUrls($content, $slug, $path) . '</style>';
-            },
-            $html,
-        ) ?? $html;
-
-        $html = preg_replace_callback(
-            '/<script\b([^>]*)\bsrc=(["\'])' . $quotedAssetUrl . '\/([^"\']+)\2([^>]*)>\s*<\/script>/i',
-            function (array $match) use ($slug): string {
-                $path = trim(rawurldecode($match[3]));
-                $content = $this->readAsset($slug, $path);
-                if ($content === null) {
-                    return $match[0];
-                }
-
-                $content = str_replace('</script', '<\\/script', $content);
-
-                return '<script' . $match[1] . $match[4] . '>' . $content . '</script>';
-            },
-            $html,
-        ) ?? $html;
-
-        return preg_replace_callback(
-            '/\b(src|href)=("|\')' . $quotedAssetUrl . '\/([^"\']+)(\2)/i',
-            function (array $match) use ($slug): string {
-                $path = trim(rawurldecode($match[3]));
-                $dataUri = $this->assetDataUri($slug, $path);
-                if ($dataUri === null) {
-                    return $match[0];
-                }
-
-                return $match[1] . '=' . $match[2] . $dataUri . $match[4];
-            },
-            $html,
-        ) ?? $html;
+        return htmlspecialchars($value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
     }
 
-    private function inlineCssUrls(string $css, string $slug, string $cssPath): string
+    private function injectThemeAssets(string $html, string $themeDirectory): string
     {
-        $directory = trim(str_replace('\\', '/', dirname($cssPath)), '.');
-        $directory = trim($directory, '/');
-        $assetBase = $directory === '' ? '' : $directory . '/';
+        $css = $this->readOptionalAsset($themeDirectory . DIRECTORY_SEPARATOR . 'theme.css');
+        $js = $this->readOptionalAsset($themeDirectory . DIRECTORY_SEPARATOR . 'theme.js');
 
-        return preg_replace_callback(
-            '/url\((\s*["\']?)(?!data:|https?:|\/\/|#)([^"\')\s]+)(["\']?\s*)\)/i',
-            function (array $match) use ($slug, $assetBase): string {
-                $path = $this->normalizeAssetPath($assetBase . rawurldecode(trim($match[2])));
-                $dataUri = $this->assetDataUri($slug, $path);
-                if ($dataUri === null) {
-                    return $match[0];
-                }
-
-                return 'url(' . $match[1] . $dataUri . $match[3] . ')';
-            },
-            $css,
-        ) ?? $css;
-    }
-
-    private function readAsset(string $slug, string $path): ?string
-    {
-        $file = $this->themes->filePath($slug, $path);
-        if ($file === null) {
-            return null;
+        if ($css !== '') {
+            $style = "<style data-pixiepoint-theme-css>\n" . $css . "\n</style>";
+            if (preg_match('/<\/head>/i', $html)) {
+                $html = preg_replace('/<\/head>/i', $style . "\n</head>", $html, 1) ?? $html;
+            } else {
+                $html = $style . "\n" . $html;
+            }
         }
 
-        $content = file_get_contents($file);
-
-        return $content === false ? null : $content;
-    }
-
-    private function assetDataUri(string $slug, string $path): ?string
-    {
-        $path = $this->normalizeAssetPath($path);
-        $file = $this->themes->filePath($slug, $path);
-        if ($file === null) {
-            return null;
+        if ($js !== '') {
+            $script = "<script data-pixiepoint-theme-js>\n" . $js . "\n</script>";
+            if (preg_match('/<\/body>/i', $html)) {
+                $html = preg_replace('/<\/body>/i', $script . "\n</body>", $html, 1) ?? $html;
+            } else {
+                $html .= "\n" . $script;
+            }
         }
 
-        $content = file_get_contents($file);
+        return $html;
+    }
+
+    private function readOptionalAsset(string $path): string
+    {
+        if (!is_file($path)) {
+            return '';
+        }
+
+        $content = file_get_contents($path);
         if ($content === false) {
-            return null;
+            throw new RuntimeException('Unable to read portal theme asset: ' . $path);
         }
 
-        $mime = function_exists('mime_content_type') ? mime_content_type($file) : null;
-        if (!is_string($mime) || $mime === '') {
-            $mime = $this->mimeType($path);
-        }
-
-        return 'data:' . $mime . ';base64,' . base64_encode($content);
-    }
-
-    private function normalizeAssetPath(string $path): string
-    {
-        $segments = [];
-        foreach (explode('/', str_replace('\\', '/', $path)) as $segment) {
-            if ($segment === '' || $segment === '.') {
-                continue;
-            }
-            if ($segment === '..') {
-                array_pop($segments);
-                continue;
-            }
-            $segments[] = $segment;
-        }
-
-        return implode('/', $segments);
-    }
-
-    private function mimeType(string $path): string
-    {
-        return match (strtolower((string) pathinfo($path, PATHINFO_EXTENSION))) {
-            'css' => 'text/css',
-            'js', 'mjs' => 'text/javascript',
-            'html', 'htm' => 'text/html',
-            'svg' => 'image/svg+xml',
-            'png' => 'image/png',
-            'jpg', 'jpeg' => 'image/jpeg',
-            'gif' => 'image/gif',
-            'webp' => 'image/webp',
-            'avif' => 'image/avif',
-            'ico' => 'image/x-icon',
-            'woff' => 'font/woff',
-            'woff2' => 'font/woff2',
-            'ttf' => 'font/ttf',
-            'otf' => 'font/otf',
-            default => 'application/octet-stream',
-        };
-    }
-
-    /** @return array<string,mixed> */
-    private function flatten(array $data, string $prefix = ''): array
-    {
-        $result = [];
-        foreach ($data as $key => $value) {
-            $name = $prefix === '' ? (string) $key : $prefix . '.' . $key;
-            if (is_array($value)) {
-                $result += $this->flatten($value, $name);
-                continue;
-            }
-            $result[$name] = $value;
-        }
-
-        return $result;
+        return $content;
     }
 }
