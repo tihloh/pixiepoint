@@ -28,13 +28,17 @@ final class ThemeEngine
             throw new RuntimeException('Portal theme file not found: ' . $entry);
         }
 
+        $content = file_get_contents($path);
+        if ($content === false) {
+            throw new RuntimeException('Unable to read portal theme file: ' . $entry);
+        }
+
         $context = new ThemeContext($data, $features);
-        $html = (string) file_get_contents($path);
+        $html = $this->sanitizeThemeContent($content);
+        $themeRecord = $this->themes->find($slug);
 
         $values = [
-            'theme.url' => $this->themes->assetUrl($slug),
-            'theme.asset_url' => $this->themes->assetUrl($slug),
-            'theme.name' => (string) ($this->themes->find($slug)['name'] ?? $slug),
+            'theme.name' => (string) ($themeRecord['name'] ?? $slug),
         ];
 
         foreach ($this->flatten($context->data) as $key => $value) {
@@ -51,7 +55,7 @@ final class ThemeEngine
             $html,
         ) ?? $html;
 
-        $html = $this->inlineLocalAssets($html, $slug);
+        $html = $this->injectThemeAssets($html, $slug);
         $html = $this->appendDebugPanel($html, $values, $features, $data['portal']['debug'] ?? null);
 
         return $adapter->transform($html, $context);
@@ -96,54 +100,45 @@ final class ThemeEngine
             . '</section>';
     }
 
-    private function inlineLocalAssets(string $html, string $slug): string
+    private function injectThemeAssets(string $html, string $slug): string
     {
-        $assetUrl = rtrim($this->themes->assetUrl($slug), '/');
-        $quotedAssetUrl = preg_quote($assetUrl, '/');
+        $css = $this->readAsset($slug, 'theme.css');
+        if ($css === null) {
+            throw new RuntimeException('Portal theme stylesheet not found: theme.css');
+        }
 
-        $html = preg_replace_callback(
-            '/<link\b(?=[^>]*\brel=["\']stylesheet["\'])([^>]*\bhref=["\'])' . $quotedAssetUrl . '\/([^"\']+)(["\'][^>]*)>/i',
-            function (array $match) use ($slug): string {
-                $path = trim(rawurldecode($match[2]));
-                $content = $this->readAsset($slug, $path);
-                if ($content === null) {
-                    return $match[0];
-                }
+        $css = $this->inlineCssUrls($css, $slug, 'theme.css');
+        $style = '<style data-pixiepoint-theme-asset="theme.css">' . $css . '</style>';
 
-                return '<style data-pixiepoint-theme-asset="' . e($path) . '">' . $this->inlineCssUrls($content, $slug, $path) . '</style>';
-            },
-            $html,
-        ) ?? $html;
+        if (preg_match('/<\/head\s*>/i', $html)) {
+            $html = preg_replace('/<\/head\s*>/i', $style . "\n</head>", $html, 1) ?? $html;
+        } else {
+            $html = $style . "\n" . $html;
+        }
 
-        $html = preg_replace_callback(
-            '/<script\b([^>]*)\bsrc=(["\'])' . $quotedAssetUrl . '\/([^"\']+)\2([^>]*)>\s*<\/script>/i',
-            function (array $match) use ($slug): string {
-                $path = trim(rawurldecode($match[3]));
-                $content = $this->readAsset($slug, $path);
-                if ($content === null) {
-                    return $match[0];
-                }
+        $js = $this->readAsset($slug, 'theme.js');
+        if ($js === null) {
+            return $html;
+        }
 
-                $content = str_replace('</script', '<\\/script', $content);
+        $js = str_replace('</script', '<\\/script', $js);
+        $script = '<script data-pixiepoint-theme-asset="theme.js">' . $js . '</script>';
 
-                return '<script' . $match[1] . $match[4] . '>' . $content . '</script>';
-            },
-            $html,
-        ) ?? $html;
+        if (preg_match('/<\/body\s*>/i', $html)) {
+            $html = preg_replace('/<\/body\s*>/i', $script . "\n</body>", $html, 1) ?? $html;
+        } else {
+            $html .= "\n" . $script;
+        }
 
-        return preg_replace_callback(
-            '/\b(src|href)=("|\')' . $quotedAssetUrl . '\/([^"\']+)(\2)/i',
-            function (array $match) use ($slug): string {
-                $path = trim(rawurldecode($match[3]));
-                $dataUri = $this->assetDataUri($slug, $path);
-                if ($dataUri === null) {
-                    return $match[0];
-                }
+        return $html;
+    }
 
-                return $match[1] . '=' . $match[2] . $dataUri . $match[4];
-            },
-            $html,
-        ) ?? $html;
+    private function sanitizeThemeContent(string $content): string
+    {
+        $content = preg_replace('/<\?(?:php|=)?/i', '&lt;?', $content) ?? $content;
+        $content = preg_replace('/\?>/i', '?&gt;', $content) ?? $content;
+
+        return $content;
     }
 
     private function inlineCssUrls(string $css, string $slug, string $cssPath): string
@@ -176,7 +171,7 @@ final class ThemeEngine
 
         $content = file_get_contents($file);
 
-        return $content === false ? null : $content;
+        return $content === false ? null : $this->sanitizeThemeContent($content);
     }
 
     private function assetDataUri(string $slug, string $path): ?string
