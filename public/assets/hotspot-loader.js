@@ -163,7 +163,7 @@
     started = true;
     status('Hosted portal found · loading…');
     try {
-      await loadStyle(`${hostedOrigin}/assets/app.css?v=${version}`, 'pixiepoint-css');
+      await loadStyle(`${hostedOrigin}/assets/hotspot.css?v=${version}`, 'pixiepoint-hotspot-css');
 
       const root = document.querySelector('#pp-page') || document.getElementById('pixiepoint-root') || document.body;
       if (serverRendered) {
