@@ -35,11 +35,12 @@ final class HotspotController
         $device = $this->portalDevice($context);
         $options = $this->vendoOptions($vendos);
         $debug = $this->debugDetails($context);
+        $auth = $this->hasActiveHotspotSession();
 
         $this->headers('text/html; charset=utf-8');
         echo $this->themeEngine->render($theme, 'portal.html', $this->portalAdapter, [
             'portal' => [
-                'page' => 'login',
+                'auth' => $auth,
                 'name' => (string) ($vendos[0]['name'] ?? 'PixiePoint'),
                 'vendo_options' => $options,
                 'device' => $device,
@@ -55,29 +56,10 @@ final class HotspotController
         exit;
     }
 
+    /** Backward-compatible alias. Both MikroTik login and status now use /hotspot/compat. */
     public function status(): never
     {
-        $context = $this->hotspotContext();
-        $vendos = $this->api->forHotspot($context['routerIdentity'], $context['serverAddress'], $context['ip'], $context['interfaceName']);
-        $theme = $this->themes->resolveByRouterIdentity($context['routerIdentity'], isset($vendos[0]['id']) ? (int) $vendos[0]['id'] : null);
-        $device = $this->portalDevice($context);
-        $debug = $this->debugDetails($context);
-
-        $this->headers('text/html; charset=utf-8');
-        echo $this->themeEngine->render($theme, 'portal.html', $this->portalAdapter, [
-            'portal' => [
-                'page' => 'status',
-                'name' => (string) ($vendos[0]['name'] ?? 'PixiePoint'),
-                'vendo_options' => $this->vendoOptions($vendos),
-                'device' => $device,
-                'debug' => $debug,
-            ],
-            'context' => $context,
-        ], [
-            'coin_slot' => !empty($vendos),
-            'points' => true,
-        ]);
-        exit;
+        $this->portal();
     }
 
     public function index(): never
@@ -98,6 +80,19 @@ final class HotspotController
         $this->headers('application/json; charset=utf-8');
         echo json_encode(['ok' => true, 'vendos' => $this->api->forHotspot($d['router_identity'], $d['server_address'], $d['client_ip'], $d['interface'])], JSON_UNESCAPED_SLASHES);
         exit;
+    }
+
+    private function hasActiveHotspotSession(): bool
+    {
+        $statusUrl = trim((string) ($_GET['status_url'] ?? ''));
+        $logoutUrl = trim((string) ($_GET['logout_url'] ?? ''));
+
+        return $this->hasRouterValue($statusUrl) || $this->hasRouterValue($logoutUrl);
+    }
+
+    private function hasRouterValue(string $value): bool
+    {
+        return $value !== '' && !str_contains($value, '$(');
     }
 
     /** @param array{routerIdentity:string,serverAddress:string,ip:string,interfaceName:string,mac:string} $context */
@@ -219,7 +214,7 @@ final class HotspotController
         return $options;
     }
 
-    /** @return array{0:array<string,string>,1:array<string,array<int,string>>} */
+    /** @return array{routerIdentity:string,serverAddress:string,ip:string,interfaceName:string,mac:string} */
     private function hotspotContext(): array
     {
         $raw = [
