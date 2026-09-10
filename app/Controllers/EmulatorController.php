@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace PixiePoint\App\Controllers;
 
 use PDO;
-use PixiePoint\App\Admin\Shared\RouterAccess;
 use PixiePoint\App\Services\AuthContext;
 
 final class EmulatorController
@@ -21,7 +20,6 @@ final class EmulatorController
         $user = $this->auth->requireAccount();
         $userId = (int) $user['id'];
         $platformOwner = $this->auth->isPlatformOwner();
-        new RouterAccess($this->db);
 
         $routers = $platformOwner
             ? $this->db->query('SELECT id,name,identity,public_host,portal_theme_id FROM routers WHERE enabled=1 ORDER BY name')->fetchAll()
