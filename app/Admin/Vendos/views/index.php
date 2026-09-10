@@ -1,106 +1,36 @@
 <?php
-/** @var string $message */
-/** @var array $vendos */
-/** @var array $routers */
-/** @var array $themes */
-/** @var bool $canManageVendos */
-/** @var string $csrf */
+/** @var array $vendos */ /** @var array $routers */ /** @var array $themes */ /** @var array $routerFeatures */ /** @var bool $canManageVendos */ /** @var string $message */ /** @var string $csrf */
+$featureLabels=['member_login'=>'Member login','qr_scan'=>'QR code / scanner','trial'=>'Trial / free time','points'=>'Points system','points_convert'=>'Convert points','points_play'=>'Play with points','points_share'=>'Share points'];
+$routerOn=static fn(string $key):bool=>(bool)($routerFeatures[$key]['value']??false);
 ?>
-
-<div class="heading">
-    <div>
-        <h1>Hotspot Stations</h1>
-        <p class="muted">Configure each customer-facing hotspot. A station can use a Vendo controller or run as voucher-only.</p>
-    </div>
-    <?php if ($canManageVendos): ?>
-        <button class="button" type="button" data-bs-toggle="modal" data-bs-target="#stationModal" data-mode="create">Add station</button>
-    <?php endif; ?>
-</div>
-
+<div class="heading"><div><h1>Hotspot Stations</h1><p class="muted">Configure Vendo or voucher-only stations and their portal features.</p></div><?php if($canManageVendos):?><button class="button" type="button" data-bs-toggle="modal" data-bs-target="#stationModal" data-mode="create">Add station</button><?php endif;?></div>
 <?= $message ?>
 
-<section class="panel">
-    <div class="d-flex flex-column flex-md-row justify-content-between gap-2 align-items-md-center mb-3">
-        <div>
-            <h2 class="mb-1">Configured stations</h2>
-            <p class="muted mb-0">Vendo stations support coin insertion. Voucher stations show the portal without requiring a Vendo device.</p>
+<section class="panel mb-4">
+    <div class="d-flex justify-content-between align-items-start gap-3 mb-3"><div><h2 class="mb-1">Router portal features</h2><p class="muted mb-0">These are the defaults inherited by every hotspot station. A station may override each feature.</p></div><a class="btn btn-outline-primary" href="/emulator/">Test portal</a></div>
+    <form method="post"><input type="hidden" name="_csrf" value="<?= e($csrf) ?>"><input type="hidden" name="action" value="save_router_features">
+        <div class="row g-3">
+            <?php foreach($featureLabels as $key=>$label):?><div class="col-md-4"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" name="<?= e($key) ?>" value="1" id="router-<?= e($key) ?>" <?= $routerOn($key)?'checked':'' ?>><label class="form-check-label" for="router-<?= e($key) ?>"><?= e($label) ?></label></div></div><?php endforeach;?>
+            <div class="col-md-3"><label>Trial minutes</label><input type="number" name="trial_minutes" min="1" max="1440" value="<?= e($routerFeatures['trial']['config']['minutes']??10) ?>"></div>
+            <div class="col-md-3"><label>Convert points</label><input type="number" name="convert_points" min="1" value="<?= e($routerFeatures['points_convert']['config']['points']??10) ?>"><small class="text-body-secondary">Points required</small></div>
+            <div class="col-md-3"><label>Convert to minutes</label><input type="number" name="convert_minutes" min="1" value="<?= e($routerFeatures['points_convert']['config']['minutes']??5) ?>"></div>
         </div>
-        <a class="btn btn-outline-primary" href="/emulator/">Test portal</a>
-    </div>
-    <div class="table-responsive">
-        <table class="table align-middle">
-            <thead><tr><th>Name / Wi-Fi</th><th>Type</th><th>Router</th><th>Server IP</th><th>Interface</th><th>Controller</th><th>Theme</th><th>Status</th><?php if ($canManageVendos): ?><th class="text-end">Action</th><?php endif; ?></tr></thead>
-            <tbody>
-            <?php foreach ($vendos as $v): $type = ($v['station_type'] ?? (trim((string)($v['base_url'] ?? '')) !== '' ? 'vendo' : 'voucher')); ?>
-                <tr>
-                    <td><strong><?= e($v['name']) ?></strong><?php if (!empty($v['debug_enabled'])): ?><div class="small text-warning">Debug enabled</div><?php endif; ?></td>
-                    <td><span class="badge rounded-pill <?= $type === 'vendo' ? 'text-bg-primary' : 'text-bg-info' ?>"><?= $type === 'vendo' ? 'Vendo' : 'Voucher / Hotspot' ?></span></td>
-                    <td><?= e($v['router_name']) ?><div class="small text-body-secondary"><?= e($v['router_identity']) ?></div></td>
-                    <td class="code"><?= e($v['server_ip'] ?: 'Not set') ?></td>
-                    <td><?= e($v['interface_name'] ?: '—') ?></td>
-                    <td class="code"><?= $type === 'vendo' ? e(preg_replace('~^https?://~i','',(string)$v['base_url'])) : 'Not required' ?></td>
-                    <td><?= e($v['portal_theme_id'] ? 'Custom' : 'Router') ?></td>
-                    <td><span class="badge <?= $v['enabled'] ? '' : 'off' ?>"><?= $v['enabled'] ? 'Enabled' : 'Disabled' ?></span></td>
-                    <?php if ($canManageVendos): ?>
-                    <td class="text-end"><div class="d-inline-flex gap-1">
-                        <form method="post" class="d-inline"><input type="hidden" name="_csrf" value="<?= e($csrf) ?>"><input type="hidden" name="action" value="toggle_debug"><input type="hidden" name="id" value="<?= e($v['id']) ?>"><input type="hidden" name="debug_enabled" value="<?= !empty($v['debug_enabled']) ? '0' : '1' ?>"><button class="btn btn-sm <?= !empty($v['debug_enabled']) ? 'btn-warning' : 'btn-outline-secondary' ?>" type="submit">Debug: <?= !empty($v['debug_enabled']) ? 'On' : 'Off' ?></button></form>
-                        <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="modal" data-bs-target="#stationModal" data-mode="edit" data-id="<?= e($v['id']) ?>" data-name="<?= e($v['name']) ?>" data-type="<?= e($type) ?>" data-router="<?= e($v['router_id']) ?>" data-theme="<?= e($v['portal_theme_id'] ?? 0) ?>" data-url="<?= e(preg_replace('~^https?://~i','',(string)$v['base_url'])) ?>" data-server-ip="<?= e($v['server_ip'] ?? '') ?>" data-subnet="<?= e($v['client_subnet'] ?? '') ?>" data-interface="<?= e($v['interface_name'] ?? '') ?>" data-password-mode="<?= e($v['password_mode']) ?>" data-charging="<?= $v['charging_enabled'] ? '1' : '0' ?>" data-eload="<?= $v['eload_enabled'] ? '1' : '0' ?>" data-enabled="<?= $v['enabled'] ? '1' : '0' ?>">Edit</button>
-                    </div></td>
-                    <?php endif; ?>
-                </tr>
-            <?php endforeach; ?>
-            <?php if (!$vendos): ?><tr><td colspan="<?= $canManageVendos ? 9 : 8 ?>" class="empty">No hotspot stations configured. Add a Vendo station or a voucher-only station.</td></tr><?php endif; ?>
-            </tbody>
-        </table>
-    </div>
+        <?php if($canManageVendos):?><div class="d-flex justify-content-end mt-3"><button class="button" type="submit">Save router defaults</button></div><?php endif;?>
+    </form>
 </section>
 
-<?php if ($canManageVendos): ?>
-<div class="modal fade" id="stationModal" tabindex="-1" aria-labelledby="stationModalTitle" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-scrollable"><div class="modal-content"><form method="post">
-        <div class="modal-header"><div><h2 class="modal-title fs-5 mb-1" id="stationModalTitle">Add hotspot station</h2><p class="small text-body-secondary mb-0">Choose whether this hotspot has a coin-slot Vendo controller or accepts existing vouchers only.</p></div><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
-        <div class="modal-body">
-            <input type="hidden" name="_csrf" value="<?= e($csrf) ?>"><input type="hidden" name="action" value="create"><input type="hidden" name="id" value="0">
-            <div class="row g-3">
-                <div class="col-md-6"><label>Station type</label><select name="station_type" id="station-type" required><option value="vendo">Vendo station</option><option value="voucher">Voucher / Hotspot station</option></select><small class="text-body-secondary">Voucher stations do not require a Vendo controller.</small></div>
-                <div class="col-md-6"><label>Name / Wi-Fi name</label><input name="name" required maxlength="160"><small class="text-body-secondary">Customer-facing hotspot or business name.</small></div>
-                <div class="col-md-6"><label>Router</label><select name="router_id" required><option value="">Select router</option><?php foreach ($routers as $r): ?><option value="<?= e($r['id']) ?>"><?= e($r['name']) ?> · <?= e($r['identity']) ?></option><?php endforeach; ?></select></div>
-                <div class="col-md-6"><label>Portal theme</label><select name="portal_theme_id"><option value="0">Inherit router theme</option><?php foreach ($themes as $theme): ?><option value="<?= e($theme['id']) ?>"><?= e($theme['name']) ?></option><?php endforeach; ?></select></div>
-                <div class="col-md-6"><label>Server IP</label><input name="server_ip" placeholder="10.0.3.1" required maxlength="45"><small class="text-body-secondary">Matches MikroTik $(server-address).</small></div>
-                <div class="col-md-6"><label>Client subnet</label><input name="client_subnet" placeholder="Optional, e.g. 10.0.3.0/24" maxlength="64"></div>
-                <div class="col-md-6"><label>Interface</label><input name="interface_name" placeholder="Optional, e.g. bridge-HS" maxlength="128"></div>
-                <div class="col-md-6"><label>Password mode</label><select name="password_mode"><option value="blank">Blank password</option><option value="voucher">Voucher as password</option></select></div>
+<section class="panel"><h2>Configured stations</h2><p class="muted">Portal features show whether the station inherits router defaults or has custom overrides.</p><div class="table-responsive"><table class="table align-middle"><thead><tr><th>Name</th><th>Type</th><th>Server</th><th>Theme</th><th>Portal features</th><th>Status</th><?php if($canManageVendos):?><th></th><?php endif;?></tr></thead><tbody>
+<?php foreach($vendos as $v):$type=$v['station_type']??'voucher';$settings=$v['feature_settings']??[];$resolved=$v['resolved_features']??[];?><tr>
+<td><strong><?= e($v['name']) ?></strong><div class="small text-body-secondary"><?= e($v['router_identity']) ?></div></td><td><span class="badge rounded-pill <?= $type==='vendo'?'text-bg-primary':'text-bg-info' ?>"><?= $type==='vendo'?'Vendo':'Voucher / Hotspot' ?></span></td><td class="code"><?= e($v['server_ip']?:'—') ?></td><td><?= $v['portal_theme_id']?'Custom':'Router' ?></td>
+<td><div class="d-flex flex-wrap gap-1"><?php foreach($featureLabels as $key=>$label):$custom=array_key_exists($key,$settings)&&$settings[$key]['value']!==null;$on=(bool)($resolved[$key]['enabled']??false);?><span class="badge <?= $on?'text-bg-success':'text-bg-secondary' ?>" title="<?= $custom?'Station override':'Inherited from router' ?>"><?= e($label) ?>: <?= $on?'On':'Off' ?><?= $custom?' *':'' ?></span><?php endforeach;?></div></td>
+<td><?= $v['enabled']?'Enabled':'Disabled' ?></td><?php if($canManageVendos):?><td class="text-end"><div class="d-flex gap-1 justify-content-end"><button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#featuresModal" data-id="<?= e($v['id']) ?>" data-name="<?= e($v['name']) ?>" data-features='<?= e(json_encode($settings)) ?>'>Features</button><button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#stationModal" data-mode="edit" data-id="<?= e($v['id']) ?>" data-name="<?= e($v['name']) ?>" data-type="<?= e($type) ?>" data-router="<?= e($v['router_id']) ?>" data-theme="<?= e($v['portal_theme_id']??0) ?>" data-url="<?= e(preg_replace('~^https?://~i','',(string)$v['base_url'])) ?>" data-server-ip="<?= e($v['server_ip']??'') ?>" data-subnet="<?= e($v['client_subnet']??'') ?>" data-interface="<?= e($v['interface_name']??'') ?>" data-password-mode="<?= e($v['password_mode']) ?>" data-charging="<?= $v['charging_enabled']?'1':'0' ?>" data-eload="<?= $v['eload_enabled']?'1':'0' ?>" data-enabled="<?= $v['enabled']?'1':'0' ?>">Edit</button></div></td><?php endif;?></tr><?php endforeach;?>
+<?php if(!$vendos):?><tr><td colspan="7" class="empty">No hotspot stations configured.</td></tr><?php endif;?></tbody></table></div></section>
 
-                <div class="col-12" id="vendo-fields">
-                    <div class="border rounded-3 p-3">
-                        <div class="fw-semibold mb-3">Vendo controller</div>
-                        <div class="row g-3">
-                            <div class="col-md-6"><label>Controller address</label><input name="base_url" placeholder="10.0.3.2" maxlength="255"><small class="text-body-secondary">IP, hostname, or http:// / https:// URL of the local Vendo controller.</small></div>
-                            <div class="col-md-3 d-flex align-items-end"><div class="form-check mb-2"><input class="form-check-input" type="checkbox" name="charging_enabled" value="1" id="station-charging"><label class="form-check-label" for="station-charging">Phone charging</label></div></div>
-                            <div class="col-md-3 d-flex align-items-end"><div class="form-check mb-2"><input class="form-check-input" type="checkbox" name="eload_enabled" value="1" id="station-eload"><label class="form-check-label" for="station-eload">E-load</label></div></div>
-                        </div>
-                    </div>
-                </div>
+<?php if($canManageVendos):?>
+<div class="modal fade" id="featuresModal" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content"><form method="post"><div class="modal-header"><div><h2 class="modal-title fs-5">Portal features</h2><div class="small text-body-secondary" id="feature-station-name"></div></div><button class="btn-close" type="button" data-bs-dismiss="modal"></button></div><div class="modal-body"><input type="hidden" name="_csrf" value="<?= e($csrf) ?>"><input type="hidden" name="action" value="save_station_features"><input type="hidden" name="id" value="0"><p class="small text-body-secondary">Inherit follows the router. Enabled/Disabled overrides it only for this station.</p><div class="row g-3"><?php foreach($featureLabels as $key=>$label):?><div class="col-md-6"><label><?= e($label) ?></label><select name="<?= e($key) ?>" data-feature="<?= e($key) ?>"><option value="inherit">Inherit router</option><option value="on">Enabled</option><option value="off">Disabled</option></select></div><?php endforeach;?><div class="col-md-4"><label>Trial minutes</label><input type="number" name="trial_minutes" min="1" max="1440" value="10"></div><div class="col-md-4"><label>Convert points</label><input type="number" name="convert_points" min="1" value="10"></div><div class="col-md-4"><label>Convert to minutes</label><input type="number" name="convert_minutes" min="1" value="5"></div></div></div><div class="modal-footer"><button class="btn btn-outline-secondary" type="button" data-bs-dismiss="modal">Cancel</button><button class="button" type="submit">Save overrides</button></div></form></div></div></div>
 
-                <div class="col-md-6" id="station-enabled-wrap" hidden><div class="form-check"><input class="form-check-input" type="checkbox" name="enabled" value="1" id="station-enabled"><label class="form-check-label" for="station-enabled">Enabled</label></div></div>
-            </div>
-        </div>
-        <div class="modal-footer"><a class="btn btn-outline-info me-auto" href="/emulator/">Open emulator</a><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button><button class="button" type="submit" id="station-submit">Add station</button></div>
-    </form></div></div>
-</div>
+<div class="modal fade" id="stationModal" tabindex="-1"><div class="modal-dialog modal-lg modal-dialog-scrollable"><div class="modal-content"><form method="post"><div class="modal-header"><h2 class="modal-title fs-5" id="stationModalTitle">Add hotspot station</h2><button class="btn-close" type="button" data-bs-dismiss="modal"></button></div><div class="modal-body"><input type="hidden" name="_csrf" value="<?= e($csrf) ?>"><input type="hidden" name="action" value="create"><input type="hidden" name="id" value="0"><div class="row g-3"><div class="col-md-6"><label>Station type</label><select name="station_type" id="station-type"><option value="vendo">Vendo station</option><option value="voucher">Voucher / Hotspot station</option></select></div><div class="col-md-6"><label>Name / Wi-Fi name</label><input name="name" required maxlength="160"></div><div class="col-md-6"><label>Router</label><select name="router_id" required><?php foreach($routers as $r):?><option value="<?= e($r['id']) ?>"><?= e($r['name']) ?> · <?= e($r['identity']) ?></option><?php endforeach;?></select></div><div class="col-md-6"><label>Portal theme</label><select name="portal_theme_id"><option value="0">Inherit router theme</option><?php foreach($themes as $theme):?><option value="<?= e($theme['id']) ?>"><?= e($theme['name']) ?></option><?php endforeach;?></select></div><div class="col-md-6"><label>Server IP</label><input name="server_ip" required placeholder="10.0.3.1"></div><div class="col-md-6"><label>Client subnet</label><input name="client_subnet" placeholder="10.0.3.0/24"></div><div class="col-md-6"><label>Interface</label><input name="interface_name" placeholder="bridge-HS"></div><div class="col-md-6"><label>Password mode</label><select name="password_mode"><option value="blank">Blank password</option><option value="voucher">Voucher as password</option></select></div><div class="col-12" id="vendo-fields"><div class="border rounded p-3"><label>Vendo controller address</label><input name="base_url" placeholder="10.0.3.2"><div class="d-flex gap-4 mt-3"><label><input type="checkbox" name="charging_enabled" value="1"> Phone charging</label><label><input type="checkbox" name="eload_enabled" value="1"> E-load</label></div></div></div><div class="col-12"><label><input type="checkbox" name="enabled" value="1" checked> Enabled</label></div></div></div><div class="modal-footer"><button class="btn btn-outline-secondary" type="button" data-bs-dismiss="modal">Cancel</button><button class="button" type="submit" id="station-submit">Add station</button></div></form></div></div></div>
 <script>
-(function(){
-    const modal=document.getElementById('stationModal');
-    const type=document.getElementById('station-type');
-    const vendoFields=document.getElementById('vendo-fields');
-    function syncType(){const isVendo=type.value==='vendo';vendoFields.hidden=!isVendo;modal.querySelector('[name="base_url"]').required=isVendo;}
-    type.addEventListener('change',syncType);
-    modal.addEventListener('show.bs.modal',function(event){
-        const button=event.relatedTarget;const isEdit=button&&button.dataset.mode==='edit';const form=this.querySelector('form');form.reset();
-        form.querySelector('[name="action"]').value=isEdit?'update':'create';form.querySelector('[name="id"]').value=isEdit?button.dataset.id:'0';
-        form.querySelector('[name="station_type"]').value=isEdit?button.dataset.type:'vendo';form.querySelector('[name="name"]').value=isEdit?button.dataset.name:'';form.querySelector('[name="router_id"]').value=isEdit?button.dataset.router:'';form.querySelector('[name="portal_theme_id"]').value=isEdit?button.dataset.theme:'0';form.querySelector('[name="server_ip"]').value=isEdit?button.dataset.serverIp:'';form.querySelector('[name="client_subnet"]').value=isEdit?button.dataset.subnet:'';form.querySelector('[name="base_url"]').value=isEdit?button.dataset.url:'';form.querySelector('[name="interface_name"]').value=isEdit?button.dataset.interface:'';form.querySelector('[name="password_mode"]').value=isEdit?button.dataset.passwordMode:'blank';form.querySelector('[name="charging_enabled"]').checked=isEdit&&button.dataset.charging==='1';form.querySelector('[name="eload_enabled"]').checked=isEdit&&button.dataset.eload==='1';form.querySelector('[name="enabled"]').checked=isEdit?button.dataset.enabled==='1':true;
-        document.getElementById('station-enabled-wrap').hidden=!isEdit;document.getElementById('stationModalTitle').textContent=isEdit?'Edit hotspot station':'Add hotspot station';document.getElementById('station-submit').textContent=isEdit?'Save changes':'Add station';syncType();
-    });
-})();
-</script>
-<?php endif; ?>
+const fm=document.getElementById('featuresModal');fm.addEventListener('show.bs.modal',e=>{const b=e.relatedTarget,f=fm.querySelector('form'),data=JSON.parse(b.dataset.features||'{}');f.querySelector('[name=id]').value=b.dataset.id;document.getElementById('feature-station-name').textContent=b.dataset.name;f.querySelectorAll('[data-feature]').forEach(s=>{const v=data[s.dataset.feature]?.value;s.value=v===true?'on':v===false?'off':'inherit';});f.querySelector('[name=trial_minutes]').value=data.trial?.config?.minutes||10;f.querySelector('[name=convert_points]').value=data.points_convert?.config?.points||10;f.querySelector('[name=convert_minutes]').value=data.points_convert?.config?.minutes||5;});
+const sm=document.getElementById('stationModal'),st=document.getElementById('station-type'),vf=document.getElementById('vendo-fields');function syncType(){const on=st.value==='vendo';vf.hidden=!on;sm.querySelector('[name=base_url]').required=on;}st.addEventListener('change',syncType);sm.addEventListener('show.bs.modal',e=>{const b=e.relatedTarget,edit=b?.dataset.mode==='edit',f=sm.querySelector('form');f.reset();f.querySelector('[name=action]').value=edit?'update':'create';f.querySelector('[name=id]').value=edit?b.dataset.id:'0';for(const n of ['name','router_id','portal_theme_id','server_ip','client_subnet','interface_name','password_mode'])if(edit)f.querySelector(`[name=${n}]`).value=b.dataset[n.replaceAll('_','')]??b.dataset[n.replace('_','-')]??'';if(edit){f.querySelector('[name=name]').value=b.dataset.name;f.querySelector('[name=router_id]').value=b.dataset.router;f.querySelector('[name=portal_theme_id]').value=b.dataset.theme;f.querySelector('[name=server_ip]').value=b.dataset.serverIp;f.querySelector('[name=client_subnet]').value=b.dataset.subnet;f.querySelector('[name=interface_name]').value=b.dataset.interface;f.querySelector('[name=password_mode]').value=b.dataset.passwordMode;f.querySelector('[name=base_url]').value=b.dataset.url;f.querySelector('[name=charging_enabled]').checked=b.dataset.charging==='1';f.querySelector('[name=eload_enabled]').checked=b.dataset.eload==='1';f.querySelector('[name=enabled]').checked=b.dataset.enabled==='1';}st.value=edit?b.dataset.type:'vendo';document.getElementById('stationModalTitle').textContent=edit?'Edit hotspot station':'Add hotspot station';document.getElementById('station-submit').textContent=edit?'Save changes':'Add station';syncType();});
+</script><?php endif;?>
