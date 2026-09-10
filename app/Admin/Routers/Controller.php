@@ -7,6 +7,7 @@ namespace PixiePoint\App\Admin\Routers;
 use PDO;
 use PixiePoint\App\Admin\Shared\FeatureController;
 use PixiePoint\App\Admin\Shared\RouterAccess;
+use PixiePoint\App\Services\PortalFeatureConfig;
 use PixiePoint\App\Services\PortalThemeManager;
 use RuntimeException;
 use Throwable;
@@ -113,6 +114,7 @@ final class Controller extends FeatureController
         $routerId = max(0, (int) $id);
         $platformOwner = $this->auth->isPlatformOwner();
         $access = new RouterAccess($this->db);
+        $features = new PortalFeatureConfig($this->db);
         if ($routerId < 1 || !$access->canManage($routerId,$userId,$platformOwner)) {
             $_SESSION['admin_flash'] = '<div class="alert">Router not found or access denied.</div>';
             redirect('/admin/routers');
@@ -144,8 +146,9 @@ final class Controller extends FeatureController
                     $themeId = $this->validThemeId((int) ($data['portal_theme_id'] ?? 0));
                     $stmt = $this->db->prepare('UPDATE routers SET name=?,public_host=?,location=?,portal_theme_id=?,enabled=? WHERE id=?');
                     $stmt->execute([$data['name'],$data['public_host'] ?? null,$data['location'] ?? null,$themeId ?: null,(int) ($data['enabled'] ?? 0),$routerId]);
-                    $this->audit('router.updated','router',$routerId,'MikroTik router was updated.');
-                    $_SESSION['admin_flash'] = '<div class="alert ok">Router updated.</div>';
+                    $features->saveRouter($routerId, $_POST);
+                    $this->audit('router.updated','router',$routerId,'MikroTik router and portal features were updated.');
+                    $_SESSION['admin_flash'] = '<div class="alert ok">Router settings updated.</div>';
                     redirect('/admin/routers/' . $routerId . '/settings');
                 } catch (Throwable $e) {
                     $message = '<div class="alert">The router could not be saved. ' . e($e->getMessage()) . '</div>';
@@ -156,6 +159,7 @@ final class Controller extends FeatureController
         $this->page('Router Settings', __DIR__ . '/views/settings.php', [
             'router' => $router,
             'themes' => $this->themes->all(),
+            'portalFeatures' => $features->raw('router', $routerId),
             'message' => $message,
             'csrf' => csrf_token(),
         ]);
