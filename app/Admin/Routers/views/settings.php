@@ -31,14 +31,14 @@ $featureOn=static fn(string $key):bool=>(bool)($portalFeatures[$key]['value']??i
             <div class="field"><label for="router-location">Location</label><input id="router-location" name="location" value="<?= e($router['location'] ?? '') ?>" placeholder="Branch, site or area" maxlength="255"></div>
             <div class="field"><label for="router-theme">Portal theme</label><select id="router-theme" name="portal_theme_id"><option value="0">System default</option><?php foreach ($themes as $theme): ?><option value="<?= e($theme['id']) ?>" <?= (int)($router['portal_theme_id']??0)===(int)$theme['id']?'selected':'' ?>><?= e($theme['name']) ?></option><?php endforeach; ?></select><small class="text-body-secondary">Stations can override this individually.</small></div>
         </div>
-        <div class="form-check mt-3"><input class="form-check-input" type="checkbox" name="enabled" value="1" id="router-enabled" <?= $router['enabled']?'checked':'' ?>><label class="form-check-label" for="router-enabled">Enabled</label></div>
+        <div class="form-check form-switch mt-3"><input class="form-check-input flex-shrink-0" style="width:2.5em;height:1.25em" type="checkbox" name="enabled" value="1" id="router-enabled" <?= $router['enabled']?'checked':'' ?>><label class="form-check-label ms-2" for="router-enabled">Enabled</label></div>
     </section>
 
     <section class="panel">
         <h2>Portal features</h2>
         <p class="muted">These are the router defaults. Each hotspot station may inherit or override every feature.</p>
         <div class="row g-3">
-            <?php foreach($featureLabels as $key=>$label): ?><div class="col-md-4"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" name="<?= e($key) ?>" value="1" id="router-<?= e($key) ?>" <?= $featureOn($key)?'checked':'' ?>><label class="form-check-label" for="router-<?= e($key) ?>"><?= e($label) ?></label></div></div><?php endforeach; ?>
+            <?php foreach($featureLabels as $key=>$label): ?><div class="col-md-4"><div class="form-check form-switch"><input class="form-check-input flex-shrink-0" style="width:2.5em;height:1.25em" type="checkbox" name="<?= e($key) ?>" value="1" id="router-<?= e($key) ?>" <?= $featureOn($key)?'checked':'' ?>><label class="form-check-label ms-2" for="router-<?= e($key) ?>"><?= e($label) ?></label></div></div><?php endforeach; ?>
             <div class="col-md-3"><label>Trial minutes</label><input type="number" name="trial_minutes" min="1" max="1440" value="<?= e($portalFeatures['trial']['config']['minutes']??10) ?>"></div>
             <div class="col-md-3"><label>Convert points</label><input type="number" name="convert_points" min="1" value="<?= e($portalFeatures['points_convert']['config']['points']??10) ?>"><small class="text-body-secondary">Points required</small></div>
             <div class="col-md-3"><label>Convert to minutes</label><input type="number" name="convert_minutes" min="1" value="<?= e($portalFeatures['points_convert']['config']['minutes']??5) ?>"></div>
