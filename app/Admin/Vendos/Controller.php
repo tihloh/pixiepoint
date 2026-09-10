@@ -28,8 +28,7 @@ final class Controller extends FeatureController
         $routerId=max(0,(int)($_SESSION['pixiepoint_selected_router_id']??0));if($routerId<1)redirect('/admin/routers');if(!$access->canView($routerId,$userId,$platformOwner)){unset($_SESSION['pixiepoint_selected_router_id']);redirect('/admin/routers');}
         if($this->isPost()){
             require_csrf();$action=(string)($_POST['action']??'create');
-            if($action==='save_router_features')$message=$this->saveRouterFeatures($features,$access,$userId,$platformOwner,$routerId);
-            elseif($action==='save_station_features')$message=$this->saveStationFeatures($features,$access,$userId,$platformOwner,$routerId);
+            if($action==='save_station_features')$message=$this->saveStationFeatures($features,$access,$userId,$platformOwner,$routerId);
             elseif($action==='toggle_debug')$message=$this->toggleDebug($access,$userId,$platformOwner,$routerId);
             else $message=$this->saveStation($access,$userId,$platformOwner,$action,$routerId);
             $_SESSION['admin_flash']=$message;redirect('/admin/stations');
@@ -37,12 +36,7 @@ final class Controller extends FeatureController
         $stmt=$this->db->prepare('SELECT v.*,r.name router_name,r.identity router_identity FROM vendos v JOIN routers r ON r.id=v.router_id WHERE v.router_id=? ORDER BY v.created_at DESC');$stmt->execute([$routerId]);$stations=$stmt->fetchAll();
         foreach($stations as &$station){$station['has_vendo']=trim((string)($station['base_url']??''))!=='';$station['feature_settings']=$features->raw('station',(int)$station['id']);$station['resolved_features']=$features->resolve($routerId,(int)$station['id']);}unset($station);
         $routers=$this->db->query('SELECT id,name,identity FROM routers WHERE enabled=1 AND id='.$routerId)->fetchAll();
-        $this->page('Hotspot Stations',__DIR__.'/views/index.php',['message'=>$message,'vendos'=>$stations,'routers'=>$routers,'routerBusinessName'=>$this->routerName($routerId),'themes'=>$this->themes->all(),'routerFeatures'=>$features->raw('router',$routerId),'resolvedRouterFeatures'=>$features->resolve($routerId),'canManageVendos'=>$this->auth->can('vendos.manage'),'isPlatformOwner'=>$platformOwner,'csrf'=>csrf_token()]);
-    }
-
-    private function saveRouterFeatures(PortalFeatureConfig $features,RouterAccess $access,int $userId,bool $platformOwner,int $routerId): string
-    {
-        if(!$access->canManage($routerId,$userId,$platformOwner))return '<div class="alert">You cannot manage this router.</div>';$features->saveRouter($routerId,$_POST);$this->audit('router.portal_features.updated','router',$routerId,'Router portal features were updated.');return '<div class="alert ok">Router portal features updated.</div>';
+        $this->page('Hotspot Stations',__DIR__.'/views/index.php',['message'=>$message,'vendos'=>$stations,'routers'=>$routers,'routerBusinessName'=>$this->routerName($routerId),'themes'=>$this->themes->all(),'canManageVendos'=>$this->auth->can('vendos.manage'),'isPlatformOwner'=>$platformOwner,'csrf'=>csrf_token()]);
     }
 
     private function saveStationFeatures(PortalFeatureConfig $features,RouterAccess $access,int $userId,bool $platformOwner,int $routerId): string
