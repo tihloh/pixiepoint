@@ -40,7 +40,7 @@ final class EmulatorController
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#111827">
     <title>MikroTik Hotspot Emulator · PixiePoint</title>
-    <link rel="stylesheet" href="/emulator/emulator.css">
+    <link rel="stylesheet" href="/assets/emulator/emulator.css">
 </head>
 <body>
 <header class="shell-header">
@@ -68,7 +68,7 @@ final class EmulatorController
     <button type="button" class="expand-button" id="expand-panel" aria-label="Open emulator panel">‹</button>
 </main>
 <script>window.PIXIEPOINT_EMULATOR = <?= json_encode($data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;</script>
-<script src="/emulator/emulator.js"></script>
+<script src="/assets/emulator/emulator.js"></script>
 </body>
 </html>
 <?php exit;
