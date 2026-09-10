@@ -4,11 +4,11 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <title>Opening PixiePoint status…</title>
-  <meta http-equiv="refresh" content="0;url=https://hs.portalx.win/hotspot/status?router_identity=$(identity)&amp;server_address=$(server-address)&amp;client_ip=$(ip)&amp;interface=$(interface-name)&amp;mac=$(mac-esc)&amp;username=$(username)&amp;session_time_left=$(session-time-left-secs)&amp;bytes_in=$(bytes-in)&amp;bytes_out=$(bytes-out)&amp;remain_bytes_total=$(remain-bytes-total)&amp;uptime=$(uptime-secs)&amp;status_url=$(link-status)&amp;logout_url=$(link-logout)&amp;login_url=$(link-login)">
+  <title>Opening PixiePoint…</title>
+  <meta http-equiv="refresh" content="0;url=https://hs.portalx.win/hotspot/compat?router_identity=$(identity)&amp;server_address=$(server-address)&amp;client_ip=$(ip)&amp;interface=$(interface-name)&amp;mac=$(mac-esc)&amp;username=$(username)&amp;session_time_left=$(session-time-left-secs)&amp;bytes_in=$(bytes-in)&amp;bytes_out=$(bytes-out)&amp;remain_bytes_total=$(remain-bytes-total)&amp;uptime=$(uptime-secs)&amp;status_url=$(link-status)&amp;logout_url=$(link-logout)&amp;login_url=$(link-login)">
 </head>
 <body>
-  <p>Opening your PixiePoint session…</p>
+  <p>Opening PixiePoint Wi-Fi portal…</p>
   <script>
     (function () {
       var p = new URLSearchParams();
@@ -26,7 +26,7 @@
       p.set('status_url', '$(link-status)');
       p.set('logout_url', '$(link-logout)');
       p.set('login_url', '$(link-login)');
-      location.replace('https://hs.portalx.win/hotspot/status?' + p.toString());
+      location.replace('https://hs.portalx.win/hotspot/compat?' + p.toString());
     })();
   </script>
 </body>
