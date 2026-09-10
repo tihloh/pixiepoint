@@ -54,8 +54,9 @@ $sidebarReturn = preg_match('#^/(?:admin|dashboard)(?:/|$)#', $path) ? ($path . 
                             <div class="small text-body-secondary mt-1 px-2 text-truncate" title="<?= e($selectedRouter['identity']) ?>"><?= e($selectedRouter['identity']) ?></div>
                             <a class="nav-link mt-2 px-2 py-1<?= $active('/admin/routers/' . (int)$selectedRouter['id']) ?>" href="/admin/routers/<?= e($selectedRouter['id']) ?>">Router dashboard</a>
                             <div class="nav-group-label mt-2">Router management</div>
-                            <?php if ($access['vendos'] ?? false): ?><a class="nav-link<?= $active('/admin/vendos') ?>" href="/admin/vendos">Vendos</a><?php endif; ?>
+                            <?php if ($access['vendos'] ?? false): ?><a class="nav-link<?= $active('/admin/stations') ?>" href="/admin/stations">Hotspot Stations</a><?php endif; ?>
                             <?php if ($access['vouchers'] ?? false): ?><a class="nav-link<?= $active('/admin/vouchers') ?>" href="/admin/vouchers">Vouchers</a><?php endif; ?>
+                            <a class="nav-link<?= $active('/emulator') ?>" href="/emulator/">Portal Emulator</a>
                             <?php if ($access['devices'] ?? false): ?><a class="nav-link<?= $active('/admin/devices') ?>" href="/admin/devices">Devices</a><?php endif; ?>
                             <?php if ($access['sessions'] ?? false): ?><a class="nav-link<?= $active('/admin/sessions') ?>" href="/admin/sessions">Sessions</a><?php endif; ?>
                         <?php endif; ?>
