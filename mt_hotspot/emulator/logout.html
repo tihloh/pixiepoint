@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>$(identity) - Logout</title>
+    <link rel="stylesheet" href="emulator.css">
+</head>
+<body>
+<main class="page">
+    <section class="card">
+        <h1>Logged out</h1>
+        <p>$(username) has been disconnected from $(identity).</p>
+        <table>
+            <tr><th>MAC address</th><td>$(mac)</td></tr>
+            <tr><th>IP address</th><td>$(ip)</td></tr>
+            <tr><th>Session ID</th><td>$(session-id)</td></tr>
+            <tr><th>Uptime</th><td>$(uptime)</td></tr>
+        </table>
+        <div class="actions">
+            <a href="login.html">Return to login</a>
+        </div>
+    </section>
+</main>
+<script src="emulator.js"></script>
+</body>
+</html>
