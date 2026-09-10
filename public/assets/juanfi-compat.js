@@ -330,7 +330,7 @@
 
   window.addEventListener('message', function (event) {
     var data = event.data || {};
-    if (!window.PIXIEPOINT_BOOTSTRAP && data.type === 'pixiepoint:init') { parentOrigin = event.origin; init(data); }
+    if (data.type === 'pixiepoint:init') { parentOrigin = event.origin; init(data); }
     else if (data.type === 'pixiepoint:response' && pending[data.id]) {
       var request = pending[data.id]; clearTimeout(request.timeout); delete pending[data.id]; data.error ? request.reject(new Error(data.error)) : request.resolve(data.result || {});
     }
