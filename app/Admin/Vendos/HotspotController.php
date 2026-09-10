@@ -30,10 +30,12 @@ final class HotspotController
     public function portal(): never
     {
         $context = $this->hotspotContext();
-        $vendos = $this->api->forHotspot($context['routerIdentity'], $context['serverAddress'], $context['ip'], $context['interfaceName']);
-        $theme = $this->themes->resolveByRouterIdentity($context['routerIdentity'], isset($vendos[0]['id']) ? (int) $vendos[0]['id'] : null);
+        $stations = $this->api->forHotspot($context['routerIdentity'], $context['serverAddress'], $context['ip'], $context['interfaceName']);
+        $station = $stations[0] ?? null;
+        $theme = $this->themes->resolveByRouterIdentity($context['routerIdentity'], isset($station['id']) ? (int) $station['id'] : null);
         $device = $this->portalDevice($context);
-        $options = $this->vendoOptions($vendos);
+        $vendoStations = array_values(array_filter($stations, static fn (array $row): bool => ($row['type'] ?? '') === 'vendo' && trim((string) ($row['baseUrl'] ?? '')) !== ''));
+        $options = $this->vendoOptions($vendoStations);
         $debug = $this->debugDetails($context);
         $auth = $this->hasActiveHotspotSession();
 
@@ -41,7 +43,8 @@ final class HotspotController
         echo $this->themeEngine->render($theme, 'portal.html', $this->portalAdapter, [
             'portal' => [
                 'auth' => $auth,
-                'name' => (string) ($vendos[0]['name'] ?? 'PixiePoint'),
+                'name' => (string) ($station['name'] ?? 'PixiePoint'),
+                'station_type' => (string) ($station['type'] ?? 'voucher'),
                 'vendo_options' => $options,
                 'device' => $device,
                 'debug' => $debug,
@@ -50,7 +53,7 @@ final class HotspotController
         ], [
             'voucher_login' => true,
             'member_login' => true,
-            'coin_slot' => !empty($vendos),
+            'coin_slot' => $vendoStations !== [],
             'points' => true,
         ]);
         exit;
@@ -74,11 +77,12 @@ final class HotspotController
         [$d, $errors] = $this->validateQuery($raw);
         if ($errors) {
             http_response_code(422);
-            echo json_encode(['ok' => false, 'errors' => $errors, 'vendos' => []]);
+            echo json_encode(['ok' => false, 'errors' => $errors, 'stations' => []]);
             exit;
         }
         $this->headers('application/json; charset=utf-8');
-        echo json_encode(['ok' => true, 'vendos' => $this->api->forHotspot($d['router_identity'], $d['server_address'], $d['client_ip'], $d['interface'])], JSON_UNESCAPED_SLASHES);
+        $stations = $this->api->forHotspot($d['router_identity'], $d['server_address'], $d['client_ip'], $d['interface']);
+        echo json_encode(['ok' => true, 'stations' => $stations, 'vendos' => $stations], JSON_UNESCAPED_SLASHES);
         exit;
     }
 
@@ -86,7 +90,6 @@ final class HotspotController
     {
         $statusUrl = trim((string) ($_GET['status_url'] ?? ''));
         $logoutUrl = trim((string) ($_GET['logout_url'] ?? ''));
-
         return $this->hasRouterValue($statusUrl) || $this->hasRouterValue($logoutUrl);
     }
 
@@ -98,10 +101,7 @@ final class HotspotController
     /** @param array{routerIdentity:string,serverAddress:string,ip:string,interfaceName:string,mac:string} $context */
     private function debugDetails(array $context): array
     {
-        if (!$this->api->hasDebugTarget($context['routerIdentity'])) {
-            return [];
-        }
-
+        if (!$this->api->hasDebugTarget($context['routerIdentity'])) return [];
         return [
             'raw' => [
                 'router_identity' => $context['routerIdentity'],
@@ -111,12 +111,7 @@ final class HotspotController
                 'mac' => $context['mac'],
             ],
             'processed' => $context,
-            'matching' => $this->api->debugForHotspot(
-                $context['routerIdentity'],
-                $context['serverAddress'],
-                $context['ip'],
-                $context['interfaceName'],
-            ),
+            'matching' => $this->api->debugForHotspot($context['routerIdentity'], $context['serverAddress'], $context['ip'], $context['interfaceName']),
         ];
     }
 
@@ -125,14 +120,7 @@ final class HotspotController
     {
         $mac = $this->normalizeMac($context['mac']);
         if ($mac === '') {
-            return [
-                'account' => 'Guest device',
-                'points' => 0,
-                'ip' => $context['ip'] !== '' ? $context['ip'] : '—',
-                'mac' => '—',
-                'last_voucher' => '',
-                'uuid' => '',
-            ];
+            return ['account' => 'Guest device', 'points' => 0, 'ip' => $context['ip'] !== '' ? $context['ip'] : '—', 'mac' => '—', 'last_voucher' => '', 'uuid' => ''];
         }
 
         try {
@@ -142,14 +130,7 @@ final class HotspotController
                 $context['ip'],
             );
             if (!$device) {
-                return [
-                    'account' => 'Guest device',
-                    'points' => 0,
-                    'ip' => $context['ip'] !== '' ? $context['ip'] : '—',
-                    'mac' => $mac,
-                    'last_voucher' => '',
-                    'uuid' => '',
-                ];
+                return ['account' => 'Guest device', 'points' => 0, 'ip' => $context['ip'] !== '' ? $context['ip'] : '—', 'mac' => $mac, 'last_voucher' => '', 'uuid' => ''];
             }
 
             $deviceId = (int) $device['id'];
@@ -158,9 +139,7 @@ final class HotspotController
             if ($userId) {
                 $stmt = $this->db->prepare('SELECT name FROM users WHERE id=? AND active=1 LIMIT 1');
                 $stmt->execute([$userId]);
-                if ($name = $stmt->fetchColumn()) {
-                    $account = (string) $name;
-                }
+                if ($name = $stmt->fetchColumn()) $account = (string) $name;
             }
 
             return [
@@ -172,29 +151,16 @@ final class HotspotController
                 'uuid' => (string) ($device['uuid'] ?? ''),
             ];
         } catch (Throwable) {
-            return [
-                'account' => 'Guest device',
-                'points' => 0,
-                'ip' => $context['ip'] !== '' ? $context['ip'] : '—',
-                'mac' => $mac,
-                'last_voucher' => '',
-                'uuid' => '',
-            ];
+            return ['account' => 'Guest device', 'points' => 0, 'ip' => $context['ip'] !== '' ? $context['ip'] : '—', 'mac' => $mac, 'last_voucher' => '', 'uuid' => ''];
         }
     }
 
     private function normalizeMac(string $value): string
     {
         $value = trim($value);
-        if ($value === '' || str_contains($value, '$(')) {
-            return '';
-        }
-
+        if ($value === '' || str_contains($value, '$(')) return '';
         $hex = preg_replace('/[^0-9a-fA-F]/', '', $value) ?? '';
-        if (strlen($hex) !== 12) {
-            return '';
-        }
-
+        if (strlen($hex) !== 12) return '';
         return strtoupper(implode(':', str_split($hex, 2)));
     }
 
@@ -254,9 +220,7 @@ final class HotspotController
             }
             $data[$key] = $value;
         }
-        if ($data['router_identity'] === '') {
-            $errors['router_identity'] = ['The router identity field is required.'];
-        }
+        if ($data['router_identity'] === '') $errors['router_identity'] = ['The router identity field is required.'];
         return [$data, $errors];
     }
 }
