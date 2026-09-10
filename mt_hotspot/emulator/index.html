@@ -75,10 +75,10 @@
     </aside>
     <button type="button" class="expand-button" id="expand-panel" aria-label="Open emulator panel">‹</button>
 </main>
+<script>window.PIXIEPOINT_EMULATOR = __PIXIEPOINT_EMULATOR_CONFIG__;</script>
 <script>
 (() => {
     'use strict';
-
     const config = window.PIXIEPOINT_EMULATOR || {};
     const portal = document.getElementById('portal');
     const platform = document.getElementById('platform-select');
@@ -192,7 +192,6 @@
         const values = context();
         showVariables(values);
         status.textContent = `Loading ${selectedPage}…`;
-
         try {
             const response = await fetch(`${location.pathname}?page=${encodeURIComponent(selectedPage)}`, { cache: 'no-store', credentials: 'same-origin' });
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -200,7 +199,7 @@
             source = expandRouterOs(source, values);
             source = rewriteRelativeAssets(source);
             portal.srcdoc = source;
-            status.textContent = `${selectedPage} · ${selected(router, router)?.name || 'Router'}`;
+            status.textContent = `${selectedPage} · ${selected(routers, router)?.name || 'Router'}`;
         } catch (error) {
             status.textContent = `Failed to load ${selectedPage}: ${error.message}`;
             portal.srcdoc = `<pre style="padding:1rem;font:14px/1.5 monospace;white-space:pre-wrap">${String(error.stack || error).replace(/[&<>]/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))}</pre>`;
