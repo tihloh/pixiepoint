@@ -48,7 +48,10 @@ return static function (RouteManager $routes, array $c): void {
         ->name('admin.portal_emulator')
         ->auth()
         ->middleware('prefab.access');
-    $routes->redirect('/emulator/', '/admin/portal-emulator');
+    $routes->get('/emulator/', [$c['emulator'], 'index'])
+        ->name('emulator.compat')
+        ->auth()
+        ->middleware('prefab.access');
 
     $routes->matchMethods(['GET', 'POST'], '/setup', [$c['auth'], 'setup'])->name('setup');
     $routes->matchMethods(['GET', 'POST'], '/register', [$c['auth'], 'register'])->name('register');
