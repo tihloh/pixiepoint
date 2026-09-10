@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>$(identity) - Login</title>
+    <link rel="stylesheet" href="emulator.css">
+</head>
+<body>
+<main class="page">
+    <section class="card">
+        <h1>$(identity)</h1>
+        <p class="muted">MikroTik Hotspot Emulator — login.html</p>
+
+        <div class="alert">Connect your device to the hotspot.</div>
+
+        <form action="$(link-login-only)" method="post">
+            <input type="hidden" name="dst" value="$(link-orig)">
+            <input type="hidden" name="popup" value="$(popup)">
+
+            <label for="username">Username</label>
+            <input id="username" name="username" value="$(username)" autocomplete="username">
+
+            <label for="password">Password</label>
+            <input id="password" name="password" type="password" value="$(plain-pass)" autocomplete="current-password">
+
+            <div class="actions">
+                <button type="submit">Log in</button>
+                <a href="status.html">Open emulated status page</a>
+            </div>
+        </form>
+
+        <div class="debug">
+            <strong>RouterOS variables used by this page</strong>
+            <table>
+                <tr><th>$(mac)</th><td>Client MAC</td></tr>
+                <tr><th>$(ip)</th><td>Client IP</td></tr>
+                <tr><th>$(link-login-only)</th><td>Login endpoint</td></tr>
+                <tr><th>$(link-orig)</th><td>Original destination</td></tr>
+                <tr><th>$(identity)</th><td>Router identity</td></tr>
+            </table>
+        </div>
+    </section>
+</main>
+<script src="emulator.js"></script>
+</body>
+</html>
