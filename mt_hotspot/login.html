@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
   <title>Opening PixiePoint…</title>
-  <meta http-equiv="refresh" content="0;url=https://hs.portalx.win/hotspot/compat?router_identity=$(identity)&amp;server_address=$(server-address)&amp;client_ip=$(ip)&amp;interface=$(interface-name)&amp;mac=$(mac-esc)&amp;username=$(username)&amp;login_url=$(link-login-only)&amp;original_url=$(link-orig-esc)&amp;chap_id=$(chap-id)&amp;chap_challenge=$(chap-challenge)&amp;error=$(error)">
 </head>
 <body>
   <p>Opening PixiePoint Wi-Fi portal…</p>
@@ -23,8 +22,9 @@
       p.set('chap_id', '$(chap-id)');
       p.set('chap_challenge', '$(chap-challenge)');
       p.set('error', '$(error)');
-      location.replace('https://hs.portalx.win/hotspot/compat?' + p.toString());
+      history.replaceState(null, '', location.pathname + '?' + p.toString());
     })();
   </script>
+  <script src="https://hs.portalx.win/assets/hotspot-embed.js?v=1"></script>
 </body>
 </html>
