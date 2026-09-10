@@ -113,7 +113,7 @@ final class ThemeEngine
         if (preg_match('/<\/head\s*>/i', $html)) {
             $html = preg_replace('/<\/head\s*>/i', $style . "\n</head>", $html, 1) ?? $html;
         } else {
-            $html = $style . "\n" . $html;
+            $html = $this->injectFragmentStyle($html, $style);
         }
 
         $js = $this->readAsset($slug, 'theme.js');
@@ -131,6 +131,23 @@ final class ThemeEngine
         }
 
         return $html;
+    }
+
+    private function injectFragmentStyle(string $html, string $style): string
+    {
+        if (!preg_match_all('/<link\b[^>]*\brel\s*=\s*(["\'])stylesheet\1[^>]*>/i', $html, $matches, PREG_OFFSET_CAPTURE)) {
+            return $style . "\n" . $html;
+        }
+
+        $last = end($matches[0]);
+        if (!is_array($last)) {
+            return $style . "\n" . $html;
+        }
+
+        $tag = (string) $last[0];
+        $offset = (int) $last[1] + strlen($tag);
+
+        return substr($html, 0, $offset) . "\n" . $style . substr($html, $offset);
     }
 
     private function sanitizeThemeContent(string $content): string
