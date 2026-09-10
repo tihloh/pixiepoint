@@ -8,16 +8,10 @@ return static function (RouteManager $routes, array $c): void {
     $nativeUrl = static function (mixed $value): ?string {
         $url = trim((string) $value);
         $parts = $url !== '' ? parse_url($url) : false;
-        if (!$parts) {
-            return null;
-        }
-
+        if (!$parts) return null;
         $scheme = strtolower((string) ($parts['scheme'] ?? ''));
         $host = trim((string) ($parts['host'] ?? ''));
-        if (!in_array($scheme, ['http', 'https'], true) || $host === '') {
-            return null;
-        }
-
+        if (!in_array($scheme, ['http', 'https'], true) || $host === '') return null;
         return $url;
     };
 
@@ -38,27 +32,22 @@ return static function (RouteManager $routes, array $c): void {
     $routes->post('/hotspot/device-voucher', [$c['device_info'], 'saveVoucher'])->name('hotspot.device_voucher');
     $routes->post('/hotspot/authenticate', [$c['hotspot'], 'authenticate'])->name('hotspot.authenticate');
 
-    $routes
-        ->post('/hotspot/session', static function () use ($c, $nativeUrl): never {
-            $url = $nativeUrl($_POST['refresh_url'] ?? null);
-            if ($url !== null) {
-                header('Location: ' . $url, true, 303);
-                exit;
-            }
-            $c['hotspot']->session();
-        })
-        ->name('hotspot.session');
+    $routes->post('/hotspot/session', static function () use ($c, $nativeUrl): never {
+        $url = $nativeUrl($_POST['refresh_url'] ?? null);
+        if ($url !== null) { header('Location: ' . $url, true, 303); exit; }
+        $c['hotspot']->session();
+    })->name('hotspot.session');
 
-    $routes
-        ->post('/hotspot/disconnected', static function () use ($c, $nativeUrl): never {
-            $url = $nativeUrl($_POST['login_url'] ?? null);
-            if ($url !== null) {
-                header('Location: ' . $url, true, 303);
-                exit;
-            }
-            $c['hotspot']->disconnected();
-        })
-        ->name('hotspot.disconnected');
+    $routes->post('/hotspot/disconnected', static function () use ($c, $nativeUrl): never {
+        $url = $nativeUrl($_POST['login_url'] ?? null);
+        if ($url !== null) { header('Location: ' . $url, true, 303); exit; }
+        $c['hotspot']->disconnected();
+    })->name('hotspot.disconnected');
+
+    $routes->get('/emulator/', [$c['emulator'], 'index'])
+        ->name('emulator')
+        ->auth()
+        ->middleware('prefab.access');
 
     $routes->matchMethods(['GET', 'POST'], '/setup', [$c['auth'], 'setup'])->name('setup');
     $routes->matchMethods(['GET', 'POST'], '/register', [$c['auth'], 'register'])->name('register');
@@ -74,13 +63,8 @@ return static function (RouteManager $routes, array $c): void {
     $routes->get('/dashboard', [$c['dashboard'], 'index'])->name('dashboard')->auth()->middleware('prefab.access');
     $routes->post('/devices/claim', [$c['dashboard'], 'claimDevice'])->name('devices.claim')->auth()->middleware('prefab.access');
 
-    $routes
-        ->get('/admin/select/router', [$c['admin.selection'], 'router'])
-        ->name('admin.select.router')
-        ->auth()
-        ->middleware('prefab.access');
+    $routes->get('/admin/select/router', [$c['admin.selection'], 'router'])->name('admin.select.router')->auth()->middleware('prefab.access');
 
-    // Personal account routes are intentionally separate from admin user management.
     (require dirname(__DIR__) . '/Profile/routes.php')($routes, $c);
 
     $adminRoot = dirname(__DIR__) . '/Admin';
