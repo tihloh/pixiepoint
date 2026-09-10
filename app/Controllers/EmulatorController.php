@@ -38,15 +38,38 @@ final class EmulatorController
         $routers = $platformOwner
             ? $this->db->query('SELECT id,name,identity,public_host,portal_theme_id FROM routers WHERE enabled=1 ORDER BY name')->fetchAll()
             : $this->routersForUser($userId);
-        $vendos = $this->vendosForUser($userId, $platformOwner);
+        $rows = $this->stationsForUser($userId, $platformOwner);
+        $stations = array_map(static function (array $v): array {
+            $baseUrl = rtrim((string) ($v['base_url'] ?? ''), '/');
+            return [
+                'id' => (int) $v['id'],
+                'routerId' => (int) $v['router_id'],
+                'name' => (string) $v['name'],
+                'type' => $baseUrl !== '' ? 'vendo' : 'voucher',
+                'baseUrl' => $baseUrl,
+                'serverIp' => (string) ($v['server_ip'] ?? ''),
+                'clientSubnet' => (string) ($v['client_subnet'] ?? ''),
+                'interfaceName' => (string) ($v['interface_name'] ?? ''),
+                'portalThemeId' => $v['portal_theme_id'] !== null ? (int) $v['portal_theme_id'] : null,
+                'passwordMode' => (string) ($v['password_mode'] ?: 'blank'),
+                'chargingEnabled' => $baseUrl !== '' && (bool) $v['charging_enabled'],
+                'eloadEnabled' => $baseUrl !== '' && (bool) $v['eload_enabled'],
+            ];
+        }, $rows);
+
+        $sampleVendo = ['id' => 0, 'routerId' => 0, 'name' => 'Sample Vendo', 'type' => 'vendo', 'baseUrl' => 'https://example.invalid', 'serverIp' => '192.168.88.1', 'clientSubnet' => '192.168.88.0/24', 'interfaceName' => 'bridge-hotspot', 'passwordMode' => 'blank', 'chargingEnabled' => true, 'eloadEnabled' => true];
+        $sampleVoucher = ['id' => -1, 'routerId' => 0, 'name' => 'Sample Voucher Hotspot', 'type' => 'voucher', 'baseUrl' => '', 'serverIp' => '192.168.88.1', 'clientSubnet' => '192.168.88.0/24', 'interfaceName' => 'bridge-hotspot', 'passwordMode' => 'voucher', 'chargingEnabled' => false, 'eloadEnabled' => false];
+
         $data = [
             'user' => ['name' => (string) ($user['name'] ?? ''), 'email' => (string) ($user['email'] ?? '')],
             'platforms' => [['id' => 'mikrotik', 'name' => 'MikroTik']],
             'pages' => self::PAGES,
             'routers' => array_map(static fn (array $r): array => ['id' => (int) $r['id'], 'name' => (string) $r['name'], 'identity' => (string) $r['identity'], 'publicHost' => (string) ($r['public_host'] ?? ''), 'portalThemeId' => $r['portal_theme_id'] !== null ? (int) $r['portal_theme_id'] : null], $routers),
-            'vendos' => array_map(static fn (array $v): array => ['id' => (int) $v['id'], 'routerId' => (int) $v['router_id'], 'name' => (string) $v['name'], 'baseUrl' => rtrim((string) $v['base_url'], '/'), 'serverIp' => (string) ($v['server_ip'] ?? ''), 'clientSubnet' => (string) ($v['client_subnet'] ?? ''), 'interfaceName' => (string) ($v['interface_name'] ?? ''), 'portalThemeId' => $v['portal_theme_id'] !== null ? (int) $v['portal_theme_id'] : null, 'passwordMode' => (string) ($v['password_mode'] ?: 'blank'), 'chargingEnabled' => (bool) $v['charging_enabled'], 'eloadEnabled' => (bool) $v['eload_enabled']], $vendos),
+            'stations' => $stations,
+            'vendos' => $stations,
             'sampleRouter' => ['id' => 0, 'name' => 'Sample Router', 'identity' => 'PIXIEPOINT-DEMO', 'publicHost' => '192.168.88.1'],
-            'sampleVendo' => ['id' => 0, 'routerId' => 0, 'name' => 'Sample Vendo', 'baseUrl' => 'https://example.invalid', 'serverIp' => '192.168.88.1', 'clientSubnet' => '192.168.88.0/24', 'interfaceName' => 'bridge-hotspot', 'passwordMode' => 'blank', 'chargingEnabled' => true, 'eloadEnabled' => true],
+            'sampleVendo' => $sampleVendo,
+            'sampleVoucher' => $sampleVoucher,
         ];
 
         $shell = $this->readHotspotFile('emulator/index.html');
@@ -124,9 +147,7 @@ final class EmulatorController
         }
         $root = realpath($this->hotspotRoot);
         $path = realpath($this->hotspotRoot . '/' . $relativePath);
-        if ($root === false || $path === false || !is_file($path)) {
-            return null;
-        }
+        if ($root === false || $path === false || !is_file($path)) return null;
         $prefix = rtrim($root, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
         return str_starts_with($path, $prefix) ? $path : null;
     }
@@ -138,7 +159,7 @@ final class EmulatorController
         return $stmt->fetchAll();
     }
 
-    private function vendosForUser(int $userId, bool $platformOwner): array
+    private function stationsForUser(int $userId, bool $platformOwner): array
     {
         $sql = $platformOwner
             ? 'SELECT v.id,v.router_id,v.name,v.base_url,v.server_ip,v.client_subnet,v.interface_name,v.portal_theme_id,v.password_mode,v.charging_enabled,v.eload_enabled FROM vendos v JOIN routers r ON r.id=v.router_id WHERE v.enabled=1 AND r.enabled=1 ORDER BY r.name,v.name'
