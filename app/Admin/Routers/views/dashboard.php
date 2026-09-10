@@ -2,117 +2,84 @@
 /** @var array $router */
 /** @var array<string,array{label:string,value:mixed}> $metrics */
 /** @var array $recentSessions */
+/** @var array $stations */
+/** @var array $themes */
+/** @var array $portalFeatures */
 /** @var bool $canManageRouter */
+/** @var bool $canManageStations */
 /** @var bool $canManageTeam */
 /** @var bool $canViewSales */
+/** @var string $message */
 /** @var string $csrf */
+$featureLabels=['coin_slot'=>'Coin slot','voucher_login'=>'Voucher login','member_login'=>'Member login','qr_scan'=>'QR code / scanner','trial'=>'Trial / free time','points'=>'Points system','points_convert'=>'Convert points','points_play'=>'Play with points','points_share'=>'Share points'];
+$featureOn=static fn(string $key):bool=>(bool)($portalFeatures[$key]['value']??in_array($key,['coin_slot','voucher_login'],true));
 ?>
 
 <div class="heading">
     <div>
-        <div class="d-flex align-items-center gap-2 mb-1">
-            <span class="badge">Router</span>
-            <span class="text-body-secondary small">#<?= e($router['id']) ?></span>
-        </div>
+        <div class="d-flex align-items-center gap-2 mb-1"><span class="badge">Router</span><span class="text-body-secondary small">#<?= e($router['id']) ?></span></div>
         <h1><?= e($router['name']) ?></h1>
-        <p class="muted mb-0">
-            <?= e($router['identity']) ?>
-            <?php if (!empty($router['location'])): ?>
-                · <?= e($router['location']) ?>
-            <?php endif; ?>
-        </p>
+        <p class="muted mb-0"><?= e($router['identity']) ?><?php if(!empty($router['location'])): ?> · <?= e($router['location']) ?><?php endif;?></p>
     </div>
     <div class="actions">
-        <?php if ($canManageTeam): ?>
-            <a class="btn btn-outline-secondary" href="/admin/routers/<?= e($router['id']) ?>/team">Team</a>
-        <?php endif; ?>
-        <?php if ($canManageRouter): ?>
-            <a class="btn btn-outline-secondary" href="/admin/routers/<?= e($router['id']) ?>/settings">Router settings</a>
-        <?php endif; ?>
+        <?php if($canManageTeam):?><a class="btn btn-outline-secondary" href="/admin/routers/<?= e($router['id']) ?>/team">Team</a><?php endif;?>
+        <?php if($canManageRouter):?><button class="btn btn-outline-secondary" type="button" data-bs-toggle="modal" data-bs-target="#routerSettingsModal">Router settings</button><button class="btn btn-outline-secondary" type="button" data-bs-toggle="modal" data-bs-target="#portalFeaturesModal">Portal defaults</button><?php endif;?>
     </div>
 </div>
 
+<?= $message ?>
+
 <section class="grid" aria-label="Router summary">
-    <?php foreach ($metrics as $metric): ?>
-        <div class="metric">
-            <small><?= e($metric['label']) ?></small>
-            <strong>
-                <?php if ($metric['label'] === 'Sales today'): ?>
-                    ₱<?= e(number_format((float) $metric['value'], 2)) ?>
-                <?php else: ?>
-                    <?= e((int) $metric['value']) ?>
-                <?php endif; ?>
-            </strong>
-        </div>
-    <?php endforeach; ?>
+    <?php foreach($metrics as $metric):?><div class="metric"><small><?= e($metric['label']) ?></small><strong><?= $metric['label']==='Sales today'?'₱'.e(number_format((float)$metric['value'],2)):e((int)$metric['value']) ?></strong></div><?php endforeach;?>
+</section>
+
+<section class="panel" id="stations">
+    <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-2 mb-3">
+        <div><h2 class="mb-1">Hotspot stations</h2><p class="muted mb-0">Stations connected to this router. Configure Vendo hardware and station-level portal overrides here.</p></div>
+        <?php if($canManageStations):?><button class="button" type="button" data-bs-toggle="modal" data-bs-target="#stationModal" data-mode="create">Add station</button><?php endif;?>
+    </div>
+    <div class="table-responsive"><table class="table align-middle"><thead><tr><th>Name</th><th>Vendo</th><th>Server</th><th>Theme</th><th>Features</th><th>Status</th><?php if($canManageStations):?><th></th><?php endif;?></tr></thead><tbody>
+    <?php foreach($stations as $v):$settings=$v['feature_settings']??[];$resolved=$v['resolved_features']??[];$hasVendo=(bool)($v['has_vendo']??false);?><tr>
+        <td><strong><?= e($v['name']) ?></strong></td>
+        <td><?= $hasVendo?'<span class="badge text-bg-primary">Connected</span>':'<span class="badge text-bg-secondary">None</span>' ?></td>
+        <td class="code"><?= e($v['server_ip']?:'—') ?></td>
+        <td><?= $v['portal_theme_id']?'Custom':'Router' ?></td>
+        <td><div class="d-flex flex-wrap gap-1"><?php $shown=0;foreach($featureLabels as $key=>$label):$on=(bool)($resolved[$key]['enabled']??false);if($key==='coin_slot'&&!$hasVendo)$on=false;if(!$on)continue;$shown++;?><span class="badge text-bg-success"><?= e($label) ?></span><?php endforeach;?><?php if(!$shown):?><span class="text-body-secondary small">None</span><?php endif;?></div></td>
+        <td><?= $v['enabled']?'Enabled':'Disabled' ?></td>
+        <?php if($canManageStations):?><td class="text-end"><div class="d-flex gap-1 justify-content-end">
+            <form method="post" action="/admin/stations" class="m-0"><input type="hidden" name="_csrf" value="<?= e($csrf) ?>"><input type="hidden" name="action" value="toggle_debug"><input type="hidden" name="id" value="<?= e($v['id']) ?>"><input type="hidden" name="debug_enabled" value="<?= !empty($v['debug_enabled'])?'0':'1' ?>"><button class="btn btn-sm <?= !empty($v['debug_enabled'])?'btn-warning':'btn-outline-secondary' ?>" type="submit">Debug <?= !empty($v['debug_enabled'])?'on':'off' ?></button></form>
+            <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#featuresModal" data-id="<?= e($v['id']) ?>" data-name="<?= e($v['name']) ?>" data-features='<?= e(json_encode($settings)) ?>'>Features</button>
+            <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#stationModal" data-mode="edit" data-id="<?= e($v['id']) ?>" data-name="<?= e($v['name']) ?>" data-theme="<?= e($v['portal_theme_id']??0) ?>" data-url="<?= e(preg_replace('~^https?://~i','',(string)$v['base_url'])) ?>" data-server-ip="<?= e($v['server_ip']??'') ?>" data-subnet="<?= e($v['client_subnet']??'') ?>" data-interface="<?= e($v['interface_name']??'') ?>" data-password-mode="<?= e($v['password_mode']) ?>" data-charging="<?= $v['charging_enabled']?'1':'0' ?>" data-eload="<?= $v['eload_enabled']?'1':'0' ?>" data-enabled="<?= $v['enabled']?'1':'0' ?>">Edit</button>
+        </div></td><?php endif;?>
+    </tr><?php endforeach;?>
+    <?php if(!$stations):?><tr><td colspan="7" class="empty">No hotspot stations configured.</td></tr><?php endif;?>
+    </tbody></table></div>
 </section>
 
 <section class="panel">
-    <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-2 mb-3">
-        <div>
-            <h2 class="mb-1">Router overview</h2>
-            <p class="muted mb-0">Manage everything associated with this MikroTik from the navigation.</p>
-        </div>
-        <span class="badge <?= $router['enabled'] ? '' : 'off' ?>">
-            <?= $router['enabled'] ? 'Enabled' : 'Disabled' ?>
-        </span>
-    </div>
-
+    <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-2 mb-3"><div><h2 class="mb-1">Router overview</h2><p class="muted mb-0">Quick access to router data and activity.</p></div><span class="badge <?= $router['enabled']?'':'off' ?>"><?= $router['enabled']?'Enabled':'Disabled' ?></span></div>
     <div class="row g-2">
-        <?php if (isset($metrics['vendos'])): ?>
-            <div class="col-sm-6 col-xl">
-                <a class="btn btn-outline-secondary w-100" href="/admin/vendos">Vendos</a>
-            </div>
-        <?php endif; ?>
-        <?php if (isset($metrics['vouchers'])): ?>
-            <div class="col-sm-6 col-xl">
-                <a class="btn btn-outline-secondary w-100" href="/admin/vouchers">Vouchers</a>
-            </div>
-        <?php endif; ?>
-        <?php if (isset($metrics['devices'])): ?>
-            <div class="col-sm-6 col-xl">
-                <a class="btn btn-outline-secondary w-100" href="/admin/devices">Devices</a>
-            </div>
-        <?php endif; ?>
-        <?php if (isset($metrics['sessions'])): ?>
-            <div class="col-sm-6 col-xl">
-                <a class="btn btn-outline-secondary w-100" href="/admin/sessions">Sessions</a>
-            </div>
-        <?php endif; ?>
-        <?php if ($canViewSales): ?>
-            <div class="col-sm-6 col-xl">
-                <a class="btn btn-outline-secondary w-100" href="/admin/sales">Sales</a>
-            </div>
-        <?php endif; ?>
+        <?php if(isset($metrics['vouchers'])):?><div class="col-sm-6 col-xl"><a class="btn btn-outline-secondary w-100" href="/admin/vouchers">Vouchers</a></div><?php endif;?>
+        <?php if(isset($metrics['devices'])):?><div class="col-sm-6 col-xl"><a class="btn btn-outline-secondary w-100" href="/admin/devices">Devices</a></div><?php endif;?>
+        <?php if(isset($metrics['sessions'])):?><div class="col-sm-6 col-xl"><a class="btn btn-outline-secondary w-100" href="/admin/sessions">Sessions</a></div><?php endif;?>
+        <?php if($canViewSales):?><div class="col-sm-6 col-xl"><a class="btn btn-outline-secondary w-100" href="/admin/sales">Sales</a></div><?php endif;?>
     </div>
 </section>
 
-<?php if ($recentSessions): ?>
-    <section class="panel">
-        <h2>Recent sessions</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th>Access</th>
-                    <th>Device</th>
-                    <th>Status</th>
-                    <th>Updated</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php foreach ($recentSessions as $session): ?>
-                    <tr>
-                        <td><?= e($session['username'] ?: '—') ?></td>
-                        <td class="code"><?= e($session['mac'] ?: '—') ?></td>
-                        <td>
-                            <span class="badge <?= $session['status'] === 'active' ? '' : 'off' ?>">
-                                <?= e($session['status']) ?>
-                            </span>
-                        </td>
-                        <td><?= e($session['updated_at']) ?></td>
-                    </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
-    </section>
-<?php endif; ?>
+<?php if($recentSessions):?><section class="panel"><h2>Recent sessions</h2><table><thead><tr><th>Access</th><th>Device</th><th>Status</th><th>Updated</th></tr></thead><tbody><?php foreach($recentSessions as $session):?><tr><td><?= e($session['username']?:'—') ?></td><td class="code"><?= e($session['mac']?:'—') ?></td><td><span class="badge <?= $session['status']==='active'?'':'off' ?>"><?= e($session['status']) ?></span></td><td><?= e($session['updated_at']) ?></td></tr><?php endforeach;?></tbody></table></section><?php endif;?>
+
+<?php if($canManageRouter):?>
+<div class="modal fade" id="routerSettingsModal" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content"><form method="post" action="/admin/routers/<?= e($router['id']) ?>/settings"><div class="modal-header"><h2 class="modal-title fs-5">Router settings</h2><button class="btn-close" type="button" data-bs-dismiss="modal"></button></div><div class="modal-body"><input type="hidden" name="_csrf" value="<?= e($csrf) ?>"><input type="hidden" name="action" value="router_settings"><div class="row g-3"><div class="col-md-6"><label>Router / Wi-Fi name</label><input name="name" value="<?= e($router['name']) ?>" required maxlength="160"></div><div class="col-md-6"><label>RouterOS identity</label><input value="<?= e($router['identity']) ?>" readonly></div><div class="col-md-6"><label>Public hostname / VPN IP</label><input name="public_host" value="<?= e($router['public_host']??'') ?>" maxlength="255"></div><div class="col-md-6"><label>Location</label><input name="location" value="<?= e($router['location']??'') ?>" maxlength="255"></div><div class="col-md-6"><label>Portal theme</label><select name="portal_theme_id"><option value="0">System default</option><?php foreach($themes as $theme):?><option value="<?= e($theme['id']) ?>" <?= (int)($router['portal_theme_id']??0)===(int)$theme['id']?'selected':'' ?>><?= e($theme['name']) ?></option><?php endforeach;?></select></div><div class="col-12"><label class="d-inline-flex align-items-center gap-2"><input class="form-check-input m-0" style="width:1rem;height:1rem" type="checkbox" name="enabled" value="1" <?= $router['enabled']?'checked':'' ?>> Enabled</label></div></div></div><div class="modal-footer"><button class="btn btn-outline-secondary" type="button" data-bs-dismiss="modal">Cancel</button><button class="button" type="submit">Save settings</button></div></form></div></div></div>
+
+<div class="modal fade" id="portalFeaturesModal" tabindex="-1"><div class="modal-dialog modal-lg modal-dialog-scrollable"><div class="modal-content"><form method="post" action="/admin/routers/<?= e($router['id']) ?>/settings"><div class="modal-header"><div><h2 class="modal-title fs-5">Portal defaults</h2><div class="small text-body-secondary">Inherited by hotspot stations unless overridden.</div></div><button class="btn-close" type="button" data-bs-dismiss="modal"></button></div><div class="modal-body"><input type="hidden" name="_csrf" value="<?= e($csrf) ?>"><input type="hidden" name="action" value="portal_features"><div class="row g-3"><?php foreach($featureLabels as $key=>$label):?><div class="col-md-4"><label class="d-inline-flex align-items-center gap-2"><input class="form-check-input m-0" style="width:1rem;height:1rem" type="checkbox" name="<?= e($key) ?>" value="1" <?= $featureOn($key)?'checked':'' ?>> <?= e($label) ?></label></div><?php endforeach;?><div class="col-md-4"><label>Trial minutes</label><input type="number" name="trial_minutes" min="1" max="1440" value="<?= e($portalFeatures['trial']['config']['minutes']??10) ?>"></div><div class="col-md-4"><label>Convert points</label><input type="number" name="convert_points" min="1" value="<?= e($portalFeatures['points_convert']['config']['points']??10) ?>"></div><div class="col-md-4"><label>Convert to minutes</label><input type="number" name="convert_minutes" min="1" value="<?= e($portalFeatures['points_convert']['config']['minutes']??5) ?>"></div></div></div><div class="modal-footer"><button class="btn btn-outline-secondary" type="button" data-bs-dismiss="modal">Cancel</button><button class="button" type="submit">Save defaults</button></div></form></div></div></div>
+<?php endif;?>
+
+<?php if($canManageStations):?>
+<div class="modal fade" id="featuresModal" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content"><form method="post" action="/admin/stations"><div class="modal-header"><div><h2 class="modal-title fs-5">Station portal features</h2><div class="small text-body-secondary" id="feature-station-name"></div></div><button class="btn-close" type="button" data-bs-dismiss="modal"></button></div><div class="modal-body"><input type="hidden" name="_csrf" value="<?= e($csrf) ?>"><input type="hidden" name="action" value="save_station_features"><input type="hidden" name="id" value="0"><div class="row g-3"><?php foreach($featureLabels as $key=>$label):?><div class="col-md-6"><label><?= e($label) ?></label><select name="<?= e($key) ?>" data-feature="<?= e($key) ?>"><option value="inherit">Inherit router</option><option value="on">Enabled</option><option value="off">Disabled</option></select></div><?php endforeach;?><div class="col-md-4"><label>Trial minutes</label><input type="number" name="trial_minutes" min="1" max="1440" value="10"></div><div class="col-md-4"><label>Convert points</label><input type="number" name="convert_points" min="1" value="10"></div><div class="col-md-4"><label>Convert to minutes</label><input type="number" name="convert_minutes" min="1" value="5"></div></div></div><div class="modal-footer"><button class="btn btn-outline-secondary" type="button" data-bs-dismiss="modal">Cancel</button><button class="button" type="submit">Save overrides</button></div></form></div></div></div>
+
+<div class="modal fade" id="stationModal" tabindex="-1"><div class="modal-dialog modal-lg modal-dialog-scrollable"><div class="modal-content"><form method="post" action="/admin/stations"><div class="modal-header"><h2 class="modal-title fs-5" id="stationModalTitle">Add hotspot station</h2><button class="btn-close" type="button" data-bs-dismiss="modal"></button></div><div class="modal-body"><input type="hidden" name="_csrf" value="<?= e($csrf) ?>"><input type="hidden" name="action" value="create"><input type="hidden" name="id" value="0"><input type="hidden" name="router_id" value="<?= e($router['id']) ?>"><div class="row g-3"><div class="col-md-6"><label>Name / Wi-Fi name</label><input name="name" required maxlength="160"></div><div class="col-md-6"><label>Portal theme</label><select name="portal_theme_id"><option value="0">Inherit router theme</option><?php foreach($themes as $theme):?><option value="<?= e($theme['id']) ?>"><?= e($theme['name']) ?></option><?php endforeach;?></select></div><div class="col-md-6"><label>Server IP</label><input name="server_ip" required placeholder="10.0.3.1"></div><div class="col-md-6"><label>Client subnet</label><input name="client_subnet" placeholder="10.0.3.0/24"></div><div class="col-md-6"><label>Interface</label><input name="interface_name" placeholder="bridge-HS"></div><div class="col-md-6"><label>Password mode</label><select name="password_mode"><option value="blank">Blank password</option><option value="voucher">Voucher as password</option></select></div><div class="col-12"><div class="border rounded p-3"><div class="fw-semibold mb-2">Optional Vendo hardware</div><label>Controller address</label><input name="base_url" placeholder="Leave blank for no Vendo controller"><small class="text-body-secondary d-block mt-1">Required only when using the coin-slot feature.</small><div class="d-flex flex-wrap gap-4 mt-3"><label class="d-inline-flex align-items-center gap-2"><input class="form-check-input m-0" style="width:1rem;height:1rem" type="checkbox" name="charging_enabled" value="1"> Phone charging</label><label class="d-inline-flex align-items-center gap-2"><input class="form-check-input m-0" style="width:1rem;height:1rem" type="checkbox" name="eload_enabled" value="1"> E-load</label></div></div></div><div class="col-12"><label class="d-inline-flex align-items-center gap-2"><input class="form-check-input m-0" style="width:1rem;height:1rem" type="checkbox" name="enabled" value="1" checked> Enabled</label></div></div></div><div class="modal-footer"><button class="btn btn-outline-secondary" type="button" data-bs-dismiss="modal">Cancel</button><button class="button" type="submit" id="station-submit">Add station</button></div></form></div></div></div>
+<script>
+const fm=document.getElementById('featuresModal');fm?.addEventListener('show.bs.modal',e=>{const b=e.relatedTarget,f=fm.querySelector('form'),data=JSON.parse(b.dataset.features||'{}');f.querySelector('[name=id]').value=b.dataset.id;document.getElementById('feature-station-name').textContent=b.dataset.name;f.querySelectorAll('[data-feature]').forEach(s=>{const v=data[s.dataset.feature]?.value;s.value=v===true?'on':v===false?'off':'inherit';});f.querySelector('[name=trial_minutes]').value=data.trial?.config?.minutes||10;f.querySelector('[name=convert_points]').value=data.points_convert?.config?.points||10;f.querySelector('[name=convert_minutes]').value=data.points_convert?.config?.minutes||5;});
+const sm=document.getElementById('stationModal');sm?.addEventListener('show.bs.modal',e=>{const b=e.relatedTarget,edit=b?.dataset.mode==='edit',f=sm.querySelector('form');f.reset();f.querySelector('[name=router_id]').value='<?= e($router['id']) ?>';f.querySelector('[name=action]').value=edit?'update':'create';f.querySelector('[name=id]').value=edit?b.dataset.id:'0';if(edit){f.querySelector('[name=name]').value=b.dataset.name;f.querySelector('[name=portal_theme_id]').value=b.dataset.theme;f.querySelector('[name=server_ip]').value=b.dataset.serverIp;f.querySelector('[name=client_subnet]').value=b.dataset.subnet;f.querySelector('[name=interface_name]').value=b.dataset.interface;f.querySelector('[name=password_mode]').value=b.dataset.passwordMode;f.querySelector('[name=base_url]').value=b.dataset.url;f.querySelector('[name=charging_enabled]').checked=b.dataset.charging==='1';f.querySelector('[name=eload_enabled]').checked=b.dataset.eload==='1';f.querySelector('[name=enabled]').checked=b.dataset.enabled==='1';}document.getElementById('stationModalTitle').textContent=edit?'Edit hotspot station':'Add hotspot station';document.getElementById('station-submit').textContent=edit?'Save changes':'Add station';});
+</script>
+<?php endif;?>
