@@ -11,7 +11,8 @@
     activeVoucher = '',
     transactionMode = 'internet';
   var totalCoinReceived = 0,
-    finalizingTopup = false;
+    finalizingTopup = false,
+    startingTopup = false;
   var $ = function (id) {
     return document.getElementById(id);
   };
@@ -159,7 +160,7 @@
     return seconds;
   }
   function resetTransaction(message) {
-    clearTimeout(pollTimer); pollTimer = null; activeVoucher = ''; totalCoinReceived = 0; finalizingTopup = false;
+    clearTimeout(pollTimer); pollTimer = null; activeVoucher = ''; totalCoinReceived = 0; finalizingTopup = false; startingTopup = false;
     setTopupActive(false); $('compat-progress-bar').style.width = '100%'; $('compat-countdown').textContent = 'Waiting…';
     $('compat-finish').disabled = true; $('compat-cancel').disabled = false; $('compat-topup').disabled = false;
     if (message) alertMessage(message);
@@ -234,18 +235,25 @@
       $('compat-progress').textContent = error.message; pollTimer = setTimeout(pollCoin, 2500);
     });
   }
-  function startTopup(payload, retryCount) {
+  function startTopup(payload) {
+    if (startingTopup) return;
+    startingTopup = true;
     rpc('/topUp', 'POST', payload).then(function (result) {
       var data = responseData(result);
-      if (!result.ok || (!isTrue(data.status) && !isTrue(data.success))) throw new Error(data.message || data.errorCode || 'The coin slot rejected the request.');
+      startingTopup = false;
+      if (!result.ok || (!isTrue(data.status) && !isTrue(data.success))) {
+        resetTransaction(data.message || data.errorCode || 'The coin slot rejected the request.');
+        return;
+      }
       activeVoucher = generatedVoucher(data) || activeVoucher; displayTransaction(data);
       $('compat-progress').textContent = 'Coin slot active. Insert a coin now.'; $('compat-progress-bar').style.width = '100%'; $('compat-countdown').textContent = 'Ready'; pollCoin();
     }).catch(function (error) {
-      if (retryCount < 3) { setTimeout(function () { startTopup(payload, retryCount + 1); }, 1000); return; }
+      startingTopup = false;
       resetTransaction(error.message || 'Coin slot is unavailable.');
     });
   }
   function beginTopup(options) {
+    if (startingTopup || pollTimer || finalizingTopup) return;
     options = options || {}; transactionMode = options.mode || 'internet'; alertMessage(''); totalCoinReceived = 0; finalizingTopup = false;
     $('compat-topup').disabled = true; $('compat-finish').disabled = true; $('compat-cancel').disabled = false;
     var voucher = options.voucher || (transactionMode === 'internet' ? currentVoucher() : '');
@@ -256,7 +264,7 @@
     $('compat-progress').textContent = 'Activating coin slot…'; $('compat-progress-bar').style.width = '100%'; $('compat-countdown').textContent = 'Starting…'; setTopupActive(true);
     var payload = { voucher: activeVoucher, mac: context.mac || '', ipAddress: context.ip || '', extendTime: 0 };
     if (options.chargerPort !== undefined) { payload.topupType = 'CHARGER'; payload.chargerPort = options.chargerPort; }
-    startTopup(payload, 0);
+    startTopup(payload);
   }
   function showRates() {
     var list = $('compat-rate-list'), modalElement = $('compat-rates-modal');
