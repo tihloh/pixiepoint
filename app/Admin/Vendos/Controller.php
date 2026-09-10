@@ -24,19 +24,16 @@ final class Controller extends FeatureController
 
     public function index(): never
     {
-        $user=$this->auth->requireAccount();$userId=(int)$user['id'];$platformOwner=$this->auth->isPlatformOwner();$access=new RouterAccess($this->db);$features=new PortalFeatureConfig($this->db);$message=(string)($_SESSION['admin_flash']??'');unset($_SESSION['admin_flash']);
+        $user=$this->auth->requireAccount();$userId=(int)$user['id'];$platformOwner=$this->auth->isPlatformOwner();$access=new RouterAccess($this->db);$features=new PortalFeatureConfig($this->db);
         $routerId=max(0,(int)($_SESSION['pixiepoint_selected_router_id']??0));if($routerId<1)redirect('/admin/routers');if(!$access->canView($routerId,$userId,$platformOwner)){unset($_SESSION['pixiepoint_selected_router_id']);redirect('/admin/routers');}
-        if($this->isPost()){
-            require_csrf();$action=(string)($_POST['action']??'create');
-            if($action==='save_station_features')$message=$this->saveStationFeatures($features,$access,$userId,$platformOwner,$routerId);
-            elseif($action==='toggle_debug')$message=$this->toggleDebug($access,$userId,$platformOwner,$routerId);
-            else $message=$this->saveStation($access,$userId,$platformOwner,$action,$routerId);
-            $_SESSION['admin_flash']=$message;redirect('/admin/stations');
-        }
-        $stmt=$this->db->prepare('SELECT v.*,r.name router_name,r.identity router_identity FROM vendos v JOIN routers r ON r.id=v.router_id WHERE v.router_id=? ORDER BY v.created_at DESC');$stmt->execute([$routerId]);$stations=$stmt->fetchAll();
-        foreach($stations as &$station){$station['has_vendo']=trim((string)($station['base_url']??''))!=='';$station['feature_settings']=$features->raw('station',(int)$station['id']);$station['resolved_features']=$features->resolve($routerId,(int)$station['id']);}unset($station);
-        $routers=$this->db->query('SELECT id,name,identity FROM routers WHERE enabled=1 AND id='.$routerId)->fetchAll();
-        $this->page('Hotspot Stations',__DIR__.'/views/index.php',['message'=>$message,'vendos'=>$stations,'routers'=>$routers,'routerBusinessName'=>$this->routerName($routerId),'themes'=>$this->themes->all(),'canManageVendos'=>$this->auth->can('vendos.manage'),'isPlatformOwner'=>$platformOwner,'csrf'=>csrf_token()]);
+        if(!$this->isPost())redirect('/admin/routers/'.$routerId.'#stations');
+
+        require_csrf();$action=(string)($_POST['action']??'create');
+        if($action==='save_station_features')$message=$this->saveStationFeatures($features,$access,$userId,$platformOwner,$routerId);
+        elseif($action==='toggle_debug')$message=$this->toggleDebug($access,$userId,$platformOwner,$routerId);
+        else $message=$this->saveStation($access,$userId,$platformOwner,$action,$routerId);
+        $_SESSION['admin_flash']=$message;
+        redirect('/admin/routers/'.$routerId.'#stations');
     }
 
     private function saveStationFeatures(PortalFeatureConfig $features,RouterAccess $access,int $userId,bool $platformOwner,int $routerId): string
@@ -55,14 +52,13 @@ final class Controller extends FeatureController
         $data=$result->validated();$routerId=(int)$data['router_id'];$serverIp=trim((string)$data['server_ip']);$subnet=trim((string)($data['client_subnet']??''));$themeId=$this->validThemeId((int)($data['portal_theme_id']??0));
         if($routerId!==$selectedRouterId)return '<div class="alert">Select the router before managing its hotspot stations.</div>';if(filter_var($serverIp,FILTER_VALIDATE_IP)===false)return '<div class="alert">Server IP must be a valid IPv4 or IPv6 address.</div>';if($subnet!==''&&!$this->validCidr($subnet))return '<div class="alert">Client subnet must be valid CIDR.</div>';if(!in_array((string)$data['password_mode'],['blank','voucher'],true))return '<div class="alert">Invalid password mode.</div>';if(!$access->canManage($routerId,$userId,$platformOwner))return '<div class="alert">You do not have access to manage that router.</div>';
         $baseUrl='';if(trim((string)($data['base_url']??''))!==''){$baseUrl=$this->normalizeBaseUrl((string)$data['base_url'])??'';if($baseUrl==='')return '<div class="alert">Vendo controller address is invalid.</div>';}$charging=$baseUrl!==''?(int)($data['charging_enabled']??0):0;$eload=$baseUrl!==''?(int)($data['eload_enabled']??0):0;
-        try{$check=$this->db->prepare('SELECT id FROM routers WHERE id=? AND enabled=1');$check->execute([$routerId]);if(!$check->fetchColumn())throw new RuntimeException('Router unavailable.');$params=[$routerId,$data['name'],$baseUrl,$serverIp,$subnet?:null,$data['interface_name']??null,$themeId?:null,$data['password_mode'],$charging,$eload,(int)($data['enabled']??0)];
+        try{$check=$this->db->prepare('SELECT id FROM routers WHERE id=?');$check->execute([$routerId]);if(!$check->fetchColumn())throw new RuntimeException('Router unavailable.');$params=[$routerId,$data['name'],$baseUrl,$serverIp,$subnet?:null,$data['interface_name']??null,$themeId?:null,$data['password_mode'],$charging,$eload,(int)($data['enabled']??0)];
             if($action==='update'){$id=max(0,(int)($_POST['id']??0));$existing=$this->findStation($id);if(!$existing||(int)$existing['router_id']!==$selectedRouterId)throw new RuntimeException('Station not found.');$stmt=$this->db->prepare('UPDATE vendos SET router_id=?,name=?,base_url=?,server_ip=?,client_subnet=?,interface_name=?,portal_theme_id=?,password_mode=?,charging_enabled=?,eload_enabled=?,enabled=? WHERE id=?');$stmt->execute([...$params,$id]);return '<div class="alert ok">Station updated.</div>';}
             $stmt=$this->db->prepare('INSERT INTO vendos(owner_user_id,router_id,name,base_url,server_ip,client_subnet,interface_name,portal_theme_id,password_mode,charging_enabled,eload_enabled,enabled) VALUES(NULL,?,?,?,?,?,?,?,?,?,?,?)');$stmt->execute($params);return '<div class="alert ok">Station added.</div>';
         }catch(Throwable $e){return '<div class="alert">The station could not be saved. '.e($e->getMessage()).'</div>';}
     }
 
     private function findStation(int $id): ?array{if($id<1)return null;$stmt=$this->db->prepare('SELECT id,router_id,name FROM vendos WHERE id=? LIMIT 1');$stmt->execute([$id]);$row=$stmt->fetch();return $row?:null;}
-    private function routerName(int $id): string{$stmt=$this->db->prepare('SELECT name FROM routers WHERE id=? LIMIT 1');$stmt->execute([$id]);return trim((string)($stmt->fetchColumn()?:''));}
     private function validThemeId(int $id): ?int{if($id<1)return null;$stmt=$this->db->prepare('SELECT id FROM portal_themes WHERE id=? AND enabled=1 LIMIT 1');$stmt->execute([$id]);return($found=$stmt->fetchColumn())?(int)$found:null;}
     private function normalizeBaseUrl(string $value): ?string{$value=trim($value);if($value==='')return null;if(!preg_match('~^https?://~i',$value))$value='http://'.$value;$parts=parse_url($value);if(!$parts||!in_array(strtolower((string)($parts['scheme']??'')),['http','https'],true)||trim((string)($parts['host']??''))==='')return null;return rtrim($value,'/');}
     private function validCidr(string $cidr): bool{if(!str_contains($cidr,'/'))return false;[$ip,$prefix]=array_pad(explode('/',$cidr,2),2,'');$bin=@inet_pton($ip);if($bin===false)return false;$bits=strlen($bin)*8;return filter_var($prefix,FILTER_VALIDATE_INT,['options'=>['min_range'=>0,'max_range'=>$bits]])!==false;}
