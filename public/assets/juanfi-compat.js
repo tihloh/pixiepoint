@@ -1,348 +1,187 @@
 (function () {
-  'use strict';
+  "use strict";
 
-  var parentOrigin = '*',
-    context = {},
-    vendos = [],
-    selected = null;
-  var pending = Object.create(null),
-    sequence = 0,
-    pollTimer = null,
-    activeVoucher = '',
-    transactionMode = 'internet';
-  var totalCoinReceived = 0,
-    finalizingTopup = false,
-    startingTopup = false;
-  var $ = function (id) {
-    return document.getElementById(id);
-  };
-
-  function localRequest(path, method, data) {
-    return new Promise(function (resolve, reject) {
-      var xhr = new XMLHttpRequest();
-      var query =
-        method === 'GET' && data && Object.keys(data).length
-          ? '?' + new URLSearchParams(data).toString()
-          : '';
-      if (!selected) return reject(new Error('No local vendo is selected.'));
-      xhr.open(method || 'GET', selected.baseUrl + path + query, true);
-      xhr.timeout = 7000;
-      xhr.onload = function () {
-        var body = xhr.responseText;
-        try { body = JSON.parse(body); } catch (_) {}
-        resolve({ ok: xhr.status >= 200 && xhr.status < 300, status: xhr.status, body: body });
-      };
-      xhr.onerror = function () { reject(new Error('The local vendo is unreachable.')); };
-      xhr.ontimeout = function () { reject(new Error('The local vendo timed out.')); };
-      if (method === 'POST') {
-        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-        xhr.send(new URLSearchParams(data || {}).toString());
-      } else xhr.send();
-    });
-  }
+  var parentOrigin = "*", context = {}, vendos = [], selected = null;
+  var pending = Object.create(null), sequence = 0, pollTimer = null, activeVoucher = "";
+  var $ = function (id) { return document.getElementById(id); };
 
   function alertMessage(message) {
-    var el = $('compat-alert');
-    el.textContent = message || '';
+    var el = $("compat-alert");
+    el.textContent = message || "";
     el.hidden = !message;
   }
 
   function rpc(path, method, data) {
-    if (window.PIXIEPOINT_BOOTSTRAP) return localRequest(path, method || 'GET', data || {});
     return new Promise(function (resolve, reject) {
-      var id = 'rpc-' + ++sequence + '-' + Date.now();
+      var id = "rpc-" + (++sequence) + "-" + Date.now();
       var timeout = setTimeout(function () {
         delete pending[id];
-        reject(new Error('The local vendo did not respond.'));
+        reject(new Error("The local vendo did not respond."));
       }, 9000);
       pending[id] = { resolve: resolve, reject: reject, timeout: timeout };
-      window.parent.postMessage({
-        type: 'pixiepoint:request', id: id, vendoId: selected && selected.id,
-        path: path, method: method || 'GET', data: data || {},
-      }, parentOrigin);
+      window.parent.postMessage({ type: "pixiepoint:request", id: id, vendoId: selected && selected.id, path: path, method: method || "GET", data: data || {} }, parentOrigin);
     });
   }
 
   function responseData(result) {
     var body = result && result.body;
-    if (body && typeof body === 'object') return body;
-    if (typeof body !== 'string') return {};
+    if (body && typeof body === "object") return body;
+    if (typeof body !== "string") return {};
     try { return JSON.parse(body); } catch (_) { return { raw: body }; }
   }
 
-  function isTrue(value) { return value === true || value === 'true' || value === 1 || value === '1'; }
-  function number(value) {
-    value = Number(value);
-    return Number.isFinite(value) && value > 0 ? value : 0;
-  }
-  function currentVoucher() {
-    var input = $('compat-voucher');
-    return input ? input.value.trim().toUpperCase() : '';
-  }
-  function setCurrentVoucher(voucher) {
-    voucher = String(voucher || '').trim().toUpperCase();
-    var input = $('compat-voucher');
-    if (input && voucher) input.value = voucher;
-    return voucher;
-  }
-  function setTopupActive(active) {
-    $('compat-topup').hidden = active;
-    $('compat-connect').hidden = active;
-    $('compat-transaction').hidden = !active;
-  }
+  function isTrue(value) { return value === true || value === "true" || value === 1 || value === "1"; }
+
   function setReady(ready, message) {
-    $('compat-topup').disabled = !ready;
-    $('compat-rates').disabled = !ready;
-    $('compat-health').textContent = message;
-    $('compat-health').className = 'compat-status ' + (ready ? 'online' : 'offline');
+    $("compat-topup").disabled = !ready;
+    $("compat-rates").disabled = !ready;
+    $("compat-health").textContent = message;
+    $("compat-health").className = "compat-status " + (ready ? "online" : "offline");
   }
+
   function health() {
     if (!selected) return;
-    rpc('/health').then(function (result) {
-      if (!result.ok) throw new Error('HTTP ' + result.status);
-      setReady(true, selected.name + ' is ready'); alertMessage('');
+    rpc("/health").then(function (result) {
+      if (!result.ok) throw new Error("HTTP " + result.status);
+      setReady(true, selected.name + " is ready");
+      alertMessage("");
     }).catch(function () {
-      setReady(false, selected.name + ' is unavailable');
-      alertMessage('PixiePoint is online, but this browser cannot reach the local coin slot. Check its power, Wi-Fi connection, and address.');
+      setReady(false, selected.name + " is unavailable");
+      alertMessage("PixiePoint is online, but this browser cannot reach the local coin slot. Check its power, Wi-Fi connection, and address.");
     });
   }
+
   function selectVendo() {
-    selected = vendos.filter(function (v) { return v.id === $('compat-vendo').value; })[0] || vendos[0] || null;
-    setReady(false, 'Checking the local vendo…'); health();
+    selected = vendos.filter(function (v) { return v.id === $("compat-vendo").value; })[0] || vendos[0] || null;
+    setReady(false, "Checking the local vendo…");
+    health();
   }
+
   function init(data) {
     context = data.context || {};
     vendos = data.vendos || [];
-    var select = $('compat-vendo');
-    select.textContent = '';
+    var select = $("compat-vendo");
+    select.textContent = "";
     vendos.forEach(function (vendo) {
-      var option = document.createElement('option');
+      var option = document.createElement("option");
       option.value = vendo.id;
       option.textContent = vendo.name;
       if (vendo.interfaceName && vendo.interfaceName === context.interfaceName) option.selected = true;
       select.appendChild(option);
     });
     if (!vendos.length) {
-      setReady(false, 'No local vendo configured');
-      alertMessage('The operator has not configured a coin slot for this hotspot.');
+      setReady(false, "No local vendo configured");
+      alertMessage("The operator has not configured a coin slot for this hotspot.");
       return;
     }
-    $('compat-charging').hidden = !vendos.some(function (v) { return v.chargingEnabled; });
-    $('compat-eload').hidden = !vendos.some(function (v) { return v.eloadEnabled; });
     selectVendo();
   }
+
   function generatedVoucher(data) {
-    return String(data.voucher || data.voucherCode || data.code || '').trim().toUpperCase();
+    return String(data.voucher || data.voucherCode || data.code || "").trim();
   }
-  function transactionAmount(data) {
-    if (data.totalCoin !== undefined) return number(data.totalCoin);
-    if (data.amount !== undefined) return number(data.amount);
-    if (data.coin !== undefined) return number(data.coin);
-    return null;
-  }
+
   function displayTransaction(data) {
     activeVoucher = generatedVoucher(data) || activeVoucher;
-    if (transactionMode === 'internet') setCurrentVoucher(activeVoucher);
-    var amount = transactionAmount(data);
-    if (amount !== null) totalCoinReceived = amount;
-    $('compat-code').textContent = activeVoucher || 'Preparing…';
-    $('compat-amount').textContent = '₱' + totalCoinReceived;
-    var seconds = number(data.timeAdded || 0);
-    var time = data.time || data.minutes || data.duration;
-    if (!time && seconds) time = Math.floor(seconds / 3600) + 'h ' + Math.floor((seconds % 3600) / 60) + 'm';
-    $('compat-time').textContent = time || '—';
-    setTopupActive(true);
-    $('compat-finish').disabled = totalCoinReceived <= 0;
-    $('compat-cancel').disabled = totalCoinReceived > 0;
-  }
-  function updateCountdown(data) {
-    var remainMs = number(data.remainTime), waitMs = number(data.waitTime);
-    var percent = waitMs > 0 ? Math.max(0, Math.min(100, (remainMs / waitMs) * 100)) : 100;
-    var seconds = Math.max(0, Math.floor(remainMs / 1000));
-    $('compat-progress-bar').style.width = percent + '%';
-    $('compat-countdown').textContent = seconds > 0 ? seconds + 's' : '0s';
-    return seconds;
-  }
-  function resetTransaction(message) {
-    clearTimeout(pollTimer); pollTimer = null; activeVoucher = ''; totalCoinReceived = 0; finalizingTopup = false; startingTopup = false;
-    setTopupActive(false); $('compat-progress-bar').style.width = '100%'; $('compat-countdown').textContent = 'Waiting…';
-    $('compat-finish').disabled = true; $('compat-cancel').disabled = false; $('compat-topup').disabled = false;
-    if (message) alertMessage(message);
+    $("compat-code").textContent = activeVoucher || "Preparing…";
+    $("compat-amount").textContent = "₱" + (data.totalCoin || data.amount || data.coin || 0);
+    var seconds = Number(data.timeAdded || 0), time = data.time || data.minutes || data.duration;
+    if (!time && seconds) time = Math.floor(seconds / 3600) + "h " + Math.floor((seconds % 3600) / 60) + "m";
+    $("compat-time").textContent = time || "—";
+    $("compat-transaction").hidden = false;
   }
 
-  function login(voucher) {
-    voucher = String(voucher || '').trim().toUpperCase();
-    if (!voucher) return;
-    if (window.PIXIEPOINT_BOOTSTRAP) {
-      var password = selected && selected.passwordMode === 'voucher' ? voucher : '';
-      var chap = window.PIXIEPOINT_CHAP || {};
-      var form = chap.id ? $('chap-login') : $('pap-login');
-      if (!form || !form.username || !form.password) {
-        alertMessage('The hotspot login form is unavailable. Please reload the Wi-Fi portal.');
-        return;
-      }
-      form.username.value = voucher;
-      form.password.value = chap.id ? hexMD5(chap.id + password + chap.challenge) : password;
-      form.submit();
-      return;
-    }
-    window.parent.postMessage({ type: 'pixiepoint:login', voucher: voucher, vendoId: selected && selected.id }, parentOrigin);
-  }
-
-  function finishTopup(autoLogin) {
-    if (finalizingTopup || !activeVoucher || totalCoinReceived <= 0) return;
-    finalizingTopup = true; clearTimeout(pollTimer); pollTimer = null;
-    $('compat-finish').disabled = true; $('compat-cancel').disabled = true;
-    $('compat-progress').textContent = autoLogin ? 'Connecting…' : 'Saving credit…';
-    if (autoLogin) {
-      if (transactionMode === 'internet') { setCurrentVoucher(activeVoucher); login(activeVoucher); }
-      else resetTransaction('Charging time was added successfully.');
-      return;
-    }
-    rpc('/useVoucher', 'POST', { voucher: activeVoucher }).then(function (result) {
-      var data = responseData(result);
-      if (!result.ok || (!isTrue(data.status) && !isTrue(data.success))) throw new Error(data.message || data.errorCode || 'The voucher could not be activated.');
-      if (transactionMode === 'internet') { setCurrentVoucher(activeVoucher); login(activeVoucher); }
-      else resetTransaction('Charging time was added successfully.');
-    }).catch(function (error) {
-      finalizingTopup = false; $('compat-finish').disabled = totalCoinReceived <= 0; $('compat-progress').textContent = error.message;
-    });
-  }
-  function cancelTopup(autoCancel) {
-    if (!activeVoucher) { resetTransaction(); return; }
-    if (totalCoinReceived > 0) return;
-    clearTimeout(pollTimer); pollTimer = null; $('compat-cancel').disabled = true;
-    rpc('/cancelTopUp', 'POST', { voucher: activeVoucher, mac: context.mac || '' }).catch(function () {}).then(function () {
-      resetTransaction(autoCancel ? 'Coin slot closed.' : 'Coin insertion cancelled.');
-    });
-  }
-  function handleCoinTimeout() {
-    if (finalizingTopup) return;
-    clearTimeout(pollTimer); pollTimer = null;
-    if (totalCoinReceived > 0) finishTopup(true);
-    else resetTransaction('Coin slot expired.');
-  }
-  function handleCoinBusy() {
-    clearTimeout(pollTimer); pollTimer = null;
-    if (totalCoinReceived > 0) finishTopup(true);
-    else resetTransaction('Coin slot was cancelled.');
-  }
   function pollCoin() {
     clearTimeout(pollTimer);
-    if (!activeVoucher || finalizingTopup) return;
-    rpc('/checkCoin', 'POST', { voucher: activeVoucher }).then(function (result) {
-      var data = responseData(result), errorCode = String(data.errorCode || '');
-      if (result.ok && (isTrue(data.status) || isTrue(data.success))) {
-        displayTransaction(data); $('compat-progress').textContent = 'Coin received. Insert another coin or wait for the timer.';
-        $('compat-progress-bar').style.width = '100%'; $('compat-countdown').textContent = 'Renewed';
-      } else if (errorCode === 'coin.is.reading') {
-        $('compat-progress').textContent = 'Verifying coin, please wait…';
-      } else if (errorCode === 'coin.not.inserted') {
-        displayTransaction(data); var seconds = updateCountdown(data);
-        $('compat-progress').textContent = totalCoinReceived > 0 ? 'Insert another coin to renew the timer, or press Done.' : 'Waiting for coin…';
-        if (seconds <= 0) { handleCoinTimeout(); return; }
-      } else if (errorCode === 'coinslot.busy') {
-        handleCoinBusy(); return;
-      } else {
-        resetTransaction(data.message || errorCode || 'The coin slot reported an error.'); return;
+    if (!activeVoucher) return;
+    rpc("/checkCoin", "POST", { voucher: activeVoucher }).then(function (result) {
+      var data = responseData(result);
+      if (result.ok && (isTrue(data.status) || isTrue(data.success))) displayTransaction(data);
+      else if (data.errorCode !== "coin.not.inserted" && data.errorCode !== "coin.is.reading") {
+        throw new Error(data.message || "The coin slot reported an error.");
       }
       pollTimer = setTimeout(pollCoin, 1000);
     }).catch(function (error) {
-      $('compat-progress').textContent = error.message; pollTimer = setTimeout(pollCoin, 2500);
+      alertMessage(error.message);
+      pollTimer = setTimeout(pollCoin, 3000);
     });
   }
-  function startTopup(payload) {
-    if (startingTopup) return;
-    startingTopup = true;
-    rpc('/topUp', 'POST', payload).then(function (result) {
+
+  function beginTopup() {
+    alertMessage("");
+    $("compat-topup").disabled = true;
+    rpc("/topUp", "POST", { voucher: "", mac: context.mac || "" }).then(function (result) {
       var data = responseData(result);
-      startingTopup = false;
-      if (!result.ok || (!isTrue(data.status) && !isTrue(data.success))) {
-        resetTransaction(data.message || data.errorCode || 'The coin slot rejected the request.');
-        return;
-      }
-      activeVoucher = generatedVoucher(data) || activeVoucher;
-      if (!activeVoucher) { resetTransaction('The vendo did not return a voucher code.'); return; }
+      if (!result.ok || (!isTrue(data.status) && !isTrue(data.success))) throw new Error(data.message || data.errorCode || "The coin slot rejected the request.");
       displayTransaction(data);
-      $('compat-progress').textContent = 'Coin slot active. Insert a coin now.'; $('compat-progress-bar').style.width = '100%'; $('compat-countdown').textContent = 'Ready'; pollCoin();
+      if (!activeVoucher) throw new Error("The coin slot did not return a voucher code.");
+      pollCoin();
     }).catch(function (error) {
-      startingTopup = false;
-      resetTransaction(error.message || 'Coin slot is unavailable.');
+      alertMessage(error.message);
+      $("compat-topup").disabled = false;
     });
   }
-  function beginTopup(options) {
-    if (startingTopup || pollTimer || finalizingTopup) return;
-    options = options || {}; transactionMode = options.mode || 'internet'; alertMessage(''); totalCoinReceived = 0; finalizingTopup = false;
-    $('compat-topup').disabled = true; $('compat-finish').disabled = true; $('compat-cancel').disabled = false;
-    var voucher = options.voucher || (transactionMode === 'internet' ? currentVoucher() : '');
-    activeVoucher = String(voucher || '').trim().toUpperCase();
-    if (transactionMode === 'internet' && activeVoucher) setCurrentVoucher(activeVoucher);
-    $('compat-code').textContent = activeVoucher || 'Generating…'; $('compat-amount').textContent = '₱0'; $('compat-time').textContent = '—';
-    $('compat-progress').textContent = 'Activating coin slot…'; $('compat-progress-bar').style.width = '100%'; $('compat-countdown').textContent = 'Starting…'; setTopupActive(true);
-    var payload = { voucher: activeVoucher, mac: context.mac || '', ipAddress: context.ip || '', extendTime: 0 };
-    if (options.chargerPort !== undefined) { payload.topupType = 'CHARGER'; payload.chargerPort = options.chargerPort; }
-    startTopup(payload);
+
+  function login(voucher) {
+    window.parent.postMessage({ type: "pixiepoint:login", voucher: voucher, vendoId: selected && selected.id }, parentOrigin);
   }
+
+  function finishTopup() {
+    clearTimeout(pollTimer);
+    rpc("/useVoucher", "POST", { voucher: activeVoucher }).then(function (result) {
+      var data = responseData(result);
+      if (!result.ok || (!isTrue(data.status) && !isTrue(data.success))) throw new Error(data.message || data.errorCode || "The voucher could not be activated.");
+      login(activeVoucher);
+    }).catch(function (error) { alertMessage(error.message); });
+  }
+
+  function cancelTopup() {
+    clearTimeout(pollTimer);
+    rpc("/cancelTopUp", "POST", { voucher: activeVoucher, mac: context.mac || "" }).catch(function () {}).then(function () {
+      activeVoucher = "";
+      $("compat-transaction").hidden = true;
+      $("compat-topup").disabled = false;
+    });
+  }
+
   function showRates() {
-    var list = $('compat-rate-list'), modalElement = $('compat-rates-modal');
-    if (!list || !modalElement) return;
-    list.textContent = 'Loading rates…';
-    var modal = window.bootstrap && bootstrap.Modal ? bootstrap.Modal.getOrCreateInstance(modalElement) : null;
-    if (modal) modal.show();
-    rpc('/getRates?rateType=1&date=' + encodeURIComponent(new Date().toISOString()), 'GET').then(function (result) {
-      if (!result.ok) throw new Error('Rates are unavailable.');
-      var data = responseData(result), rates = Array.isArray(data) ? data : data.rates || [];
-      if (!rates.length && typeof data.raw === 'string') rates = data.raw.split('|').filter(Boolean).map(function (row) { var column = row.split('#'); return { amount: column[0], minutes: column[3], data: column[4] }; });
-      list.textContent = '';
+    rpc("/getRates?rateType=1&date=" + encodeURIComponent(new Date().toISOString()), "GET").then(function (result) {
+      if (!result.ok) throw new Error("Rates are unavailable.");
+      var data = responseData(result), rates = Array.isArray(data) ? data : (data.rates || []);
+      var list = $("compat-rate-list");
+      list.textContent = "";
       rates.forEach(function (rate) {
-        var row = document.createElement('div'); row.className = 'compat-rate py-2 border-bottom';
-        row.textContent = '₱' + (rate.amount || rate.price || rate.coin || '—') + ' · ' + (rate.time || rate.minutes || rate.duration || '—') + (rate.data ? ' · ' + rate.data + ' MB' : '');
+        var row = document.createElement("div");
+        row.className = "compat-rate";
+        row.textContent = "₱" + (rate.amount || rate.price || rate.coin || "—") + " · " + (rate.time || rate.minutes || rate.duration || "—");
         list.appendChild(row);
       });
-      if (!rates.length && typeof data.raw === 'string') list.textContent = data.raw;
-      if (!rates.length && typeof data.raw !== 'string') list.textContent = 'No rates were returned.';
-    }).catch(function (error) { list.textContent = error.message; });
-  }
-  function showCharging() {
-    rpc('/getChargingStation', 'GET', { date: Date.now() }).then(function (result) {
-      if (!result.ok) throw new Error('Charging stations are unavailable.');
-      var data = responseData(result), raw = typeof data.raw === 'string' ? data.raw : '', list = $('compat-charger-list');
-      list.textContent = '';
-      raw.split('|').filter(Boolean).forEach(function (value, index) {
-        var column = value.split('#'); if (column[1] === '-1') return;
-        var row = document.createElement('div'), button = document.createElement('button'); row.className = 'compat-rate';
-        row.appendChild(document.createTextNode((column[0] || 'Charging port ' + (index + 1)) + (Number(column[3]) * 1000 > Date.now() ? ' · In use' : ' · Available')));
-        button.className = 'button secondary'; button.type = 'button'; button.textContent = 'Add charging time'; button.disabled = Number(column[3]) * 1000 > Date.now();
-        button.addEventListener('click', function () { beginTopup({ voucher: column[0], chargerPort: index, mode: 'charger' }); }); row.appendChild(button); list.appendChild(row);
-      });
-      if (!list.childNodes.length) list.textContent = 'No charging ports are configured.';
+      if (!rates.length) list.textContent = typeof data.raw === "string" ? data.raw : "No rates were returned.";
       list.hidden = false;
     }).catch(function (error) { alertMessage(error.message); });
   }
-  function showEload() {
-    var panel = $('compat-eload-panel'), products = $('compat-eload-products'); panel.hidden = false; products.textContent = 'Contacting the JuanFi e-load service…';
-    rpc('/eload/rates', 'GET', { date: Date.now() }).then(function (result) {
-      if (!result.ok) throw new Error('E-load rates are unavailable.');
-      var data = responseData(result); if (data.raw === 'disabled') throw new Error('E-load is disabled on this vendo.');
-      products.textContent = 'The vendo returned its compressed product catalog. Full product checkout requires binary catalog decoding and will remain unavailable until it passes a physical-device test.';
-    }).catch(function (error) { products.textContent = error.message; });
-  }
 
-  window.addEventListener('message', function (event) {
+  window.addEventListener("message", function (event) {
     var data = event.data || {};
-    if (data.type === 'pixiepoint:init') { parentOrigin = event.origin; init(data); }
-    else if (data.type === 'pixiepoint:response' && pending[data.id]) {
-      var request = pending[data.id]; clearTimeout(request.timeout); delete pending[data.id]; data.error ? request.reject(new Error(data.error)) : request.resolve(data.result || {});
+    if (data.type === "pixiepoint:init") {
+      parentOrigin = event.origin;
+      init(data);
+    } else if (data.type === "pixiepoint:response" && pending[data.id]) {
+      var request = pending[data.id];
+      clearTimeout(request.timeout);
+      delete pending[data.id];
+      data.error ? request.reject(new Error(data.error)) : request.resolve(data.result || {});
     }
   });
-  $('compat-vendo').addEventListener('change', selectVendo);
-  $('compat-topup').addEventListener('click', function () { beginTopup({ voucher: currentVoucher(), mode: 'internet' }); });
-  $('compat-finish').addEventListener('click', function () { finishTopup(false); });
-  $('compat-cancel').addEventListener('click', function () { cancelTopup(false); });
-  $('compat-rates').addEventListener('click', showRates);
-  $('compat-charging').addEventListener('click', showCharging);
-  $('compat-eload').addEventListener('click', showEload);
-  $('compat-voucher-form').addEventListener('submit', function (event) { event.preventDefault(); login(currentVoucher()); });
-  if (window.PIXIEPOINT_BOOTSTRAP) init({ context: window.PIXIEPOINT_CONTEXT || {}, vendos: window.PIXIEPOINT_VENDOS || [] });
-  else window.parent.postMessage({ type: 'pixiepoint:ready' }, '*');
-})();
+
+  $("compat-vendo").addEventListener("change", selectVendo);
+  $("compat-topup").addEventListener("click", beginTopup);
+  $("compat-finish").addEventListener("click", finishTopup);
+  $("compat-cancel").addEventListener("click", cancelTopup);
+  $("compat-rates").addEventListener("click", showRates);
+  $("compat-voucher-form").addEventListener("submit", function (event) {
+    event.preventDefault();
+    login($("compat-voucher").value.trim().toUpperCase());
+  });
+  window.parent.postMessage({ type: "pixiepoint:ready" }, "*");
+}());
