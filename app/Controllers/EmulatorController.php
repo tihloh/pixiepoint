@@ -10,14 +10,8 @@ use PixiePoint\App\Services\AuthContext;
 final class EmulatorController
 {
     private const PAGES = [
-        'login.html',
-        'status.html',
-        'logout.html',
-        'alogin.html',
-        'redirect.html',
-        'error.html',
-        'flogin.html',
-        'rlogin.html',
+        'login.html', 'status.html', 'logout.html', 'alogin.html',
+        'redirect.html', 'error.html', 'flogin.html', 'rlogin.html',
     ];
 
     private string $hotspotRoot;
@@ -34,9 +28,8 @@ final class EmulatorController
         if (isset($_GET['asset'])) {
             $this->asset((string) $_GET['asset']);
         }
-
         if (isset($_GET['page'])) {
-            $thisspotPage((string) $_GET['page']);
+            $this->hotspotPage((string) $_GET['page']);
         }
 
         $user = $this->auth->requireAccount();
@@ -76,7 +69,6 @@ final class EmulatorController
             http_response_code(404);
             exit('Hotspot page not found.');
         }
-
         header('Content-Type: text/html; charset=utf-8');
         header('Cache-Control: no-store, no-cache, must-revalidate');
         echo $this->readHotspotFile($page);
@@ -90,13 +82,11 @@ final class EmulatorController
             http_response_code(404);
             exit('Hotspot asset not found.');
         }
-
         $path = $this->resolveHotspotFile($asset);
         if ($path === null) {
             http_response_code(404);
             exit('Hotspot asset not found.');
         }
-
         $extension = strtolower(pathinfo($path, PATHINFO_EXTENSION));
         $types = [
             'css' => 'text/css; charset=utf-8',
@@ -132,13 +122,11 @@ final class EmulatorController
         if ($relativePath === '' || str_contains($relativePath, "\0") || str_contains($relativePath, '..') || str_starts_with($relativePath, '/')) {
             return null;
         }
-
         $root = realpath($this->hotspotRoot);
         $path = realpath($this->hotspotRoot . '/' . $relativePath);
         if ($root === false || $path === false || !is_file($path)) {
             return null;
         }
-
         $prefix = rtrim($root, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
         return str_starts_with($path, $prefix) ? $path : null;
     }
