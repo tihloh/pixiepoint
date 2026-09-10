@@ -42,26 +42,180 @@ final class ThemeEngine
         ];
 
         foreach ($this->flatten($context->data) as $key => $value) {
-            $values[$key] = is_scalar($value) ? (string) $value : '';
+            $values[$key] = $value;
+        }
+        foreach ($features as $key => $enabled) {
+            $values['feature.' . $key] = (bool) $enabled;
         }
 
-        $html = preg_replace_callback(
-            '/\{\{\s*(html:)?([a-zA-Z0-9_.-]+)\s*\}\}/',
-            static function (array $m) use ($values): string {
-                $value = (string) ($values[$m[2]] ?? '');
-
-                return $m[1] !== null && $m[1] !== '' ? $value : e($value);
-            },
-            $html,
-        ) ?? $html;
-
+        $html = $this->renderConditionals($html, $values, $features);
+        $html = $this->renderVariables($html, $values);
         $html = $this->injectThemeAssets($html, $slug);
         $html = $this->appendDebugPanel($html, $values, $features, $data['portal']['debug'] ?? null);
 
         return $adapter->transform($html, $context);
     }
 
-    /** @param array<string,string> $values @param array<string,bool> $features */
+    /** @param array<string,mixed> $values */
+    private function renderVariables(string $html, array $values): string
+    {
+        return preg_replace_callback(
+            '/\{\{\s*(html:)?([a-zA-Z0-9_.-]+)\s*\}\}/',
+            static function (array $m) use ($values): string {
+                $value = $values[$m[2]] ?? '';
+                if (is_bool($value)) {
+                    $value = $value ? 'true' : 'false';
+                } elseif (!is_scalar($value)) {
+                    $value = '';
+                }
+                $value = (string) $value;
+
+                return $m[1] !== null && $m[1] !== '' ? $value : e($value);
+            },
+            $html,
+        ) ?? $html;
+    }
+
+    /**
+     * Supported blocks:
+     * {{#if portal.state == "login"}}...{{else}}...{{/if}}
+     * {{#unless client.authenticated}}...{{/unless}}
+     * {{#feature coin_slot}}...{{else}}...{{/feature}}
+     * Blocks may be nested.
+     *
+     * @param array<string,mixed> $values
+     * @param array<string,bool> $features
+     */
+    private function renderConditionals(string $html, array $values, array $features): string
+    {
+        $pattern = '/\{\{\s*#(if|unless|feature)\s+([^{}]+?)\s*\}\}((?:(?!\{\{\s*#(?:if|unless|feature)\b|\{\{\s*\/(?:if|unless|feature)\s*\}\}).)*)\{\{\s*\/\1\s*\}\}/s';
+        $guard = 0;
+
+        while ($guard++ < 100 && preg_match($pattern, $html)) {
+            $html = preg_replace_callback($pattern, function (array $m) use ($values, $features): string {
+                $type = $m[1];
+                $expression = trim($m[2]);
+                $body = $m[3];
+                $parts = preg_split('/\{\{\s*else\s*\}\}/', $body, 2) ?: [$body];
+                $truthy = $type === 'feature'
+                    ? (bool) ($features[$expression] ?? false)
+                    : $this->evaluateCondition($expression, $values);
+
+                if ($type === 'unless') {
+                    $truthy = !$truthy;
+                }
+
+                return $truthy ? ($parts[0] ?? '') : ($parts[1] ?? '');
+            }, $html, 1) ?? $html;
+        }
+
+        return $html;
+    }
+
+    /** @param array<string,mixed> $values */
+    private function evaluateCondition(string $expression, array $values): bool
+    {
+        foreach ($this->splitExpression($expression, '||') as $orPart) {
+            $andResult = true;
+            foreach ($this->splitExpression($orPart, '&&') as $andPart) {
+                if (!$this->evaluateAtomicCondition(trim($andPart), $values)) {
+                    $andResult = false;
+                    break;
+                }
+            }
+            if ($andResult) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /** @return array<int,string> */
+    private function splitExpression(string $expression, string $operator): array
+    {
+        $parts = [];
+        $buffer = '';
+        $quote = null;
+        $length = strlen($expression);
+
+        for ($i = 0; $i < $length; $i++) {
+            $char = $expression[$i];
+            if (($char === '"' || $char === "'") && ($i === 0 || $expression[$i - 1] !== '\\')) {
+                $quote = $quote === null ? $char : ($quote === $char ? null : $quote);
+            }
+            if ($quote === null && substr($expression, $i, strlen($operator)) === $operator) {
+                $parts[] = trim($buffer);
+                $buffer = '';
+                $i += strlen($operator) - 1;
+                continue;
+            }
+            $buffer .= $char;
+        }
+
+        $parts[] = trim($buffer);
+        return $parts;
+    }
+
+    /** @param array<string,mixed> $values */
+    private function evaluateAtomicCondition(string $expression, array $values): bool
+    {
+        if ($expression === '') {
+            return false;
+        }
+
+        if ($expression[0] === '!' && !str_starts_with($expression, '!=')) {
+            return !$this->truthy($this->resolveOperand(substr($expression, 1), $values));
+        }
+
+        if (preg_match('/^(.+?)\s*(===|!==|==|!=|>=|<=|>|<)\s*(.+)$/', $expression, $m)) {
+            $left = $this->resolveOperand(trim($m[1]), $values);
+            $right = $this->resolveOperand(trim($m[3]), $values);
+
+            return match ($m[2]) {
+                '===', '==' => $left == $right,
+                '!==', '!=' => $left != $right,
+                '>' => $left > $right,
+                '>=' => $left >= $right,
+                '<' => $left < $right,
+                '<=' => $left <= $right,
+                default => false,
+            };
+        }
+
+        return $this->truthy($this->resolveOperand($expression, $values));
+    }
+
+    /** @param array<string,mixed> $values */
+    private function resolveOperand(string $operand, array $values): mixed
+    {
+        $operand = trim($operand);
+        $length = strlen($operand);
+        if ($length >= 2 && (($operand[0] === '"' && $operand[$length - 1] === '"') || ($operand[0] === "'" && $operand[$length - 1] === "'"))) {
+            return stripcslashes(substr($operand, 1, -1));
+        }
+
+        $lower = strtolower($operand);
+        if ($lower === 'true') return true;
+        if ($lower === 'false') return false;
+        if ($lower === 'null') return null;
+        if (is_numeric($operand)) return str_contains($operand, '.') ? (float) $operand : (int) $operand;
+
+        return $values[$operand] ?? null;
+    }
+
+    private function truthy(mixed $value): bool
+    {
+        if (is_bool($value)) return $value;
+        if ($value === null) return false;
+        if (is_int($value) || is_float($value)) return $value != 0;
+        if (is_array($value)) return $value !== [];
+
+        $value = strtolower(trim((string) $value));
+        return $value !== '' && !in_array($value, ['0', 'false', 'null', 'no', 'off'], true);
+    }
+
+    /** @param array<string,mixed> $values @param array<string,bool> $features */
     private function appendDebugPanel(string $html, array $values, array $features, mixed $debug): string
     {
         if (!is_array($debug) || $debug === []) {
@@ -70,11 +224,11 @@ final class ThemeEngine
 
         $placeholderRows = '';
         foreach ($values as $key => $value) {
-            $display = trim((string) $value);
-            if ($display === '') {
+            $display = is_scalar($value) || $value === null ? trim((string) $value) : json_encode($value, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+            if ($display === '' || $display === false) {
                 $display = '∅';
             }
-            $placeholderRows .= '<tr><th scope="row">{{ ' . e($key) . ' }}</th><td><pre>' . e($display) . '</pre></td></tr>';
+            $placeholderRows .= '<tr><th scope="row">{{ ' . e($key) . ' }}</th><td><pre>' . e((string) $display) . '</pre></td></tr>';
         }
 
         $featureRows = '';
