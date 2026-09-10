@@ -1,55 +1,78 @@
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css">
-<main id="pp-page" class="portal-theme-shell">
-    <section id="pp-login-card" class="portal-card p-4">
-        <div id="compat-app">
-            <div id="compat-brand" class="brand mb-3">{{ portal.name }}</div>
-            <h1 id="compat-title" class="h3 mb-2">Connect to Wi-Fi</h1>
-            <p id="compat-description" class="muted mb-4">Insert coins or enter an existing voucher.</p>
-            <div id="compat-alert" class="alert mb-3" hidden></div>
-            <div id="compat-topup-slot" class="mb-3">
-                <label for="compat-vendo" class="form-label">Vendo</label>
-                <select id="compat-vendo" class="form-select">{{ html:portal.vendo_options }}</select>
-                <small id="compat-health" class="compat-status">Checking the local Vendo…</small>
-            </div>
-            <form id="compat-voucher-form" class="compat-voucher mb-3">
-                <label for="compat-voucher" class="form-label">Voucher</label>
-                <div class="input-group">
-                    <input id="compat-voucher" class="form-control" value="{{ portal.device.last_voucher }}" autocomplete="one-time-code" autocapitalize="characters" required>
-                    <button id="compat-connect" class="button" type="submit">Connect</button>
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+    <meta name="theme-color" content="#07111f">
+    <title>{{ portal.name }} Wi-Fi</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css">
+</head>
+<body>
+<main id="pixiepoint-root">
+    <main id="pp-page" class="portal-theme-shell">
+        <section id="pp-login-card" class="portal-card p-4 shadow">
+            <div id="compat-app">
+                <div id="compat-brand" class="brand mb-3">{{ portal.name }}</div>
+                <h1 id="compat-title" class="h3 mb-2">Connect to Wi-Fi</h1>
+                <p id="compat-description" class="muted mb-4">Insert coins or enter an existing voucher.</p>
+                <div id="compat-alert" class="alert alert-warning mb-3" hidden></div>
+                <div id="compat-topup-slot" class="mb-3">
+                    <label for="compat-vendo" class="form-label">Vendo</label>
+                    <select id="compat-vendo" class="form-select">{{ html:portal.vendo_options }}</select>
+                    <small id="compat-health" class="compat-status d-block mt-2">Checking the local Vendo…</small>
                 </div>
-            </form>
-            <div class="d-grid gap-2 mb-3">
-                <button id="compat-topup" class="button full" type="button" disabled>Insert coin</button>
-                <button id="compat-rates" class="button secondary full" type="button" disabled>View rates</button>
-            </div>
-            <div id="compat-tools" class="compat-tools mb-3">
-                <button id="compat-charging" class="button secondary" type="button" hidden>Phone charging</button>
-                <button id="compat-eload" class="button secondary" type="button" hidden>Buy e-load</button>
-            </div>
-            <div id="compat-transaction" class="compat-transaction" hidden>
-                <div class="mb-3"><small class="d-block">Your voucher</small><strong id="compat-code" class="d-block">—</strong></div>
-                <div class="context mb-3"><div><small>Coin total</small><span id="compat-amount">₱0</span></div><div><small>Time</small><span id="compat-time">—</span></div></div>
-                <div class="progress mb-2"><div id="compat-progress-bar" class="progress-bar" style="width:100%"></div></div>
-                <div id="compat-countdown" class="mb-2">Waiting…</div>
-                <p id="compat-progress" class="muted mb-3">Waiting for coins…</p>
-                <div class="actions"><button id="compat-finish" class="button" type="button" disabled>Done &amp; connect</button><button id="compat-cancel" class="button secondary" type="button">Cancel</button></div>
-            </div>
-            <div id="compat-charger-list" hidden></div>
-            <div id="compat-eload-panel" hidden><div id="compat-eload-products">Loading products…</div></div>
-            <div id="pp-device-info" class="table-responsive mt-4">
-                <table class="table table-sm align-middle mb-0"><tbody>
+                <form id="compat-voucher-form" class="compat-voucher mb-3">
+                    <label for="compat-voucher" class="form-label">Voucher</label>
+                    <div class="input-group">
+                        <input id="compat-voucher" class="form-control" value="{{ portal.device.last_voucher }}" autocomplete="one-time-code" autocapitalize="characters" required>
+                        <button id="compat-connect" class="btn btn-primary" type="submit">Connect</button>
+                    </div>
+                </form>
+                <div class="d-grid gap-2 mb-3">
+                    <button id="compat-topup" class="btn btn-primary" type="button" disabled>Insert coin</button>
+                    <button id="compat-rates" class="btn btn-outline-secondary" type="button" disabled>View rates</button>
+                </div>
+                <div id="compat-tools" class="d-flex flex-wrap gap-2 mb-3">
+                    <button id="compat-charging" class="btn btn-outline-secondary" type="button" hidden>Phone charging</button>
+                    <button id="compat-eload" class="btn btn-outline-secondary" type="button" hidden>Buy e-load</button>
+                </div>
+                <div id="compat-transaction" class="compat-transaction" hidden>
+                    <div class="mb-3"><small class="d-block">Your voucher</small><strong id="compat-code" class="d-block">—</strong></div>
+                    <div class="context mb-3"><div><small>Coin total</small><span id="compat-amount">₱0</span></div><div><small>Time</small><span id="compat-time">—</span></div></div>
+                    <div class="progress mb-2"><div id="compat-progress-bar" class="progress-bar" style="width:100%"></div></div>
+                    <div id="compat-countdown" class="mb-2">Waiting…</div>
+                    <p id="compat-progress" class="muted mb-3">Waiting for coins…</p>
+                    <div class="d-flex gap-2"><button id="compat-finish" class="btn btn-primary" type="button" disabled>Done &amp; connect</button><button id="compat-cancel" class="btn btn-outline-secondary" type="button">Cancel</button></div>
+                </div>
+                <div id="compat-charger-list" hidden></div>
+                <div id="compat-eload-panel" hidden><div id="compat-eload-products">Loading products…</div></div>
+                <div id="pp-device-info" class="table-responsive mt-4"><table class="table table-sm align-middle mb-0"><tbody>
                     <tr><th scope="row">Device</th><td id="pp-device-account" class="text-end">{{ portal.device.account }}</td></tr>
                     <tr><th scope="row">Points</th><td id="pp-device-points" class="text-end fw-semibold">{{ portal.device.points }}</td></tr>
                     <tr><th scope="row">IP address</th><td id="pp-device-ip" class="text-end text-break">{{ portal.device.ip }}</td></tr>
                     <tr><th scope="row">MAC address</th><td id="pp-device-mac" class="text-end text-break">{{ portal.device.mac }}</td></tr>
-                </tbody></table>
+                </tbody></table></div>
             </div>
-        </div>
-    </section>
-    <div class="modal fade" id="compat-rates-modal" tabindex="-1" aria-labelledby="compat-rates-title" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h2 id="compat-rates-title" class="modal-title fs-5">Wi-Fi Rates</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div><div class="modal-body"><div id="compat-rate-list">Loading rates…</div></div></div></div>
-    </div>
-    <form id="chap-login" method="post" hidden><input name="username"><input name="password"><input name="dst"><input name="popup" value="true"></form>
-    <form id="pap-login" method="post" hidden><input name="username"><input name="password"><input name="dst"><input name="popup" value="true"></form>
+        </section>
+        <div class="modal fade" id="compat-rates-modal" tabindex="-1" aria-labelledby="compat-rates-title" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h2 id="compat-rates-title" class="modal-title fs-5">Wi-Fi Rates</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div><div class="modal-body"><div id="compat-rate-list">Loading rates…</div></div></div></div></div>
+        <form id="chap-login" method="post" hidden><input name="username"><input name="password"><input name="dst"><input name="popup" value="true"></form>
+        <form id="pap-login" method="post" hidden><input name="username"><input name="password"><input name="dst"><input name="popup" value="true"></form>
+    </main>
 </main>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/assets/md5.js"></script>
+<script>
+(function () {
+    var q = new URLSearchParams(location.search);
+    var context = { mac:q.get('mac')||'', ip:q.get('client_ip')||'', username:q.get('username')||'', routerIdentity:q.get('router_identity')||'', interfaceName:q.get('interface')||'', serverAddress:q.get('server_address')||'', loginUrl:q.get('login_url')||'', originalUrl:q.get('original_url')||'', error:q.get('error')||'' };
+    window.PIXIEPOINT_CONTEXT = context;
+    window.PIXIEPOINT_CHAP = { id:q.get('chap_id')||'', challenge:q.get('chap_challenge')||'' };
+    window.PIXIEPOINT_BOOTSTRAP = true;
+    window.PIXIEPOINT_VENDOS = Array.from(document.querySelectorAll('#compat-vendo option')).map(function (o) { return { id:o.value, name:o.textContent.trim(), baseUrl:o.dataset.baseUrl||'', passwordMode:o.dataset.passwordMode||'blank', chargingEnabled:o.dataset.charging==='1', eloadEnabled:o.dataset.eload==='1' }; });
+    ['chap-login','pap-login'].forEach(function (id) { var form=document.getElementById(id); if(!form)return; form.action=context.loginUrl||''; var dst=form.elements.namedItem('dst'); if(dst)dst.value=context.originalUrl||''; });
+})();
+</script>
+<script src="/assets/juanfi-compat.js"></script>
+<script src="/assets/device-info.js"></script>
+</body>
+</html>
