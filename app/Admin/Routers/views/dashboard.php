@@ -36,7 +36,7 @@ $featureOn=static fn(string $key):bool=>(bool)($portalFeatures[$key]['value']??i
 <section class="panel" id="stations">
     <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-2 mb-3">
         <div><h2 class="mb-1">Hotspot stations</h2><p class="muted mb-0">Stations connected to this router. Configure Vendo hardware and station-level portal overrides here.</p></div>
-        <?php if($canManageStations):?><button class="button" type="button" data-bs-toggle="modal" data-bs-target="#stationModal" data-mode="create">Add station</button><?php endif;?>
+        <div class="d-flex gap-2"><a class="btn btn-outline-secondary" href="/admin/portal-themes">Portal themes</a><?php if($canManageStations):?><button class="button" type="button" data-bs-toggle="modal" data-bs-target="#stationModal" data-mode="create">Add station</button><?php endif;?></div>
     </div>
     <div class="table-responsive"><table class="table align-middle"><thead><tr><th>Name</th><th>Vendo</th><th>Server</th><th>Theme</th><th>Features</th><th>Status</th><?php if($canManageStations):?><th></th><?php endif;?></tr></thead><tbody>
     <?php foreach($stations as $v):$settings=$v['feature_settings']??[];$resolved=$v['resolved_features']??[];$hasVendo=(bool)($v['has_vendo']??false);?><tr>
