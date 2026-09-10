@@ -1,35 +1,33 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <meta name="theme-color" content="#07111f" />
-    <title>PixiePoint Wi-Fi</title>
-  </head>
-  <body>
-    <main id="pixiepoint-root">
-      <strong>PixiePoint Wi-Fi</strong>
-      <p id="boot-status">Opening your active session…</p>
-    </main>
-
-    <script>
-      window.PIXIEPOINT_SESSION = {
-        username: '$(username)',
-        mac: '$(mac)',
-        macEsc: '$(mac-esc)',
-        ip: '$(ip)',
-        routerIdentity: '$(identity)',
-        serverAddress: '$(server-address)',
-        interfaceName: '$(interface-name)',
-        sessionTimeLeft: '$(session-time-left-secs)',
-        bytesIn: '$(bytes-in)',
-        bytesOut: '$(bytes-out)',
-        remainBytesTotal: '$(remain-bytes-total)',
-        refreshUrl: '$(link-status)',
-        logoutUrl: '$(link-logout)',
-        loginUrl: '$(link-login)',
-      };
-    </script>
-    <script src="https://hs.portalx.win/assets/hotspot-loader.js?v=20260910-1"></script>
-  </body>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+  <title>Opening PixiePoint status…</title>
+  <meta http-equiv="refresh" content="0;url=https://hs.portalx.win/hotspot/status?router_identity=$(identity)&amp;server_address=$(server-address)&amp;client_ip=$(ip)&amp;interface=$(interface-name)&amp;mac=$(mac-esc)&amp;username=$(username)&amp;session_time_left=$(session-time-left-secs)&amp;bytes_in=$(bytes-in)&amp;bytes_out=$(bytes-out)&amp;remain_bytes_total=$(remain-bytes-total)&amp;uptime=$(uptime-secs)&amp;status_url=$(link-status)&amp;logout_url=$(link-logout)&amp;login_url=$(link-login)">
+</head>
+<body>
+  <p>Opening your PixiePoint session…</p>
+  <script>
+    (function () {
+      var p = new URLSearchParams();
+      p.set('router_identity', '$(identity)');
+      p.set('server_address', '$(server-address)');
+      p.set('client_ip', '$(ip)');
+      p.set('interface', '$(interface-name)');
+      p.set('mac', '$(mac)');
+      p.set('username', '$(username)');
+      p.set('session_time_left', '$(session-time-left-secs)');
+      p.set('bytes_in', '$(bytes-in)');
+      p.set('bytes_out', '$(bytes-out)');
+      p.set('remain_bytes_total', '$(remain-bytes-total)');
+      p.set('uptime', '$(uptime-secs)');
+      p.set('status_url', '$(link-status)');
+      p.set('logout_url', '$(link-logout)');
+      p.set('login_url', '$(link-login)');
+      location.replace('https://hs.portalx.win/hotspot/status?' + p.toString());
+    })();
+  </script>
+</body>
 </html>
