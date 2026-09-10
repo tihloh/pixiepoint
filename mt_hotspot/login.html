@@ -1,36 +1,30 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-    <meta name="theme-color" content="#07111f" />
-    <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate" />
-    <title>PixiePoint Wi-Fi</title>
-  </head>
-  <body>
-    <main id="pixiepoint-root">
-      <strong>PixiePoint Wi-Fi</strong>
-      <p id="boot-status">Checking the hosted portal…</p>
-    </main>
-
-    <script src="md5.js"></script>
-    <script>
-      window.PIXIEPOINT_CONTEXT = {
-        mac: '$(mac)',
-        macEsc: '$(mac-esc)',
-        ip: '$(ip)',
-        username: '$(username)',
-        routerIdentity: '$(identity)',
-        interfaceName: '$(interface-name)',
-        serverAddress: '$(server-address)',
-        sessionTimeLeft: '$(session-time-left-secs)',
-        loginUrl: '$(link-login-only)',
-        originalUrl: '$(link-orig)',
-        error: '$(error)',
-      };
-      window.PIXIEPOINT_CHAP = { id: '$(chap-id)', challenge: '$(chap-challenge)' };
-      window.PIXIEPOINT_BOOTSTRAP = true;
-    </script>
-    <script src="https://hs.portalx.win/assets/hotspot-loader.js?v=20260910-1"></script>
-  </body>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+  <title>Opening PixiePoint…</title>
+  <meta http-equiv="refresh" content="0;url=https://hs.portalx.win/hotspot/compat?router_identity=$(identity)&amp;server_address=$(server-address)&amp;client_ip=$(ip)&amp;interface=$(interface-name)&amp;mac=$(mac-esc)&amp;username=$(username)&amp;login_url=$(link-login-only)&amp;original_url=$(link-orig-esc)&amp;chap_id=$(chap-id)&amp;chap_challenge=$(chap-challenge)&amp;error=$(error)">
+</head>
+<body>
+  <p>Opening PixiePoint Wi-Fi portal…</p>
+  <script>
+    (function () {
+      var p = new URLSearchParams();
+      p.set('router_identity', '$(identity)');
+      p.set('server_address', '$(server-address)');
+      p.set('client_ip', '$(ip)');
+      p.set('interface', '$(interface-name)');
+      p.set('mac', '$(mac)');
+      p.set('username', '$(username)');
+      p.set('login_url', '$(link-login-only)');
+      p.set('original_url', '$(link-orig)');
+      p.set('chap_id', '$(chap-id)');
+      p.set('chap_challenge', '$(chap-challenge)');
+      p.set('error', '$(error)');
+      location.replace('https://hs.portalx.win/hotspot/compat?' + p.toString());
+    })();
+  </script>
+</body>
 </html>
