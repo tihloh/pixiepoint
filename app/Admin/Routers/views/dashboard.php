@@ -56,16 +56,6 @@ $featureOn=static fn(string $key):bool=>(bool)($portalFeatures[$key]['value']??i
     </tbody></table></div>
 </section>
 
-<section class="panel">
-    <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-2 mb-3"><div><h2 class="mb-1">Router overview</h2><p class="muted mb-0">Quick access to router data and activity.</p></div><span class="badge <?= $router['enabled']?'':'off' ?>"><?= $router['enabled']?'Enabled':'Disabled' ?></span></div>
-    <div class="row g-2">
-        <?php if(isset($metrics['vouchers'])):?><div class="col-sm-6 col-xl"><a class="btn btn-outline-secondary w-100" href="/admin/vouchers">Vouchers</a></div><?php endif;?>
-        <?php if(isset($metrics['devices'])):?><div class="col-sm-6 col-xl"><a class="btn btn-outline-secondary w-100" href="/admin/devices">Devices</a></div><?php endif;?>
-        <?php if(isset($metrics['sessions'])):?><div class="col-sm-6 col-xl"><a class="btn btn-outline-secondary w-100" href="/admin/sessions">Sessions</a></div><?php endif;?>
-        <?php if($canViewSales):?><div class="col-sm-6 col-xl"><a class="btn btn-outline-secondary w-100" href="/admin/sales">Sales</a></div><?php endif;?>
-    </div>
-</section>
-
 <?php if($recentSessions):?><section class="panel"><h2>Recent sessions</h2><table><thead><tr><th>Access</th><th>Device</th><th>Status</th><th>Updated</th></tr></thead><tbody><?php foreach($recentSessions as $session):?><tr><td><?= e($session['username']?:'—') ?></td><td class="code"><?= e($session['mac']?:'—') ?></td><td><span class="badge <?= $session['status']==='active'?'':'off' ?>"><?= e($session['status']) ?></span></td><td><?= e($session['updated_at']) ?></td></tr><?php endforeach;?></tbody></table></section><?php endif;?>
 
 <?php if($canManageRouter):?>
