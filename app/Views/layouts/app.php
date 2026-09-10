@@ -78,8 +78,6 @@ $sidebarReturn = preg_match('#^/(?:admin|dashboard)(?:/|$)#', $path) ? ($path . 
                         <a class="nav-link<?= $active('/dashboard') ?>" href="/dashboard">Dashboard</a>
                         <?php if ($access['sales'] ?? false): ?><a class="nav-link<?= $active('/admin/sales') ?>"
                                 href="/admin/sales">Sales</a><?php endif; ?>
-                        <?php if ($access['routers'] ?? false): ?><a class="nav-link<?= $active('/admin/portal-themes') ?>"
-                                href="/admin/portal-themes">Portal Themes</a><?php endif; ?>
 
                         <?php if ($isOverview): ?>
                             <?php if ($access['routers'] ?? false): ?><div class="nav-group-label mt-3">Network</div><a
