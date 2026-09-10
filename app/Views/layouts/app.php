@@ -56,7 +56,7 @@ $sidebarReturn = preg_match('#^/(?:admin|dashboard)(?:/|$)#', $path) ? ($path . 
                             <div class="nav-group-label mt-2">Router management</div>
                             <?php if ($access['vendos'] ?? false): ?><a class="nav-link<?= $active('/admin/stations') ?>" href="/admin/stations">Hotspot Stations</a><?php endif; ?>
                             <?php if ($access['vouchers'] ?? false): ?><a class="nav-link<?= $active('/admin/vouchers') ?>" href="/admin/vouchers">Vouchers</a><?php endif; ?>
-                            <a class="nav-link<?= $active('/emulator') ?>" href="/emulator/">Portal Emulator</a>
+                            <a class="nav-link<?= $active('/admin/portal-emulator') ?>" href="/admin/portal-emulator">Portal Emulator</a>
                             <?php if ($access['devices'] ?? false): ?><a class="nav-link<?= $active('/admin/devices') ?>" href="/admin/devices">Devices</a><?php endif; ?>
                             <?php if ($access['sessions'] ?? false): ?><a class="nav-link<?= $active('/admin/sessions') ?>" href="/admin/sessions">Sessions</a><?php endif; ?>
                         <?php endif; ?>
