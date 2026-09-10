@@ -3,41 +3,43 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#111827">
     <title>MikroTik Hotspot Emulator</title>
-    <style>
-        :root { color-scheme: light dark; }
-        body { margin: 0; font: 14px/1.5 system-ui, sans-serif; background: #111827; color: #e5e7eb; }
-        header { padding: 16px 20px; border-bottom: 1px solid #374151; display: flex; gap: 18px; align-items: center; flex-wrap: wrap; }
-        header strong { font-size: 17px; }
-        nav { display: flex; gap: 8px; flex-wrap: wrap; }
-        nav a { color: #d1d5db; text-decoration: none; padding: 6px 10px; border: 1px solid #4b5563; border-radius: 6px; }
-        nav a:hover { background: #374151; }
-        main { max-width: 1100px; margin: 0 auto; padding: 24px 20px; }
-        iframe { width: 100%; min-height: 720px; border: 1px solid #4b5563; border-radius: 8px; background: white; }
-        details { margin-top: 16px; }
-        pre { white-space: pre-wrap; overflow: auto; }
-    </style>
+    <link rel="stylesheet" href="emulator.css">
 </head>
 <body>
-    <header>
-        <strong>MikroTik Hotspot Emulator</strong>
-        <nav>
-            <a href="login.html">login.html</a>
-            <a href="status.html">status.html</a>
-            <a href="logout.html">logout.html</a>
-            <a href="alogin.html">alogin.html</a>
-            <a href="redirect.html">redirect.html</a>
-            <a href="error.html">error.html</a>
-            <a href="radvert.html">radvert.html</a>
-        </nav>
+    <header class="shell-header">
+        <div>
+            <strong>MikroTik Hotspot Emulator</strong>
+            <span>Browser simulation of the current <code>mt_hotspot/</code></span>
+        </div>
+        <nav id="page-nav" aria-label="Hotspot pages"></nav>
     </header>
-    <main>
-        <iframe id="portal" src="login.html" title="MikroTik hotspot page"></iframe>
+
+    <main class="shell">
+        <section class="toolbar">
+            <label>
+                Page
+                <select id="page-select"></select>
+            </label>
+            <button type="button" id="reload-page">Reload</button>
+            <span id="load-status" role="status"></span>
+        </section>
+
+        <iframe id="portal" title="MikroTik hotspot portal"></iframe>
+
         <details>
-            <summary>Emulated MikroTik variables</summary>
+            <summary>Emulated RouterOS variables</summary>
             <pre id="variables"></pre>
         </details>
+
+        <p class="note">
+            Pages are fetched from the parent <code>mt_hotspot/</code> directory at runtime.
+            The emulator does not maintain copies of <code>login.html</code>, <code>status.html</code>,
+            or the other hotspot pages, so this stays aligned with the latest repository files.
+        </p>
     </main>
+
     <script src="emulator.js"></script>
 </body>
 </html>
