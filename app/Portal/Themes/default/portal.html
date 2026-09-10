@@ -9,7 +9,7 @@
 </head>
 <body>
 <div id="pixiepoint-root">
-{{#if portal.page == "login"}}
+{{#if !portal.auth}}
     <main id="pp-page" class="portal-theme-shell">
         <section id="pp-login-card" class="portal-card p-4 shadow">
             <div id="compat-app">
@@ -51,10 +51,7 @@
                     <div class="progress mb-2"><div id="compat-progress-bar" class="progress-bar" style="width:100%"></div></div>
                     <div id="compat-countdown" class="mb-2">Waiting…</div>
                     <p id="compat-progress" class="muted mb-3">Waiting for coins…</p>
-                    <div class="d-flex gap-2">
-                        <button id="compat-finish" class="btn btn-primary" type="button" disabled>Done &amp; connect</button>
-                        <button id="compat-cancel" class="btn btn-outline-secondary" type="button">Cancel</button>
-                    </div>
+                    <div class="d-flex gap-2"><button id="compat-finish" class="btn btn-primary" type="button" disabled>Done &amp; connect</button><button id="compat-cancel" class="btn btn-outline-secondary" type="button">Cancel</button></div>
                 </div>
                 <div id="compat-charger-list" hidden></div>
                 <div id="compat-eload-panel" hidden><div id="compat-eload-products">Loading products…</div></div>
@@ -87,31 +84,22 @@
                 <div id="pp-brand" class="brand mb-3">{{ portal.name }}</div>
                 <h1 id="pp-session-title" class="h3 mb-2">You're connected</h1>
                 <p id="pp-session-description" class="muted mb-4">Live Wi-Fi session.</p>
-
-                <div id="pp-session-details" class="table-responsive mb-3">
-                    <table class="table table-sm align-middle mb-0"><tbody>
-                        <tr><th scope="row">Device</th><td id="pp-session-device" class="text-end">{{ portal.device.account }}</td></tr>
-                        <tr><th scope="row">Time left</th><td id="pp-time-left" class="text-end">Unlimited</td></tr>
-                        <tr><th scope="row">Data used in/out</th><td id="pp-data-total" class="text-end">0 B / 0 B</td></tr>
-                    </tbody></table>
-                </div>
-
-                <div id="pp-device-info" class="table-responsive mb-3">
-                    <table class="table table-sm align-middle mb-0"><tbody>
-                        {{#feature points}}<tr><th scope="row">Points</th><td id="pp-device-points" class="text-end fw-semibold">{{ portal.device.points }}</td></tr>{{/feature}}
-                        <tr><th scope="row">IP address</th><td id="pp-device-ip" class="text-end text-break">{{ portal.device.ip }}</td></tr>
-                        <tr><th scope="row">MAC address</th><td id="pp-device-mac" class="text-end text-break">{{ portal.device.mac }}</td></tr>
-                    </tbody></table>
-                </div>
+                <div id="pp-session-details" class="table-responsive mb-3"><table class="table table-sm align-middle mb-0"><tbody>
+                    <tr><th scope="row">Device</th><td id="pp-session-device" class="text-end">{{ portal.device.account }}</td></tr>
+                    <tr><th scope="row">Time left</th><td id="pp-time-left" class="text-end">Unlimited</td></tr>
+                    <tr><th scope="row">Data used in/out</th><td id="pp-data-total" class="text-end">0 B / 0 B</td></tr>
+                </tbody></table></div>
+                <div id="pp-device-info" class="table-responsive mb-3"><table class="table table-sm align-middle mb-0"><tbody>
+                    {{#feature points}}<tr><th scope="row">Points</th><td id="pp-device-points" class="text-end fw-semibold">{{ portal.device.points }}</td></tr>{{/feature}}
+                    <tr><th scope="row">IP address</th><td id="pp-device-ip" class="text-end text-break">{{ portal.device.ip }}</td></tr>
+                    <tr><th scope="row">MAC address</th><td id="pp-device-mac" class="text-end text-break">{{ portal.device.mac }}</td></tr>
+                </tbody></table></div>
 
                 {{#feature coin_slot}}
                 <select id="pp-vendo" class="d-none">{{ html:portal.vendo_options }}</select>
                 <button id="pp-extend" class="btn btn-outline-primary w-100 mb-3" type="button" hidden>Extend time</button>
                 <div id="pp-extend-box" class="compat-transaction mb-3" hidden>
-                    <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
-                        <div><small class="d-block">Extend current voucher</small><strong id="pp-extend-voucher" class="d-block">—</strong></div>
-                        <small id="pp-extend-countdown" class="compat-countdown text-nowrap">Waiting…</small>
-                    </div>
+                    <div class="d-flex justify-content-between align-items-start gap-3 mb-3"><div><small class="d-block">Extend current voucher</small><strong id="pp-extend-voucher" class="d-block">—</strong></div><small id="pp-extend-countdown" class="compat-countdown text-nowrap">Waiting…</small></div>
                     <div class="progress mb-3"><div id="pp-extend-progress-bar" class="progress-bar" style="width:100%"></div></div>
                     <div class="context mb-3"><div><small>Coin total</small><span id="pp-extend-amount">₱0</span></div><div><small>Added time</small><span id="pp-extend-time">—</span></div></div>
                     <p id="pp-extend-status" class="muted mb-3">Activating coin slot…</p>
@@ -124,30 +112,24 @@
                     <button id="pp-end-session" class="btn btn-outline-danger" type="button">End session</button>
                 </div>
             </div>
-            <div id="pp-disconnected" hidden>
-                <div id="pp-disconnected-title" class="h4 mb-2">Session ended</div>
-                <p id="pp-disconnected-message" class="muted mb-3">Your Wi-Fi session has ended.</p>
-                <a id="pp-login" class="btn btn-primary" href="#">Connect again</a>
-            </div>
+            <div id="pp-disconnected" hidden><div id="pp-disconnected-title" class="h4 mb-2">Session ended</div><p id="pp-disconnected-message" class="muted mb-3">Your Wi-Fi session has ended.</p><a id="pp-login" class="btn btn-primary" href="#">Connect again</a></div>
         </section>
     </main>
 {{/if}}
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
-{{#if portal.page == "login"}}
+{{#if !portal.auth}}
 <script src="/assets/md5.js"></script>
 <script>
 (function () {
-    var q = new URLSearchParams(location.search);
-    var context = {
-        mac:q.get('mac')||'', ip:q.get('client_ip')||'', username:q.get('username')||'', routerIdentity:q.get('router_identity')||'', interfaceName:q.get('interface')||'', serverAddress:q.get('server_address')||'', loginUrl:q.get('login_url')||'', originalUrl:q.get('original_url')||'', error:q.get('error')||''
-    };
-    window.PIXIEPOINT_CONTEXT = context;
-    window.PIXIEPOINT_CHAP = { id:q.get('chap_id')||'', challenge:q.get('chap_challenge')||'' };
-    window.PIXIEPOINT_BOOTSTRAP = true;
-    window.PIXIEPOINT_VENDOS = Array.from(document.querySelectorAll('#compat-vendo option')).map(function (o) { return { id:o.value, name:o.textContent.trim(), baseUrl:o.dataset.baseUrl||'', passwordMode:o.dataset.passwordMode||'blank', chargingEnabled:o.dataset.charging==='1', eloadEnabled:o.dataset.eload==='1' }; });
-    ['chap-login','pap-login'].forEach(function (id) { var form=document.getElementById(id); if(!form)return; form.action=context.loginUrl||''; var dst=form.elements.namedItem('dst'); if(dst)dst.value=context.originalUrl||''; });
+    var q=new URLSearchParams(location.search);
+    var context={mac:q.get('mac')||'',ip:q.get('client_ip')||'',username:q.get('username')||'',routerIdentity:q.get('router_identity')||'',interfaceName:q.get('interface')||'',serverAddress:q.get('server_address')||'',loginUrl:q.get('login_url')||'',originalUrl:q.get('original_url')||'',error:q.get('error')||''};
+    window.PIXIEPOINT_CONTEXT=context;
+    window.PIXIEPOINT_CHAP={id:q.get('chap_id')||'',challenge:q.get('chap_challenge')||''};
+    window.PIXIEPOINT_BOOTSTRAP=true;
+    window.PIXIEPOINT_VENDOS=Array.from(document.querySelectorAll('#compat-vendo option')).map(function(o){return{id:o.value,name:o.textContent.trim(),baseUrl:o.dataset.baseUrl||'',passwordMode:o.dataset.passwordMode||'blank',chargingEnabled:o.dataset.charging==='1',eloadEnabled:o.dataset.eload==='1'};});
+    ['chap-login','pap-login'].forEach(function(id){var form=document.getElementById(id);if(!form)return;form.action=context.loginUrl||'';var dst=form.elements.namedItem('dst');if(dst)dst.value=context.originalUrl||'';});
 })();
 </script>
 <script src="/assets/juanfi-compat.js"></script>
@@ -155,11 +137,9 @@
 {{else}}
 <script>
 (function () {
-    var q = new URLSearchParams(location.search);
-    window.PIXIEPOINT_SESSION = {
-        username:q.get('username')||'', mac:q.get('mac')||'', ip:q.get('client_ip')||'', routerIdentity:q.get('router_identity')||'', serverAddress:q.get('server_address')||'', interfaceName:q.get('interface')||'', sessionTimeLeft:q.get('session_time_left')||'0', bytesIn:q.get('bytes_in')||'0', bytesOut:q.get('bytes_out')||'0', remainBytesTotal:q.get('remain_bytes_total')||'0', uptime:q.get('uptime')||'0', refreshUrl:q.get('status_url')||'', logoutUrl:q.get('logout_url')||'', loginUrl:q.get('login_url')||'', portalName:document.getElementById('pp-brand') ? document.getElementById('pp-brand').textContent.trim() : 'PixiePoint'
-    };
-    window.PIXIEPOINT_VENDOS = Array.from(document.querySelectorAll('#pp-vendo option')).map(function (o) { return { id:o.value, name:o.textContent.trim(), baseUrl:o.dataset.baseUrl||'', passwordMode:o.dataset.passwordMode||'blank', chargingEnabled:o.dataset.charging==='1', eloadEnabled:o.dataset.eload==='1' }; });
+    var q=new URLSearchParams(location.search);
+    window.PIXIEPOINT_SESSION={username:q.get('username')||'',mac:q.get('mac')||'',ip:q.get('client_ip')||'',routerIdentity:q.get('router_identity')||'',serverAddress:q.get('server_address')||'',interfaceName:q.get('interface')||'',sessionTimeLeft:q.get('session_time_left')||'0',bytesIn:q.get('bytes_in')||'0',bytesOut:q.get('bytes_out')||'0',remainBytesTotal:q.get('remain_bytes_total')||'0',uptime:q.get('uptime')||'0',refreshUrl:q.get('status_url')||'',logoutUrl:q.get('logout_url')||'',loginUrl:q.get('login_url')||'',portalName:document.getElementById('pp-brand')?document.getElementById('pp-brand').textContent.trim():'PixiePoint'};
+    window.PIXIEPOINT_VENDOS=Array.from(document.querySelectorAll('#pp-vendo option')).map(function(o){return{id:o.value,name:o.textContent.trim(),baseUrl:o.dataset.baseUrl||'',passwordMode:o.dataset.passwordMode||'blank',chargingEnabled:o.dataset.charging==='1',eloadEnabled:o.dataset.eload==='1'};});
 })();
 </script>
 <script src="/assets/session-portal.js"></script>
