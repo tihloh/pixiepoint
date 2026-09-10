@@ -3,43 +3,13 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="theme-color" content="#111827">
-    <title>MikroTik Hotspot Emulator</title>
-    <link rel="stylesheet" href="emulator.css">
+    <meta http-equiv="refresh" content="0;url=/emulator/">
+    <title>PixiePoint Hotspot Emulator</title>
 </head>
 <body>
-    <header class="shell-header">
-        <div>
-            <strong>MikroTik Hotspot Emulator</strong>
-            <span>Browser simulation of the current <code>mt_hotspot/</code></span>
-        </div>
-        <nav id="page-nav" aria-label="Hotspot pages"></nav>
-    </header>
-
-    <main class="shell">
-        <section class="toolbar">
-            <label>
-                Page
-                <select id="page-select"></select>
-            </label>
-            <button type="button" id="reload-page">Reload</button>
-            <span id="load-status" role="status"></span>
-        </section>
-
-        <iframe id="portal" title="MikroTik hotspot portal"></iframe>
-
-        <details>
-            <summary>Emulated RouterOS variables</summary>
-            <pre id="variables"></pre>
-        </details>
-
-        <p class="note">
-            Pages are fetched from the parent <code>mt_hotspot/</code> directory at runtime.
-            The emulator does not maintain copies of <code>login.html</code>, <code>status.html</code>,
-            or the other hotspot pages, so this stays aligned with the latest repository files.
-        </p>
-    </main>
-
-    <script src="emulator.js"></script>
+    <p>Opening the PixiePoint online hotspot emulator…</p>
+    <script>
+        location.replace('/emulator/');
+    </script>
 </body>
 </html>
