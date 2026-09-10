@@ -21,7 +21,7 @@
         .portal-toolbar button, .controls button { border: 1px solid #d1d5db; background: #fff; color: #111827; border-radius: 6px; padding: 6px 10px; cursor: pointer; }
         .portal-toolbar button:hover, .controls button:hover { background: #f9fafb; }
         #portal { flex: 1; width: 100%; border: 0; background: #fff; }
-        .side-panel { width: 310px; flex: 0 0 310px; background: #fff; border-left: 1px solid #d1d5db; overflow-y: auto; transition: width .2s ease, flex-basis .2s ease; }
+        .side-panel { width: 340px; flex: 0 0 340px; background: #fff; border-left: 1px solid #d1d5db; overflow-y: auto; transition: width .2s ease, flex-basis .2s ease; }
         .side-panel.collapsed { width: 0; flex-basis: 0; overflow: hidden; border-left: 0; }
         .panel-header { min-height: 64px; display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; border-bottom: 1px solid #e5e7eb; }
         .panel-header strong, .panel-header small { display: block; }
@@ -36,15 +36,19 @@
         details { margin-top: 14px; border-top: 1px solid #e5e7eb; padding-top: 12px; }
         summary { cursor: pointer; font-size: 12px; font-weight: 700; color: #374151; }
         #variables { margin: 10px 0 0; }
-        #variables div { display: flex; justify-content: space-between; gap: 10px; padding: 5px 0; border-bottom: 1px solid #f3f4f6; font-size: 11px; }
-        #variables dt { color: #6b7280; }
-        #variables dd { margin: 0; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+        #variables div { display: grid; grid-template-columns: minmax(105px, 1fr) minmax(0, 1.45fr); gap: 8px; align-items: center; padding: 5px 0; border-bottom: 1px solid #f3f4f6; font-size: 11px; }
+        #variables dt { color: #6b7280; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        #variables dd { margin: 0; min-width: 0; }
+        #variables input { width: 100%; min-width: 0; padding: 5px 7px; border: 1px solid #d1d5db; border-radius: 5px; background: #fff; color: #111827; font: 11px/1.25 ui-monospace, SFMono-Regular, Menlo, monospace; }
+        #variables input:focus { outline: 2px solid #93c5fd; outline-offset: 0; border-color: #60a5fa; }
+        #variables input.modified { background: #fffbeb; border-color: #f59e0b; }
+        .variables-note { display: block; margin-top: 8px; color: #6b7280; font-size: 11px; line-height: 1.35; }
         .page-links { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 10px; }
         .page-links button { font-size: 11px; }
         .expand-button { display: none; position: absolute; right: 8px; top: 8px; z-index: 5; border: 1px solid #d1d5db; background: #fff; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,.12); }
         @media (max-width: 760px) {
             .brand span, .header-actions span { display: none; }
-            .side-panel { position: absolute; right: 0; top: 0; bottom: 0; z-index: 10; box-shadow: -4px 0 16px rgba(0,0,0,.12); }
+            .side-panel { position: absolute; right: 0; top: 0; bottom: 0; z-index: 10; width: min(340px, 92vw); flex-basis: min(340px, 92vw); box-shadow: -4px 0 16px rgba(0,0,0,.12); }
             .side-panel.collapsed { width: 0; }
             .expand-button { display: block; }
         }
@@ -69,7 +73,11 @@
             <label>Page<select id="page-select"></select></label>
             <div class="section-title">Session</div>
             <div class="session-buttons"><button type="button" data-page="login.html">Unauthenticated</button><button type="button" data-page="status.html">Authenticated</button></div>
-            <details class="variables" open><summary>RouterOS variables</summary><dl id="variables"></dl></details>
+            <details class="variables" open>
+                <summary>RouterOS variables</summary>
+                <dl id="variables"></dl>
+                <small class="variables-note">Edit a value and press Enter or leave the field to reload the portal with that value.</small>
+            </details>
             <details><summary>Test pages</summary><div id="page-links" class="page-links"></div></details>
         </div>
     </aside>
@@ -93,6 +101,7 @@
     const routers = [config.sampleRouter || { id: 0, name: 'Sample Router', identity: 'PIXIEPOINT-DEMO', publicHost: '192.168.88.1' }].concat(config.routers || []);
     const vendos = [config.sampleVendo || { id: 0, routerId: 0, name: 'Sample Vendo', serverIp: '192.168.88.1', interfaceName: 'bridge-hotspot' }].concat(config.vendos || []);
     const pages = config.pages || [];
+    const variableOverrides = {};
 
     accountName.textContent = config.user?.name || config.user?.email || '';
 
@@ -128,7 +137,7 @@
         return list.find((item) => String(item.id) === String(select.value)) || list[0];
     }
 
-    function context() {
+    function defaultContext() {
         const r = selected(routers, router);
         const v = vendos.find((item) => String(item.id) === String(vendo.value)) || vendos.find((item) => String(item.routerId) === String(r?.id)) || vendos[0];
         const authenticated = page.value === 'status.html' || page.value === 'logout.html';
@@ -161,17 +170,64 @@
         };
     }
 
+    function context() {
+        return Object.assign(defaultContext(), variableOverrides);
+    }
+
     function showVariables(values) {
+        const active = document.activeElement;
+        const activeKey = active?.dataset?.variableKey || null;
+        const selectionStart = activeKey ? active.selectionStart : null;
+        const selectionEnd = activeKey ? active.selectionEnd : null;
+
         variables.innerHTML = '';
+        const defaults = defaultContext();
         Object.entries(values).forEach(([key, value]) => {
             const row = document.createElement('div');
             const dt = document.createElement('dt');
             const dd = document.createElement('dd');
+            const input = document.createElement('input');
             dt.textContent = `$(${key})`;
-            dd.textContent = String(value ?? '');
+            input.type = 'text';
+            input.value = String(value ?? '');
+            input.dataset.variableKey = key;
+            input.autocomplete = 'off';
+            input.spellcheck = false;
+            input.classList.toggle('modified', Object.prototype.hasOwnProperty.call(variableOverrides, key));
+
+            const apply = () => {
+                const next = input.value;
+                const base = String(defaults[key] ?? '');
+                if (next === base) delete variableOverrides[key];
+                else variableOverrides[key] = next;
+                loadPage();
+            };
+
+            input.addEventListener('change', apply);
+            input.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    input.blur();
+                }
+                if (event.key === 'Escape') {
+                    event.preventDefault();
+                    input.value = String(defaults[key] ?? '');
+                    input.blur();
+                }
+            });
+
+            dd.appendChild(input);
             row.append(dt, dd);
             variables.appendChild(row);
         });
+
+        if (activeKey) {
+            const next = variables.querySelector(`input[data-variable-key="${CSS.escape(activeKey)}"]`);
+            if (next) {
+                next.focus();
+                if (selectionStart !== null && selectionEnd !== null) next.setSelectionRange(selectionStart, selectionEnd);
+            }
+        }
     }
 
     function expandRouterOs(source, values) {
@@ -206,9 +262,14 @@
         }
     }
 
-    platform.addEventListener('change', loadPage);
-    router.addEventListener('change', loadPage);
-    vendo.addEventListener('change', loadPage);
+    function resetContextAndLoad() {
+        Object.keys(variableOverrides).forEach((key) => delete variableOverrides[key]);
+        loadPage();
+    }
+
+    platform.addEventListener('change', resetContextAndLoad);
+    router.addEventListener('change', resetContextAndLoad);
+    vendo.addEventListener('change', resetContextAndLoad);
     page.addEventListener('change', loadPage);
     document.getElementById('reload-page').addEventListener('click', loadPage);
     document.querySelectorAll('[data-page]').forEach((button) => button.addEventListener('click', () => { page.value = button.dataset.page; loadPage(); }));
