@@ -20,11 +20,11 @@ final class HotspotController
 
     public function portal(): never
     {
-        $context=$this->hotspotContext();$vendos=$this->api->forHotspot($context['routerIdentity'],$context['serverAddress'],$context['ip'],$context['interfaceName']);$stationId=isset($vendos[0]['id'])?(int)$vendos[0]['id']:null;$routerId=$this->routerId($context['routerIdentity']);$resolved=(new PortalFeatureConfig($this->db))->resolve($routerId,$stationId);$theme=$this->themes->resolveByRouterIdentity($context['routerIdentity'],$stationId);$device=$this->portalDevice($context);$options=$this->vendoOptions($vendos);$auth=$this->hasActiveHotspotSession();
-        $feature=static fn(string $key,bool $fallback=false):bool=>isset($resolved[$key])?(bool)$resolved[$key]['enabled']:$fallback;
+        $context=$this->hotspotContext();$stations=$this->api->forHotspot($context['routerIdentity'],$context['serverAddress'],$context['ip'],$context['interfaceName']);$stationId=isset($stations[0]['id'])?(int)$stations[0]['id']:null;$routerId=$this->routerId($context['routerIdentity']);$resolved=(new PortalFeatureConfig($this->db))->resolve($routerId,$stationId);$theme=$this->themes->resolveByRouterIdentity($context['routerIdentity'],$stationId);$device=$this->portalDevice($context);$options=$this->vendoOptions($stations);$auth=$this->hasActiveHotspotSession();
+        $feature=static fn(string $key,bool $fallback=false):bool=>isset($resolved[$key])?(bool)$resolved[$key]['enabled']:$fallback;$hasVendo=!empty(array_filter($stations,static fn(array $v):bool=>trim((string)($v['baseUrl']??''))!==''));
         $this->headers('text/html; charset=utf-8');echo $this->themeEngine->render($theme,'portal.html',$this->portalAdapter,[
-            'portal'=>['auth'=>$auth,'name'=>(string)($vendos[0]['name']??'PixiePoint'),'vendo_options'=>$options,'device'=>$device,'debug'=>$this->debugDetails($context),'features'=>$resolved,'trial_minutes'=>(int)($resolved['trial']['config']['minutes']??10),'convert_points'=>(int)($resolved['points_convert']['config']['points']??10),'convert_minutes'=>(int)($resolved['points_convert']['config']['minutes']??5)],'context'=>$context,
-        ],['voucher_login'=>true,'member_login'=>$feature('member_login'),'qr_scan'=>$feature('qr_scan'),'trial'=>$feature('trial'),'points'=>$feature('points'),'points_convert'=>$feature('points_convert'),'points_play'=>$feature('points_play'),'points_share'=>$feature('points_share'),'coin_slot'=>!empty(array_filter($vendos,static fn(array $v):bool=>trim((string)($v['baseUrl']??''))!==''))]);exit;
+            'portal'=>['auth'=>$auth,'name'=>(string)($stations[0]['name']??'PixiePoint'),'vendo_options'=>$options,'device'=>$device,'debug'=>$this->debugDetails($context),'features'=>$resolved,'trial_minutes'=>(int)($resolved['trial']['config']['minutes']??10),'convert_points'=>(int)($resolved['points_convert']['config']['points']??10),'convert_minutes'=>(int)($resolved['points_convert']['config']['minutes']??5)],'context'=>$context,
+        ],['voucher_login'=>$feature('voucher_login',true),'member_login'=>$feature('member_login'),'qr_scan'=>$feature('qr_scan'),'trial'=>$feature('trial'),'points'=>$feature('points'),'points_convert'=>$feature('points_convert'),'points_play'=>$feature('points_play'),'points_share'=>$feature('points_share'),'coin_slot'=>$hasVendo&&$feature('coin_slot',true)]);exit;
     }
 
     public function status(): never{$this->portal();}
@@ -60,9 +60,9 @@ final class HotspotController
         $value=trim($value);if($value===''||str_contains($value,'$('))return '';$hex=preg_replace('/[^0-9a-fA-F]/','',$value)??'';return strlen($hex)===12?strtoupper(implode(':',str_split($hex,2))):'';
     }
 
-    private function vendoOptions(array $vendos): string
+    private function vendoOptions(array $stations): string
     {
-        $options='';foreach($vendos as $index=>$vendo){if(trim((string)($vendo['baseUrl']??''))==='')continue;$options.='<option value="'.e($vendo['id']).'" data-base-url="'.e($vendo['baseUrl']).'" data-password-mode="'.e($vendo['passwordMode']).'" data-charging="'.($vendo['chargingEnabled']?'1':'0').'" data-eload="'.($vendo['eloadEnabled']?'1':'0').'"'.($index===0?' selected':'').'>'.e($vendo['name']).'</option>';}return $options;
+        $options='';$selected=false;foreach($stations as $station){if(trim((string)($station['baseUrl']??''))==='')continue;$options.='<option value="'.e($station['id']).'" data-base-url="'.e($station['baseUrl']).'" data-password-mode="'.e($station['passwordMode']).'" data-charging="'.($station['chargingEnabled']?'1':'0').'" data-eload="'.($station['eloadEnabled']?'1':'0').'"'.(!$selected?' selected':'').'>'.e($station['name']).'</option>';$selected=true;}return $options;
     }
 
     private function hotspotContext(): array
