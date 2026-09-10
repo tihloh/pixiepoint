@@ -37,8 +37,9 @@ final class HotspotController
         $debug = $this->debugDetails($context);
 
         $this->headers('text/html; charset=utf-8');
-        echo $this->themeEngine->render($theme, 'login.html', $this->portalAdapter, [
+        echo $this->themeEngine->render($theme, 'portal.html', $this->portalAdapter, [
             'portal' => [
+                'page' => 'login',
                 'name' => (string) ($vendos[0]['name'] ?? 'PixiePoint'),
                 'vendo_options' => $options,
                 'device' => $device,
@@ -63,8 +64,9 @@ final class HotspotController
         $debug = $this->debugDetails($context);
 
         $this->headers('text/html; charset=utf-8');
-        echo $this->themeEngine->render($theme, 'status.html', $this->portalAdapter, [
+        echo $this->themeEngine->render($theme, 'portal.html', $this->portalAdapter, [
             'portal' => [
+                'page' => 'status',
                 'name' => (string) ($vendos[0]['name'] ?? 'PixiePoint'),
                 'vendo_options' => $this->vendoOptions($vendos),
                 'device' => $device,
