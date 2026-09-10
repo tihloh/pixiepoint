@@ -44,10 +44,11 @@ return static function (RouteManager $routes, array $c): void {
         $c['hotspot']->disconnected();
     })->name('hotspot.disconnected');
 
-    $routes->get('/emulator/', [$c['emulator'], 'index'])
-        ->name('emulator')
+    $routes->get('/admin/portal-emulator', [$c['emulator'], 'index'])
+        ->name('admin.portal_emulator')
         ->auth()
         ->middleware('prefab.access');
+    $routes->redirect('/emulator/', '/admin/portal-emulator');
 
     $routes->matchMethods(['GET', 'POST'], '/setup', [$c['auth'], 'setup'])->name('setup');
     $routes->matchMethods(['GET', 'POST'], '/register', [$c['auth'], 'register'])->name('register');
