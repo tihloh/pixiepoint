@@ -93,6 +93,76 @@
     });
   }
 
+  function copyAttributes(from, to) {
+    Array.from(from.attributes || []).forEach(function (attr) {
+      to.setAttribute(attr.name, attr.value);
+    });
+  }
+
+  function clearFragmentAssets() {
+    document.querySelectorAll('[data-pixiepoint-fragment-asset="1"]').forEach(function (node) {
+      node.remove();
+    });
+  }
+
+  function appendFragmentStyle(node) {
+    return new Promise(function (resolve) {
+      const clone = document.createElement(node.tagName.toLowerCase());
+      copyAttributes(node, clone);
+      clone.setAttribute('data-pixiepoint-fragment-asset', '1');
+
+      if (node.tagName.toLowerCase() === 'style') {
+        clone.textContent = node.textContent || '';
+        document.head.appendChild(clone);
+        resolve();
+        return;
+      }
+
+      clone.addEventListener('load', resolve, { once: true });
+      clone.addEventListener('error', resolve, { once: true });
+      document.head.appendChild(clone);
+    });
+  }
+
+  function appendFragmentScript(node) {
+    return new Promise(function (resolve) {
+      const script = document.createElement('script');
+      copyAttributes(node, script);
+      script.setAttribute('data-pixiepoint-fragment-asset', '1');
+
+      if (node.src) {
+        script.addEventListener('load', resolve, { once: true });
+        script.addEventListener('error', resolve, { once: true });
+        document.head.appendChild(script);
+        return;
+      }
+
+      script.textContent = node.textContent || '';
+      document.head.appendChild(script);
+      resolve();
+    });
+  }
+
+  async function mountFragment(root, html) {
+    const template = document.createElement('template');
+    template.innerHTML = html;
+
+    const styles = Array.from(template.content.querySelectorAll('link[rel~="stylesheet"], style'));
+    const scripts = Array.from(template.content.querySelectorAll('script'));
+
+    styles.forEach(function (node) { node.remove(); });
+    scripts.forEach(function (node) { node.remove(); });
+
+    clearFragmentAssets();
+
+    for (const style of styles) await appendFragmentStyle(style);
+
+    root.innerHTML = '';
+    root.appendChild(template.content.cloneNode(true));
+
+    for (const script of scripts) await appendFragmentScript(script);
+  }
+
   async function loadLoginMarkup() {
     const root = document.getElementById('pixiepoint-root');
     if (!root) throw new Error('Portal root missing');
@@ -106,7 +176,8 @@
         mac: resolvedMac(c),
         v: String(version),
       });
-    root.innerHTML = await request(`${hostedOrigin}/hotspot/compat?${q.toString()}`, 'text/html');
+
+    await mountFragment(root, await request(`${hostedOrigin}/hotspot/compat?${q.toString()}`, 'text/html'));
 
     ['chap-login', 'pap-login'].forEach(function (id) {
       const form = document.getElementById(id);
@@ -154,7 +225,8 @@
         mac: resolvedMac(c),
         v: String(version),
       });
-    root.innerHTML = await request(`${hostedOrigin}/hotspot/status?${q.toString()}`, 'text/html');
+
+    await mountFragment(root, await request(`${hostedOrigin}/hotspot/status?${q.toString()}`, 'text/html'));
     readServerRenderedVendos(root);
   }
 
