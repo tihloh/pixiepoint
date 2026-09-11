@@ -18,8 +18,8 @@
         </div>
     </div>
 
-    <div class="col-lg-4">
-        <div class="card border rounded-4 shadow-sm auth-login-card">
+    <div class="col-lg-4 d-flex justify-content-center justify-content-lg-end">
+        <div class="card border rounded-4 shadow-sm auth-login-card" style="width:min(100%,410px)">
             <div class="card-body p-4">
                 <div class="mb-4">
                     <h2 class="h4 mb-1">Sign in</h2>
