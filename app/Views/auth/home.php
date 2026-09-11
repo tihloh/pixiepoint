@@ -5,8 +5,8 @@
 ?>
 
 <div class="row g-4 align-items-center auth-login-layout">
-    <div class="col-lg-6">
-        <div class="pe-lg-4 py-3">
+    <div class="col-lg-8">
+        <div class="pe-lg-5 py-3">
             <span class="badge mb-3">PixiePoint Wi-Fi</span>
             <h1 class="display-6 fw-semibold mb-3">Welcome to PixiePoint</h1>
             <p class="lead text-body-secondary mb-3">
@@ -18,9 +18,9 @@
         </div>
     </div>
 
-    <div class="col-lg-6">
+    <div class="col-lg-4">
         <div class="card border rounded-4 shadow-sm auth-login-card">
-            <div class="card-body p-4 p-md-5">
+            <div class="card-body p-4">
                 <div class="mb-4">
                     <h2 class="h4 mb-1">Sign in</h2>
                     <p class="text-body-secondary mb-0">Use your PixiePoint account credentials.</p>
