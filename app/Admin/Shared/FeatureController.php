@@ -58,6 +58,7 @@ abstract class FeatureController
         int|string|null $subjectId,
         string $message,
         array $metadata = [],
+        array $changes = [],
     ): void {
         $this->logs->record([
             'action' => $action,
@@ -65,6 +66,7 @@ abstract class FeatureController
             'subject_id' => $subjectId,
             'actor_id' => $this->auth->auth()->id(),
             'message' => $message,
+            'changes' => $changes,
             'metadata' => $metadata,
             'ip_address' => $_SERVER['REMOTE_ADDR'] ?? null,
             'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? null,
