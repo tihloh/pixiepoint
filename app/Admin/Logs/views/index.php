@@ -5,7 +5,7 @@
 <div class="heading">
     <div>
         <h1>Activity logs</h1>
-        <p class="muted">See who did what, what was affected, and what changed.</p>
+        <p class="muted">A readable history of account and system activity.</p>
     </div>
 </div>
 
@@ -19,41 +19,31 @@
         <table class="table table-hover align-middle">
             <thead>
                 <tr>
-                    <th>Who</th>
-                    <th>Event</th>
-                    <th>What</th>
-                    <th>Changes</th>
-                    <th class="text-nowrap">Time</th>
+                    <th class="text-nowrap" style="width:190px">Time</th>
+                    <th>Activity</th>
                 </tr>
             </thead>
             <tbody>
-                <?php if(!$logs): ?>
-                    <tr><td colspan="5" class="empty">No activity recorded yet.</td></tr>
-                <?php endif; ?>
-
+                <?php if(!$logs): ?><tr><td colspan="2" class="empty">No activity recorded yet.</td></tr><?php endif; ?>
                 <?php foreach($logs as $log): ?>
                     <tr>
-                        <td class="text-nowrap"><strong><?= e($log['who']??'Someone') ?></strong></td>
-                        <td><?= e($log['event']??$log['summary']??'—') ?></td>
-                        <td><?= e($log['what']??'—') ?></td>
+                        <td class="text-nowrap text-body-secondary"><?= e($log['created_at']??$log['occurred_at']??'—') ?></td>
                         <td>
+                            <div><?= e($log['activity']??$log['event']??'—') ?></div>
                             <?php $details=$log['details']??[]; ?>
                             <?php if($details): ?>
-                                <div class="d-flex flex-column gap-1">
+                                <div class="small text-body-secondary mt-1 d-flex flex-wrap gap-x-3 gap-y-1">
                                     <?php foreach($details as $detail): ?>
-                                        <div class="small">
+                                        <span class="me-3">
                                             <strong><?= e($detail['field']??'Field') ?>:</strong>
-                                            <span class="text-body-secondary"><?= e($detail['before']??'None') ?></span>
+                                            <?= e($detail['before']??'None') ?>
                                             <span aria-hidden="true">→</span>
-                                            <span><?= e($detail['now']??'None') ?></span>
-                                        </div>
+                                            <?= e($detail['now']??'None') ?>
+                                        </span>
                                     <?php endforeach; ?>
                                 </div>
-                            <?php else: ?>
-                                <span class="text-body-secondary">—</span>
                             <?php endif; ?>
                         </td>
-                        <td class="text-nowrap"><?= e($log['created_at']??$log['occurred_at']??'—') ?></td>
                     </tr>
                 <?php endforeach; ?>
             </tbody>
