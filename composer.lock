@@ -4,11 +4,11 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "4c596029e33716ae101f4b3f06e2eb23",
+    "content-hash": "93f219a0a0ea4f275b305b1ea7cf663a",
     "packages": [
         {
             "name": "tihloh/prefab-auth",
-            "version": "v0.5.1",
+            "version": "v0.5.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/tihloh/prefab-auth.git",
@@ -62,16 +62,16 @@
         },
         {
             "name": "tihloh/prefab-core",
-            "version": "v0.5.1",
+            "version": "v0.5.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/tihloh/prefab-core.git",
-                "reference": "2458f7bf161d7fba9bbf8205b9b2ec35f9cfc5d2"
+                "reference": "e1bcbecd35470ee246ca66a173937c759db826b0"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tihloh/prefab-core/zipball/2458f7bf161d7fba9bbf8205b9b2ec35f9cfc5d2",
-                "reference": "2458f7bf161d7fba9bbf8205b9b2ec35f9cfc5d2",
+                "url": "https://api.github.com/repos/tihloh/prefab-core/zipball/e1bcbecd35470ee246ca66a173937c759db826b0",
+                "reference": "e1bcbecd35470ee246ca66a173937c759db826b0",
                 "shasum": ""
             },
             "require": {
@@ -131,11 +131,11 @@
                 "issues": "https://github.com/tihloh/prefab-php/issues",
                 "source": "https://github.com/tihloh/prefab-php"
             },
-            "time": "2026-09-02T15:20:52+00:00"
+            "time": "2026-09-02T16:42:57+00:00"
         },
         {
             "name": "tihloh/prefab-input",
-            "version": "v0.5.1",
+            "version": "v0.5.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/tihloh/prefab-input.git",
@@ -194,16 +194,16 @@
         },
         {
             "name": "tihloh/prefab-logs",
-            "version": "v0.5.1",
+            "version": "v0.5.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/tihloh/prefab-logs.git",
-                "reference": "1b1b8cb415603c9904c5fbf4aee0f8754fb20e6e"
+                "reference": "6268d26e9719781743a9af1496555b21800c68fb"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tihloh/prefab-logs/zipball/1b1b8cb415603c9904c5fbf4aee0f8754fb20e6e",
-                "reference": "1b1b8cb415603c9904c5fbf4aee0f8754fb20e6e",
+                "url": "https://api.github.com/repos/tihloh/prefab-logs/zipball/6268d26e9719781743a9af1496555b21800c68fb",
+                "reference": "6268d26e9719781743a9af1496555b21800c68fb",
                 "shasum": ""
             },
             "require": {
@@ -245,11 +245,11 @@
                 "issues": "https://github.com/tihloh/prefab-php/issues",
                 "source": "https://github.com/tihloh/prefab-php"
             },
-            "time": "2026-09-02T15:17:14+00:00"
+            "time": "2026-09-12T01:09:24+00:00"
         },
         {
             "name": "tihloh/prefab-permissions",
-            "version": "v0.5.1",
+            "version": "v0.5.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/tihloh/prefab-permissions.git",
@@ -305,7 +305,7 @@
         },
         {
             "name": "tihloh/prefab-routes",
-            "version": "v0.5.1",
+            "version": "v0.5.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/tihloh/prefab-routes.git",
@@ -361,7 +361,7 @@
         },
         {
             "name": "tihloh/prefab-users",
-            "version": "v0.5.1",
+            "version": "v0.5.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/tihloh/prefab-users.git",
