@@ -1,25 +1,37 @@
 (function () {
   "use strict";
 
-  var parentOrigin = "*", context = {}, vendos = [], selected = null;
-  var pending = Object.create(null), sequence = 0, pollTimer = null, activeVoucher = "";
+  var context = window.PIXIEPOINT_CONTEXT || {}, vendos = window.PIXIEPOINT_VENDOS || [], selected = null;
+  var pollTimer = null, activeVoucher = "";
   var $ = function (id) { return document.getElementById(id); };
 
   function alertMessage(message) {
     var el = $("compat-alert");
+    if (!el) return;
     el.textContent = message || "";
     el.hidden = !message;
   }
 
-  function rpc(path, method, data) {
+  function request(path, method, data) {
     return new Promise(function (resolve, reject) {
-      var id = "rpc-" + (++sequence) + "-" + Date.now();
-      var timeout = setTimeout(function () {
-        delete pending[id];
-        reject(new Error("The local vendo did not respond."));
-      }, 9000);
-      pending[id] = { resolve: resolve, reject: reject, timeout: timeout };
-      window.parent.postMessage({ type: "pixiepoint:request", id: id, vendoId: selected && selected.id, path: path, method: method || "GET", data: data || {} }, parentOrigin);
+      if (!selected || !selected.baseUrl) return reject(new Error("No local vendo address configured."));
+      var xhr = new XMLHttpRequest(), url = selected.baseUrl.replace(/\/$/, "") + path;
+      xhr.open(method || "GET", url, true);
+      xhr.timeout = 9000;
+      xhr.onreadystatechange = function () {
+        if (xhr.readyState !== 4) return;
+        resolve({ ok: xhr.status >= 200 && xhr.status < 300, status: xhr.status, body: xhr.responseText });
+      };
+      xhr.onerror = function () { reject(new Error("The local vendo did not respond.")); };
+      xhr.ontimeout = function () { reject(new Error("The local vendo did not respond.")); };
+      if ((method || "GET").toUpperCase() === "POST") {
+        xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
+        xhr.send(Object.keys(data || {}).map(function (key) {
+          var value = data[key];
+          if (value === undefined || value === null) value = "";
+          return encodeURIComponent(key) + "=" + encodeURIComponent(String(value));
+        }).join("&").replace(/%20/g, "+"));
+      } else xhr.send();
     });
   }
 
@@ -33,15 +45,17 @@
   function isTrue(value) { return value === true || value === "true" || value === 1 || value === "1"; }
 
   function setReady(ready, message) {
-    $("compat-topup").disabled = !ready;
-    $("compat-rates").disabled = !ready;
-    $("compat-health").textContent = message;
-    $("compat-health").className = "compat-status " + (ready ? "online" : "offline");
+    if ($("compat-topup")) $("compat-topup").disabled = !ready;
+    if ($("compat-rates")) $("compat-rates").disabled = !ready;
+    if ($("compat-health")) {
+      $("compat-health").textContent = message;
+      $("compat-health").className = "compat-status " + (ready ? "online" : "offline");
+    }
   }
 
   function health() {
     if (!selected) return;
-    rpc("/health").then(function (result) {
+    request("/health").then(function (result) {
       if (!result.ok) throw new Error("HTTP " + result.status);
       setReady(true, selected.name + " is ready");
       alertMessage("");
@@ -52,23 +66,16 @@
   }
 
   function selectVendo() {
-    selected = vendos.filter(function (v) { return v.id === $("compat-vendo").value; })[0] || vendos[0] || null;
+    var select = $("compat-vendo");
+    selected = vendos.filter(function (v) { return select && String(v.id) === String(select.value); })[0] || vendos[0] || null;
+    if (!selected) return;
     setReady(false, "Checking the local vendo…");
     health();
   }
 
-  function init(data) {
-    context = data.context || {};
-    vendos = data.vendos || [];
+  function init() {
     var select = $("compat-vendo");
-    select.textContent = "";
-    vendos.forEach(function (vendo) {
-      var option = document.createElement("option");
-      option.value = vendo.id;
-      option.textContent = vendo.name;
-      if (vendo.interfaceName && vendo.interfaceName === context.interfaceName) option.selected = true;
-      select.appendChild(option);
-    });
+    if (!select) return;
     if (!vendos.length) {
       setReady(false, "No local vendo configured");
       alertMessage("The operator has not configured a coin slot for this hotspot.");
@@ -94,12 +101,10 @@
   function pollCoin() {
     clearTimeout(pollTimer);
     if (!activeVoucher) return;
-    rpc("/checkCoin", "POST", { voucher: activeVoucher }).then(function (result) {
+    request("/checkCoin", "POST", { voucher: activeVoucher }).then(function (result) {
       var data = responseData(result);
       if (result.ok && (isTrue(data.status) || isTrue(data.success))) displayTransaction(data);
-      else if (data.errorCode !== "coin.not.inserted" && data.errorCode !== "coin.is.reading") {
-        throw new Error(data.message || "The coin slot reported an error.");
-      }
+      else if (data.errorCode !== "coin.not.inserted" && data.errorCode !== "coin.is.reading") throw new Error(data.message || data.errorCode || "The coin slot reported an error.");
       pollTimer = setTimeout(pollCoin, 1000);
     }).catch(function (error) {
       alertMessage(error.message);
@@ -110,7 +115,7 @@
   function beginTopup() {
     alertMessage("");
     $("compat-topup").disabled = true;
-    rpc("/topUp", "POST", { voucher: "", mac: context.mac || "" }).then(function (result) {
+    request("/topUp", "POST", { voucher: "", mac: context.mac || "", ipAddress: context.ip || "", extendTime: 0 }).then(function (result) {
       var data = responseData(result);
       if (!result.ok || (!isTrue(data.status) && !isTrue(data.success))) throw new Error(data.message || data.errorCode || "The coin slot rejected the request.");
       displayTransaction(data);
@@ -123,12 +128,25 @@
   }
 
   function login(voucher) {
-    window.parent.postMessage({ type: "pixiepoint:login", voucher: voucher, vendoId: selected && selected.id }, parentOrigin);
+    voucher = String(voucher || "").trim();
+    if (!voucher) return;
+    var form = $("chap-login"), chap = window.PIXIEPOINT_CHAP || {};
+    if (form && chap.id && chap.challenge && typeof hexMD5 === "function") {
+      form.elements.namedItem("username").value = voucher;
+      form.elements.namedItem("password").value = hexMD5(chap.id + voucher + chap.challenge);
+      form.submit();
+      return;
+    }
+    form = $("pap-login");
+    if (!form) return;
+    form.elements.namedItem("username").value = voucher;
+    form.elements.namedItem("password").value = voucher;
+    form.submit();
   }
 
   function finishTopup() {
     clearTimeout(pollTimer);
-    rpc("/useVoucher", "POST", { voucher: activeVoucher }).then(function (result) {
+    request("/useVoucher", "POST", { voucher: activeVoucher }).then(function (result) {
       var data = responseData(result);
       if (!result.ok || (!isTrue(data.status) && !isTrue(data.success))) throw new Error(data.message || data.errorCode || "The voucher could not be activated.");
       login(activeVoucher);
@@ -137,7 +155,7 @@
 
   function cancelTopup() {
     clearTimeout(pollTimer);
-    rpc("/cancelTopUp", "POST", { voucher: activeVoucher, mac: context.mac || "" }).catch(function () {}).then(function () {
+    request("/cancelTopUp", "POST", { voucher: activeVoucher, mac: context.mac || "" }).catch(function () {}).then(function () {
       activeVoucher = "";
       $("compat-transaction").hidden = true;
       $("compat-topup").disabled = false;
@@ -145,10 +163,9 @@
   }
 
   function showRates() {
-    rpc("/getRates?rateType=1&date=" + encodeURIComponent(new Date().toISOString()), "GET").then(function (result) {
+    request("/getRates?rateType=1&date=" + encodeURIComponent(new Date().toISOString()), "GET").then(function (result) {
       if (!result.ok) throw new Error("Rates are unavailable.");
-      var data = responseData(result), rates = Array.isArray(data) ? data : (data.rates || []);
-      var list = $("compat-rate-list");
+      var data = responseData(result), rates = Array.isArray(data) ? data : (data.rates || []), list = $("compat-rate-list");
       list.textContent = "";
       rates.forEach(function (rate) {
         var row = document.createElement("div");
@@ -161,27 +178,14 @@
     }).catch(function (error) { alertMessage(error.message); });
   }
 
-  window.addEventListener("message", function (event) {
-    var data = event.data || {};
-    if (data.type === "pixiepoint:init") {
-      parentOrigin = event.origin;
-      init(data);
-    } else if (data.type === "pixiepoint:response" && pending[data.id]) {
-      var request = pending[data.id];
-      clearTimeout(request.timeout);
-      delete pending[data.id];
-      data.error ? request.reject(new Error(data.error)) : request.resolve(data.result || {});
-    }
-  });
-
-  $("compat-vendo").addEventListener("change", selectVendo);
-  $("compat-topup").addEventListener("click", beginTopup);
-  $("compat-finish").addEventListener("click", finishTopup);
-  $("compat-cancel").addEventListener("click", cancelTopup);
-  $("compat-rates").addEventListener("click", showRates);
-  $("compat-voucher-form").addEventListener("submit", function (event) {
+  if ($("compat-vendo")) $("compat-vendo").addEventListener("change", selectVendo);
+  if ($("compat-topup")) $("compat-topup").addEventListener("click", beginTopup);
+  if ($("compat-finish")) $("compat-finish").addEventListener("click", finishTopup);
+  if ($("compat-cancel")) $("compat-cancel").addEventListener("click", cancelTopup);
+  if ($("compat-rates")) $("compat-rates").addEventListener("click", showRates);
+  if ($("compat-voucher-form")) $("compat-voucher-form").addEventListener("submit", function (event) {
     event.preventDefault();
     login($("compat-voucher").value.trim().toUpperCase());
   });
-  window.parent.postMessage({ type: "pixiepoint:ready" }, "*");
+  init();
 }());
