@@ -39,6 +39,8 @@ use PixiePoint\App\Services\PointWallet;
 use PixiePoint\App\Services\PortalThemeManager;
 use PixiePoint\App\Services\PrefabKernel;
 use PixiePoint\App\Services\View;
+use PixiePoint\App\Services\Vouchers\MikroTikVoucherAdapter;
+use PixiePoint\App\Services\Vouchers\VoucherEngine;
 use Tihloh\Prefab\Routes\RouteMatch;
 
 final class Application
@@ -63,6 +65,7 @@ final class Application
         $vendoApi = new VendoApi($app->db);
         $routerQueue = new RouterCommandQueue($app->db);
         $avatars = new AvatarService($root);
+        $voucherEngine = new VoucherEngine(new MikroTikVoucherAdapter());
 
         $controllers = [
             'auth' => new AuthController($prefab['users'],$auth,$google,$view,$app->db),
@@ -82,7 +85,7 @@ final class Application
             'router.agent' => new RouterAgentController($app->db,$routerQueue),
             'admin.vendos' => new VendosController($app->db,$auth,$view,$logs,$themes),
             'vendos.hotspot' => new VendoHotspotController($vendoApi,$view,$themes,$themeEngine,$portalAdapter,$app->db,$networkDevices,$points),
-            'admin.vouchers' => new VouchersController($app->db,$auth,$view,$logs),
+            'admin.vouchers' => new VouchersController($app->db,$auth,$view,$logs,$voucherEngine),
             'admin.devices' => new DevicesController($app->db,$auth,$view,$logs),
             'admin.sessions' => new SessionsController($app->db,$auth,$view,$logs),
             'admin.sales' => new SalesController($app->db,$auth,$view,$logs),
