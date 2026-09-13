@@ -1,37 +1,35 @@
-# PixiePoint local JuanFi bridge
+# PixiePoint MikroTik hotspot bootstrap
 
-This directory is the small bootstrap installed on MikroTik. The complete customer interface, styling, and JuanFi workflow are downloaded from `https://hs.portalx.win` and rendered natively into the local document. There is no iframe and therefore no nested viewport or double scrollbar.
-
-The document retains the MikroTik origin so the downloaded application can communicate with an unchanged ESP such as `http://10.0.0.2`. A top-level HTTPS page could not reliably make that HTTP private-network request. The bootstrap also computes MikroTik HTTP-CHAP locally, so the hosted site never needs direct router access.
+This directory contains the small local bootstrap installed on MikroTik. The customer portal, styling, and application logic are hosted by PixiePoint and rendered into the local HotSpot document. There is no iframe and no second nested portal viewport.
 
 ## Install
 
-1. Edit `vendo-config.js`. Set the hosted origin and list every allowed local vendo. This file is the local security allowlist.
-2. Upload all files in this directory to `flash/mt_hotspot`.
-3. Configure RouterOS:
+1. Upload the files in this directory to `flash/mt_hotspot`.
+2. Configure RouterOS:
 
 ```routeros
 /ip hotspot profile set [find name="hsprof1"] html-directory="flash/mt_hotspot"
 /ip hotspot walled-garden add dst-host=hs.portalx.win
 ```
 
-Use `passwordMode: "blank"` for standard JuanFi voucher users whose password is empty, or `passwordMode: "voucher"` when username and password are the same.
+## Login flow
 
-## Runtime behavior
+`login.html` collects the RouterOS HotSpot variables and places them in the local page URL. It then loads:
 
-- `login.html` never navigates while checking availability.
-- It polls `/hotspot/health` asynchronously and shows a persistent local error screen if DNS, internet, TLS, CORS, the PHP app, or its database is unavailable.
-- Only after a valid health response does it download the hosted stylesheet and portal application.
-- If PixiePoint is reachable but the ESP is not, the hosted UI remains responsive and reports the local vendo failure separately.
-- Coin checks use background AJAX and update the visible transaction without page reloads.
+```text
+https://hs.portalx.win/assets/hotspot-embed.js
+```
 
-All customer-facing behavior stays in the hosted `juanfi-compat.js` application. The MikroTik files contain no rates, transaction rules, product catalog, account UI, sales logic, or operator interface. `vendo-config.js` contains only the locally trusted ESP addresses and feature switches, while `md5.js` performs the required local CHAP calculation.
+The embed script requests `/hotspot/compat`, receives the server-rendered portal theme, and writes it into the current local document with `document.open()`, `document.write()`, and `document.close()`.
 
-The hosted compatibility layer currently implements coin/voucher login, legacy rate parsing, voucher extension and conversion, charging-station discovery and charging top-up. It can detect the JuanFi e-load service, but purchasing remains hidden by default and must not be enabled until the compressed product catalog and real transaction flow pass a physical-device test.
+The rendered portal then uses `hotspot-login.js` for voucher login. When RouterOS provides CHAP values, the password response is calculated in the local document. Otherwise the configured PAP form is submitted to the RouterOS login URL.
 
-## Security notes
+## Status flow
 
-- Treat `vendo-config.js` as router configuration and restrict MikroTik administrative access.
-- Do not put Telegram tokens, database passwords, API keys, or operator credentials in hotspot files or ESP-visible requests.
-- Rotate any secrets embedded in the former JuanFi login script before deployment.
-- Keep the ESP on the hotspot LAN and block management access from untrusted upstream networks.
+`status.html` passes the current RouterOS session values to the same hosted portal endpoint. The rendered connected-state page uses `session-portal.js` to display remaining time, traffic counters, and logout actions.
+
+## Responsibilities
+
+The MikroTik bootstrap contains only the RouterOS-facing variables and hosted-portal loader. Portal themes, voucher UI, member/QR/trial/points UI, device information, and session presentation remain hosted in PixiePoint.
+
+Keep `hs.portalx.win` in the HotSpot walled garden so unauthenticated clients can load the portal assets.
