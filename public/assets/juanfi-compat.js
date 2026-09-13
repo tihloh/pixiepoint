@@ -312,10 +312,12 @@
         finishProcessedCoin("coins.wait.expired");
         return;
       } else if (errorCode === "coinslot.busy") {
-        trace("operation.coinSlotManuallyCleared", { voucher: activeVoucher, totalCoin: totalCoinReceived, response: data, insertingCoin: insertingCoin }, "warn");
+        trace("operation.coinSlotBusy", { voucher: activeVoucher, totalCoin: totalCoinReceived, response: data, insertingCoin: insertingCoin }, "warn");
         clearInsertionState();
         if (totalCoinReceived === 0) {
-          cancelVendoTopup("coinslot.busy").then(function () { finishProcessedCoin("coinslot.busy"); });
+          if ($("compat-progress")) $("compat-progress").textContent = "Coin slot is busy.";
+          if ($("compat-transaction")) $("compat-transaction").hidden = true;
+          if ($("compat-topup")) $("compat-topup").disabled = false;
         } else finishProcessedCoin("coinslot.busy");
         return;
       } else {
