@@ -293,7 +293,7 @@
     }).catch(function (error) {
       trace("operation.pollCoinFailed", { error: error && error.message, voucher: activeVoucher }, "error");
       if ($("compat-progress")) $("compat-progress").textContent = error.message;
-      if (coinSessionActive) pollTimer = setTimeout(pollCoin, 3000);
+      if (coinSessionActive) pollTimer = setTimeout(pollCoin, 1000);
     });
   }
 
@@ -307,9 +307,6 @@
     totalCoinReceived = 0;
     topupPending = true;
 
-    /* Original JuanFi behavior for a NEW insert-coin transaction:
-       do not reuse the voucher shown in the login input. The vendo owns the
-       top-up session and returns the voucher that belongs to that session. */
     activeVoucher = "";
     if ($("compat-voucher")) $("compat-voucher").value = "";
 
@@ -339,7 +336,8 @@
       if ($("compat-countdown")) $("compat-countdown").textContent = "Ready";
       if ($("compat-progress")) $("compat-progress").textContent = "Coin slot active. Insert a coin now.";
       trace("state.coinSessionOwned", { voucher: activeVoucher, vendo: selected });
-      pollCoin();
+      trace("operation.pollCoinScheduled", { voucher: activeVoucher, delayMs: 1000 });
+      pollTimer = setTimeout(pollCoin, 1000);
     }).catch(function (error) {
       topupPending = false;
       coinSessionActive = false;
