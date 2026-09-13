@@ -68,7 +68,9 @@ CREATE TABLE IF NOT EXISTS vendo_gateway_bindings (
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_vg_bindings_vendo (vendo_id),
     FOREIGN KEY(vendo_id) REFERENCES vendos(id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+SQL);
+        $this->db->exec(<<<'SQL'
 CREATE TABLE IF NOT EXISTS vendo_gateway_coin_events (
     id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
     event_id VARCHAR(128) NOT NULL UNIQUE,
@@ -83,7 +85,7 @@ CREATE TABLE IF NOT EXISTS vendo_gateway_coin_events (
     INDEX idx_vg_coin_device_seq (gateway_device_id,sequence_no),
     INDEX idx_vg_coin_vendo_time (vendo_id,received_at),
     FOREIGN KEY(vendo_id) REFERENCES vendos(id) ON DELETE SET NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 SQL);
     }
 }
