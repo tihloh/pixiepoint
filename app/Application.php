@@ -22,7 +22,6 @@ use PixiePoint\App\Api\AccountingController;
 use PixiePoint\App\Controllers\AuthController;
 use PixiePoint\App\Controllers\DashboardController;
 use PixiePoint\App\Controllers\DeviceInfoController;
-use PixiePoint\App\Controllers\EmulatorController;
 use PixiePoint\App\Controllers\HostedPortalController;
 use PixiePoint\App\Controllers\HotspotController;
 use PixiePoint\App\Models\Router as RouterModel;
@@ -67,7 +66,6 @@ final class Application
             'profile' => new ProfileController($auth,$view,$prefab['users'],$avatars),
             'hotspot' => new HotspotController($app->db,new RouterModel($app->db),$auth,$view,$devices),
             'hosted_portal' => new HostedPortalController($app->db,$themes,$themeEngine,$portalAdapter,$networkDevices,$points),
-            'emulator' => new EmulatorController($app->db,$auth),
             'device_info' => new DeviceInfoController($app->db,$networkDevices,$points),
             'admin.users' => new UsersController($app->db,$auth,$view,$logs,$prefab['users'],$avatars),
             'admin.permissions' => new PermissionsController($app->db,$auth,$view,$logs,$prefab['permissions'],$prefab['users']),
