@@ -64,6 +64,13 @@
   function removeStorageValue(key) {
     try { localStorage.removeItem(key); } catch (_) {}
   }
+  function formEncode(data) {
+    return Object.keys(data || {}).map(function (key) {
+      var value = data[key];
+      if (value === undefined || value === null) value = "";
+      return encodeURIComponent(key) + "=" + encodeURIComponent(String(value));
+    }).join("&").replace(/%20/g, "+");
+  }
 
   function localRequest(path, method, data) {
     return new Promise(function (resolve, reject) {
@@ -74,9 +81,10 @@
       }
       var xhr = new XMLHttpRequest();
       var requestId = "local-" + (++sequence) + "-" + Date.now(), startedAt = Date.now();
-      var query = method === "GET" && data && Object.keys(data).length ? "?" + new URLSearchParams(data).toString() : "";
+      var encoded = formEncode(data || {});
+      var query = method === "GET" && encoded ? "?" + encoded : "";
       var url = selected.baseUrl + path + query;
-      trace("request.start", { id: requestId, transport: "xhr", method: method || "GET", url: url, data: data, vendo: selected });
+      trace("request.start", { id: requestId, transport: "xhr", method: method || "GET", url: url, data: data, formBody: method === "POST" ? encoded : undefined, vendo: selected });
       xhr.open(method || "GET", url, true);
       xhr.timeout = 7000;
       xhr.onload = function () {
@@ -88,8 +96,8 @@
       xhr.onerror = function () { trace("request.networkError", { id: requestId, url: url, status: xhr.status, readyState: xhr.readyState, durationMs: Date.now() - startedAt }, "error"); reject(new Error("The local vendo is unreachable.")); };
       xhr.ontimeout = function () { trace("request.timeout", { id: requestId, url: url, timeoutMs: xhr.timeout, durationMs: Date.now() - startedAt }, "error"); reject(new Error("The local vendo timed out.")); };
       if (method === "POST") {
-        xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-        xhr.send(new URLSearchParams(data || {}).toString());
+        xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
+        xhr.send(encoded);
       } else xhr.send();
     });
   }
