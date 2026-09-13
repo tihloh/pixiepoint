@@ -73,7 +73,14 @@
     health();
   }
 
+<<<<<<< Updated upstream
   function init() {
+=======
+  function init(data) {
+    context = data.context || {};
+    vendos = data.vendos || [];
+    console.log("Received vendos:", vendos);
+>>>>>>> Stashed changes
     var select = $("compat-vendo");
     if (!select) return;
     if (!vendos.length) {
@@ -178,12 +185,27 @@
     }).catch(function (error) { alertMessage(error.message); });
   }
 
-  if ($("compat-vendo")) $("compat-vendo").addEventListener("change", selectVendo);
-  if ($("compat-topup")) $("compat-topup").addEventListener("click", beginTopup);
-  if ($("compat-finish")) $("compat-finish").addEventListener("click", finishTopup);
-  if ($("compat-cancel")) $("compat-cancel").addEventListener("click", cancelTopup);
-  if ($("compat-rates")) $("compat-rates").addEventListener("click", showRates);
-  if ($("compat-voucher-form")) $("compat-voucher-form").addEventListener("submit", function (event) {
+  window.addEventListener("message", function (event) {
+    var data = event.data || {};
+    console.log("Received message:", data);
+
+    if (data.type === "pixiepoint:init") {
+      parentOrigin = event.origin;
+      init(data);
+    } else if (data.type === "pixiepoint:response" && pending[data.id]) {
+      var request = pending[data.id];
+      clearTimeout(request.timeout);
+      delete pending[data.id];
+      data.error ? request.reject(new Error(data.error)) : request.resolve(data.result || {});
+    }
+  });
+
+  $("compat-vendo").addEventListener("change", selectVendo);
+  $("compat-topup").addEventListener("click", beginTopup);
+  $("compat-finish").addEventListener("click", finishTopup);
+  $("compat-cancel").addEventListener("click", cancelTopup);
+  $("compat-rates").addEventListener("click", showRates);
+  $("compat-voucher-form").addEventListener("submit", function (event) {
     event.preventDefault();
     login($("compat-voucher").value.trim().toUpperCase());
   });
