@@ -1,6 +1,5 @@
 # PixiePoint RouterOS v7 HotSpot on-login script
-# Legacy comment: duration,amount_pesos,is_extension,vendo_name
-# Example: 1h,10,0,Main Vendo
+# Voucher comment metadata: duration,amount_pesos,is_extension
 # Replace the API key with the key assigned to this router in PixiePoint.
 
 :local ppApiUrl "https://hs.portalx.win/api/router/login-event"
@@ -13,7 +12,6 @@
 :local ppInterface $interface
 :local ppIdentity [/system identity get name]
 
-# Only generated voucher characters are accepted before constructing an expiry script.
 :if (!($ppUser~"^[A-Za-z0-9_-]+$")) do={
     :log warning ("PixiePoint: unsupported HotSpot username: " . $ppUser)
     :return
@@ -21,7 +19,6 @@
 
 :local ppUserId [/ip hotspot user find where name=$ppUser]
 :if ([:len $ppUserId] = 0) do={
-    # RADIUS users are tracked by RADIUS accounting and need no local scheduler.
     :log info ("PixiePoint: RADIUS login observed for " . $ppUser)
     :return
 }
@@ -34,10 +31,9 @@
 :local ppDuration 0s
 :local ppAmount 0
 :local ppExtension 0
-:local ppVendo ""
 
 :if (($ppMeta->0) = "pp-pending") do={
-    :if ([:len $ppMeta] < 6) do={
+    :if ([:len $ppMeta] < 5) do={
         :log warning ("PixiePoint: invalid pending metadata for " . $ppUser)
         :return
     }
@@ -45,19 +41,14 @@
     :set ppDuration [:totime ($ppMeta->2)]
     :set ppAmount [:tonum ($ppMeta->3)]
     :set ppExtension [:tonum ($ppMeta->4)]
-    :do { :set ppVendo [:convert ($ppMeta->5) from=base64] } on-error={
-        :log warning ("PixiePoint: invalid pending vendo metadata for " . $ppUser)
-        :return
-    }
 } else={
-    :if ([:len $ppMeta] < 4) do={
+    :if ([:len $ppMeta] < 3) do={
         :log warning ("PixiePoint: invalid voucher metadata for " . $ppUser)
         :return
     }
     :set ppDuration [:totime ($ppMeta->0)]
     :set ppAmount [:tonum ($ppMeta->1)]
     :set ppExtension [:tonum ($ppMeta->2)]
-    :set ppVendo ($ppMeta->3)
     :if ($ppDuration <= 0s) do={
         :log warning ("PixiePoint: voucher duration is missing for " . $ppUser)
         :return
@@ -83,13 +74,11 @@
         }
     }
 
-    # Persist retry state before the network request. A failed upload cannot apply
-    # the extension twice on the next login.
     :local ppDate [/system clock get date]
     :local ppTime [/system clock get time]
     :set ppEventKey ($ppIdentity . "|" . $ppUser . "|" . $ppDate . "|" . $ppTime . "|" . $ppExtension)
     /ip hotspot user set $ppUserId comment=("pp-pending," . $ppEventKey . "," . \
-        [:tostr $ppDuration] . "," . $ppAmount . "," . $ppExtension . "," . [:convert $ppVendo to=base64])
+        [:tostr $ppDuration] . "," . $ppAmount . "," . $ppExtension)
 }
 
 :local ppDeviceName ""
@@ -106,7 +95,6 @@
 :set ($ppPayload->"client_ip") [:tostr $ppAddress]
 :set ($ppPayload->"interface_name") [:tostr $ppInterface]
 :set ($ppPayload->"device_name") $ppDeviceName
-:set ($ppPayload->"vendo_name") $ppVendo
 :set ($ppPayload->"amount_pesos") $ppAmount
 :set ($ppPayload->"duration_seconds") ([:tonsec $ppDuration] / 1000000000)
 :set ($ppPayload->"is_extension") $ppExtension
@@ -127,6 +115,5 @@
     }
     :log warning ("PixiePoint: server rejected login event for " . $ppUser . "; retry is pending")
 } on-error={
-    # Customer access remains successful; the pending comment retries next login.
     :log warning ("PixiePoint: login event upload failed for " . $ppUser . "; retry is pending")
 }
