@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "93f219a0a0ea4f275b305b1ea7cf663a",
+    "content-hash": "e6efd9e77b7387e5adc996d8bc2a427a",
     "packages": [
         {
             "name": "tihloh/prefab-auth",
@@ -412,6 +412,59 @@
                 "source": "https://github.com/tihloh/prefab-php"
             },
             "time": "2026-08-30T17:29:05+00:00"
+        },
+        {
+            "name": "tihloh/vendo-gateway",
+            "version": "v1.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/tihloh/vendo-gateway.git",
+                "reference": "bd4f4de74b81bc34ba88d8b6767cd1f081a8ec69"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/tihloh/vendo-gateway/zipball/bd4f4de74b81bc34ba88d8b6767cd1f081a8ec69",
+                "reference": "bd4f4de74b81bc34ba88d8b6767cd1f081a8ec69",
+                "shasum": ""
+            },
+            "require": {
+                "ext-openssl": "*",
+                "ext-pdo": "*",
+                "php": ">=8.2"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "^11.0"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Tihloh\\VendoGateway\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Christian Bustamante"
+                }
+            ],
+            "description": "Reusable device gateway for coin-operated, vending and IoT hardware.",
+            "homepage": "https://github.com/tihloh/vendo-gateway",
+            "keywords": [
+                "esp32",
+                "esp8266",
+                "gateway",
+                "iot",
+                "vending",
+                "vendo"
+            ],
+            "support": {
+                "issues": "https://github.com/tihloh/vendo-gateway/issues",
+                "source": "https://github.com/tihloh/vendo-gateway"
+            },
+            "time": "2026-09-13T16:04:02+00:00"
         }
     ],
     "packages-dev": [],

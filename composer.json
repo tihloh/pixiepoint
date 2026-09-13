@@ -9,7 +9,8 @@
     "tihloh/prefab-routes": "^0.5.2",
     "tihloh/prefab-input": "^0.5.2",
     "tihloh/prefab-permissions": "^0.5.2",
-    "tihloh/prefab-logs": "^0.5.2"
+    "tihloh/prefab-logs": "^0.5.2",
+    "tihloh/vendo-gateway": "^1.0"
   },
   "autoload": {
     "psr-4": {
