@@ -35,7 +35,7 @@ final class Controller extends FeatureController
     {
         [$router,$routerId]=$this->selectedRouter();$key=trim((string)($_GET['batch']??''));$stmt=$this->db->prepare('SELECT * FROM voucher_batches WHERE batch_key=? AND router_id=? LIMIT 1');$stmt->execute([$key,$routerId]);$batch=$stmt->fetch();if(!$batch){http_response_code(404);exit('Voucher batch not found.');}
         $station=null;if(!empty($batch['station_id'])){$stmt=$this->db->prepare('SELECT * FROM vendos WHERE id=? AND router_id=? LIMIT 1');$stmt->execute([(int)$batch['station_id'],$routerId]);$station=$stmt->fetch()?:null;}
-        $stmt=$this->db->prepare('SELECT * FROM vouchers WHERE batch_id=? ORDER BY id');$stmt->execute([(int)$batch['id']);$adapter=$this->engine->adapter((string)$batch['platform']);
+        $stmt=$this->db->prepare('SELECT * FROM vouchers WHERE batch_id=? ORDER BY id');$stmt->execute([(int)$batch['id']]);$adapter=$this->engine->adapter((string)$batch['platform']);
         header('Content-Type: text/plain; charset=utf-8');header('Content-Disposition: attachment; filename="'.$adapter->filename($batch).'"');header('X-Content-Type-Options: nosniff');echo $adapter->render($router,$station,$batch,$stmt->fetchAll());exit;
     }
 
