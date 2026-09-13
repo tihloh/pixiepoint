@@ -22,6 +22,7 @@ use PixiePoint\App\Admin\Vendos\Controller as VendosController;
 use PixiePoint\App\Admin\Vendos\HotspotController as VendoHotspotController;
 use PixiePoint\App\Admin\Vouchers\Controller as VouchersController;
 use PixiePoint\App\Api\AccountingController;
+use PixiePoint\App\Api\VendoGatewayController;
 use PixiePoint\App\Controllers\AuthController;
 use PixiePoint\App\Controllers\DashboardController;
 use PixiePoint\App\Controllers\DeviceInfoController;
@@ -91,6 +92,7 @@ final class Application
             'admin.sales' => new SalesController($app->db,$auth,$view,$logs),
             'admin.logs' => new LogsController($app->db,$auth,$view,$logs),
             'api' => new AccountingController($app->db,$app->config,$networkDevices),
+            'vendo.gateway' => new VendoGatewayController($app->db,$app->config),
         ];
 
         $routes->middleware('prefab.access',static function(callable $next,RouteMatch $match) use($auth,$view,$logs){
