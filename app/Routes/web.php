@@ -26,8 +26,8 @@ return static function (RouteManager $routes, array $c): void {
         exit;
     })->name('hotspot.health');
 
-    $routes->get('/hotspot/compat', [$c['vendos.hotspot'], 'portal'])->name('hotspot.compat');
-    $routes->get('/hotspot/status', [$c['vendos.hotspot'], 'status'])->name('hotspot.status');
+    $routes->get('/hotspot/compat', [$c['hosted_portal'], 'portal'])->name('hotspot.compat');
+    $routes->get('/hotspot/status', [$c['hosted_portal'], 'status'])->name('hotspot.status');
     $routes->get('/hotspot/device-info', [$c['device_info'], 'show'])->name('hotspot.device_info');
     $routes->post('/hotspot/device-voucher', [$c['device_info'], 'saveVoucher'])->name('hotspot.device_voucher');
     $routes->post('/hotspot/authenticate', [$c['hotspot'], 'authenticate'])->name('hotspot.authenticate');
@@ -72,7 +72,7 @@ return static function (RouteManager $routes, array $c): void {
     (require dirname(__DIR__) . '/Profile/routes.php')($routes, $c);
 
     $adminRoot = dirname(__DIR__) . '/Admin';
-    foreach (['Users', 'Permissions', 'Groups', 'Routers', 'Vendos', 'Vouchers', 'Devices', 'Sessions', 'Sales', 'Logs', 'PortalThemes'] as $feature) {
+    foreach (['Users', 'Permissions', 'Groups', 'Routers', 'Vouchers', 'Devices', 'Sessions', 'Sales', 'Logs', 'PortalThemes'] as $feature) {
         (require $adminRoot . '/' . $feature . '/routes.php')($routes, $c);
     }
 };
