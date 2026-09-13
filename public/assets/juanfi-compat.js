@@ -61,12 +61,9 @@
         reject(new Error("No local vendo is selected."));
         return;
       }
-
       var xhr = new XMLHttpRequest();
       var requestId = "local-" + (++sequence) + "-" + Date.now(), startedAt = Date.now();
-      var query = method === "GET" && data && Object.keys(data).length
-        ? "?" + new URLSearchParams(data).toString()
-        : "";
+      var query = method === "GET" && data && Object.keys(data).length ? "?" + new URLSearchParams(data).toString() : "";
       var url = selected.baseUrl + path + query;
       trace("request.start", { id: requestId, transport: "xhr", method: method || "GET", url: url, data: data, vendo: selected });
       xhr.open(method || "GET", url, true);
@@ -82,15 +79,14 @@
       if (method === "POST") {
         xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
         xhr.send(new URLSearchParams(data || {}).toString());
-      } else {
-        xhr.send();
-      }
+      } else xhr.send();
     });
   }
 
   function alertMessage(message) {
     trace("ui.alert", { message: message, visible: !!message }, message ? "warn" : "debug");
     var el = $("compat-alert");
+    if (!el) return;
     el.textContent = message || "";
     el.hidden = !message;
   }
@@ -117,19 +113,9 @@
     if (typeof body !== "string") return {};
     try { return JSON.parse(body); } catch (_) { return { raw: body }; }
   }
-
   function isTrue(value) { return value === true || value === "true" || value === 1 || value === "1"; }
-
-  function number(value) {
-    value = Number(value);
-    return Number.isFinite(value) && value > 0 ? value : 0;
-  }
-
-  function currentVoucher() {
-    var input = $("compat-voucher");
-    return input ? input.value.trim().toUpperCase() : "";
-  }
-
+  function number(value) { value = Number(value); return Number.isFinite(value) && value > 0 ? value : 0; }
+  function currentVoucher() { var input = $("compat-voucher"); return input ? input.value.trim().toUpperCase() : ""; }
   function setCurrentVoucher(voucher) {
     voucher = String(voucher || "").trim().toUpperCase();
     var input = $("compat-voucher");
@@ -139,10 +125,12 @@
 
   function setReady(ready, message) {
     trace("state.vendoReady", { ready: ready, message: message, vendo: selected });
-    $("compat-topup").disabled = !ready;
-    $("compat-rates").disabled = !ready;
-    $("compat-health").textContent = message;
-    $("compat-health").className = "compat-status " + (ready ? "online" : "offline");
+    if ($("compat-topup")) $("compat-topup").disabled = !ready;
+    if ($("compat-rates")) $("compat-rates").disabled = !ready;
+    if ($("compat-health")) {
+      $("compat-health").textContent = message;
+      $("compat-health").className = "compat-status " + (ready ? "online" : "offline");
+    }
   }
 
   function health() {
@@ -160,8 +148,8 @@
   }
 
   function selectVendo() {
-    selected = vendos.filter(function (v) { return v.id === $("compat-vendo").value; })[0] || vendos[0] || null;
-    trace("operation.selectVendo", { selected: selected, requestedId: $("compat-vendo").value });
+    selected = vendos.filter(function (v) { return String(v.id) === String($("compat-vendo").value); })[0] || vendos[0] || null;
+    trace("operation.selectVendo", { selected: selected, requestedId: $("compat-vendo") && $("compat-vendo").value });
     setReady(false, "Checking the local vendo…");
     health();
   }
@@ -170,6 +158,7 @@
     context = data.context || {};
     vendos = data.vendos || [];
     var select = $("compat-vendo");
+    if (!select) return;
     Array.from(select.options).forEach(function (option) {
       var vendo = vendos.filter(function (item) { return String(item.id) === String(option.value); })[0];
       if (vendo) vendo.debugEnabled = vendo.debugEnabled || option.dataset.debug === "1";
@@ -192,9 +181,7 @@
     selectVendo();
   }
 
-  function generatedVoucher(data) {
-    return String(data.voucher || data.voucherCode || data.code || "").trim().toUpperCase();
-  }
+  function generatedVoucher(data) { return String(data.voucher || data.voucherCode || data.code || "").trim().toUpperCase(); }
 
   function displayTransaction(data) {
     activeVoucher = generatedVoucher(data) || activeVoucher;
@@ -202,14 +189,14 @@
     if (data.totalCoin !== undefined) totalCoinReceived = number(data.totalCoin);
     else if (data.amount !== undefined) totalCoinReceived = number(data.amount);
     else if (data.coin !== undefined) totalCoinReceived = number(data.coin);
-    $("compat-code").textContent = activeVoucher || "Preparing…";
-    $("compat-amount").textContent = "₱" + totalCoinReceived;
+    if ($("compat-code")) $("compat-code").textContent = activeVoucher || "Preparing…";
+    if ($("compat-amount")) $("compat-amount").textContent = "₱" + totalCoinReceived;
     var seconds = Number(data.timeAdded || 0), time = data.time || data.minutes || data.duration;
     if (!time && seconds) time = Math.floor(seconds / 3600) + "h " + Math.floor((seconds % 3600) / 60) + "m";
-    $("compat-time").textContent = time || "—";
-    $("compat-transaction").hidden = false;
-    $("compat-finish").disabled = totalCoinReceived <= 0;
-    $("compat-cancel").disabled = totalCoinReceived > 0;
+    if ($("compat-time")) $("compat-time").textContent = time || "—";
+    if ($("compat-transaction")) $("compat-transaction").hidden = false;
+    if ($("compat-finish")) $("compat-finish").disabled = totalCoinReceived <= 0;
+    if ($("compat-cancel")) $("compat-cancel").disabled = totalCoinReceived > 0;
     trace("state.transaction", { voucher: activeVoucher, totalCoin: totalCoinReceived, response: data });
   }
 
@@ -217,77 +204,10 @@
     var remainMs = number(data.remainTime), waitMs = number(data.waitTime);
     var percent = waitMs > 0 ? Math.max(0, Math.min(100, remainMs / waitMs * 100)) : 100;
     var seconds = Math.max(0, Math.ceil(remainMs / 1000));
-    $("compat-progress-bar").style.width = percent + "%";
-    $("compat-countdown").textContent = seconds + "s";
+    if ($("compat-progress-bar")) $("compat-progress-bar").style.width = percent + "%";
+    if ($("compat-countdown")) $("compat-countdown").textContent = seconds + "s";
     trace("state.countdown", { remainTime: remainMs, waitTime: waitMs, seconds: seconds, percent: percent });
     return seconds;
-  }
-
-  function pollCoin() {
-    clearTimeout(pollTimer);
-    if (!activeVoucher) return;
-    trace("operation.pollCoin", { voucher: activeVoucher, totalCoin: totalCoinReceived });
-    rpc("/checkCoin", "POST", { voucher: activeVoucher }).then(function (result) {
-      var data = responseData(result), errorCode = String(data.errorCode || "");
-      if (result.ok && (isTrue(data.status) || isTrue(data.success))) {
-        displayTransaction(data);
-        if (data.remainTime !== undefined || data.waitTime !== undefined) updateCountdown(data);
-        else {
-          $("compat-progress-bar").style.width = "100%";
-          $("compat-countdown").textContent = "Renewed";
-        }
-        $("compat-progress").textContent = "Coin received. Insert another coin or press Done.";
-      } else if (errorCode === "coin.not.inserted") {
-        displayTransaction(data);
-        var seconds = updateCountdown(data);
-        $("compat-progress").textContent = totalCoinReceived > 0 ? "Insert another coin or press Done." : "Waiting for coin…";
-        if (data.remainTime !== undefined && seconds <= 0) {
-          clearTimeout(pollTimer);
-          $("compat-progress").textContent = "Coin slot expired.";
-          $("compat-topup").disabled = false;
-          return;
-        }
-      } else if (errorCode === "coin.is.reading") {
-        if (data.remainTime !== undefined || data.waitTime !== undefined) updateCountdown(data);
-        $("compat-progress").textContent = "Verifying coin, please wait…";
-      } else {
-        throw new Error(data.message || "The coin slot reported an error.");
-      }
-      pollTimer = setTimeout(pollCoin, 1000);
-    }).catch(function (error) {
-      trace("operation.pollCoinFailed", { error: error && error.message, voucher: activeVoucher }, "error");
-      $("compat-progress").textContent = error.message;
-      pollTimer = setTimeout(pollCoin, 3000);
-    });
-  }
-
-  function beginTopup() {
-    alertMessage("");
-    totalCoinReceived = 0;
-    activeVoucher = currentVoucher();
-    trace("action.beginTopup", { voucher: activeVoucher, mac: context.mac, ip: context.ip, vendo: selected });
-    $("compat-topup").disabled = true;
-    $("compat-code").textContent = activeVoucher || "Generating…";
-    $("compat-amount").textContent = "₱0";
-    $("compat-time").textContent = "—";
-    $("compat-progress-bar").style.width = "100%";
-    $("compat-countdown").textContent = "Starting…";
-    $("compat-progress").textContent = "Activating coin slot…";
-    $("compat-transaction").hidden = false;
-    rpc("/topUp", "POST", { voucher: activeVoucher, mac: context.mac || "", ipAddress: context.ip || "", extendTime: 0 }).then(function (result) {
-      var data = responseData(result);
-      if (!result.ok || (!isTrue(data.status) && !isTrue(data.success))) throw new Error(data.message || data.errorCode || "The coin slot rejected the request.");
-      displayTransaction(data);
-      if (!activeVoucher) throw new Error("The coin slot did not return a voucher code.");
-      $("compat-countdown").textContent = "Ready";
-      $("compat-progress").textContent = "Coin slot active. Insert a coin now.";
-      pollCoin();
-    }).catch(function (error) {
-      trace("action.beginTopupFailed", { error: error && error.message, voucher: activeVoucher }, "error");
-      alertMessage(error.message);
-      $("compat-transaction").hidden = true;
-      $("compat-topup").disabled = false;
-    });
   }
 
   function login(voucher) {
@@ -303,13 +223,107 @@
         return;
       }
       form.elements.namedItem("username").value = voucher;
-      form.elements.namedItem("password").value = chap.id
-        ? hexMD5(chap.id + password + chap.challenge)
-        : password;
+      form.elements.namedItem("password").value = chap.id ? hexMD5(chap.id + password + chap.challenge) : password;
       form.submit();
       return;
     }
     window.parent.postMessage({ type: "pixiepoint:login", voucher: voucher, vendoId: selected && selected.id }, parentOrigin);
+  }
+
+  function finishProcessedCoin(reason) {
+    clearTimeout(pollTimer);
+    pollTimer = null;
+    trace("operation.coinSessionFinished", { reason: reason, voucher: activeVoucher, totalCoin: totalCoinReceived });
+    if (totalCoinReceived > 0) {
+      if ($("compat-progress")) $("compat-progress").textContent = "Coin processed. Connecting…";
+      setCurrentVoucher(activeVoucher);
+      setTimeout(function () { login(activeVoucher); }, 3000);
+    } else {
+      if ($("compat-progress")) $("compat-progress").textContent = reason === "coinslot.busy" ? "Coin slot was cancelled." : "Coin slot expired.";
+      if ($("compat-transaction")) $("compat-transaction").hidden = true;
+      if ($("compat-topup")) $("compat-topup").disabled = false;
+    }
+  }
+
+  function pollCoin() {
+    clearTimeout(pollTimer);
+    if (!activeVoucher) return;
+    trace("operation.pollCoin", { voucher: activeVoucher, totalCoin: totalCoinReceived });
+    rpc("/checkCoin", "POST", { voucher: activeVoucher }).then(function (result) {
+      var data = responseData(result), errorCode = String(data.errorCode || "");
+      trace("operation.pollCoinState", { status: data.status, success: data.success, errorCode: errorCode, data: data });
+
+      if (result.ok && (isTrue(data.status) || isTrue(data.success))) {
+        displayTransaction(data);
+        if (data.remainTime !== undefined || data.waitTime !== undefined) updateCountdown(data);
+        else {
+          if ($("compat-progress-bar")) $("compat-progress-bar").style.width = "100%";
+          if ($("compat-countdown")) $("compat-countdown").textContent = "Renewed";
+        }
+        if ($("compat-progress")) $("compat-progress").textContent = "Coin received. Insert another coin or press Done.";
+      } else if (errorCode === "coin.is.reading") {
+        if (data.remainTime !== undefined || data.waitTime !== undefined) updateCountdown(data);
+        if ($("compat-progress")) $("compat-progress").textContent = "Verifying coin, please wait…";
+      } else if (errorCode === "coin.not.inserted") {
+        displayTransaction(data);
+        var seconds = updateCountdown(data);
+        if ($("compat-progress")) $("compat-progress").textContent = totalCoinReceived > 0 ? "Insert another coin or press Done." : "Waiting for coin…";
+        if (data.remainTime !== undefined && seconds <= 0) {
+          finishProcessedCoin("coins.wait.expired");
+          return;
+        }
+      } else if (errorCode === "coins.wait.expired") {
+        finishProcessedCoin("coins.wait.expired");
+        return;
+      } else if (errorCode === "coinslot.busy") {
+        finishProcessedCoin("coinslot.busy");
+        return;
+      } else {
+        clearTimeout(pollTimer);
+        pollTimer = null;
+        trace("operation.pollCoinTerminalError", { errorCode: errorCode, response: data }, "error");
+        if ($("compat-progress")) $("compat-progress").textContent = data.message || errorCode || "The coin slot reported an error.";
+        return;
+      }
+      pollTimer = setTimeout(pollCoin, 1000);
+    }).catch(function (error) {
+      trace("operation.pollCoinFailed", { error: error && error.message, voucher: activeVoucher }, "error");
+      if ($("compat-progress")) $("compat-progress").textContent = error.message;
+      pollTimer = setTimeout(pollCoin, 3000);
+    });
+  }
+
+  function beginTopup() {
+    alertMessage("");
+    totalCoinReceived = 0;
+    activeVoucher = currentVoucher();
+    trace("action.beginTopup", { voucher: activeVoucher, mac: context.mac, ip: context.ip, vendo: selected });
+    if ($("compat-topup")) $("compat-topup").disabled = true;
+    if ($("compat-code")) $("compat-code").textContent = activeVoucher || "Generating…";
+    if ($("compat-amount")) $("compat-amount").textContent = "₱0";
+    if ($("compat-time")) $("compat-time").textContent = "—";
+    if ($("compat-progress-bar")) $("compat-progress-bar").style.width = "100%";
+    if ($("compat-countdown")) $("compat-countdown").textContent = "Starting…";
+    if ($("compat-progress")) $("compat-progress").textContent = "Activating coin slot…";
+    if ($("compat-transaction")) $("compat-transaction").hidden = false;
+    rpc("/topUp", "POST", { voucher: activeVoucher, mac: context.mac || "", ipAddress: context.ip || "", extendTime: 0 }).then(function (result) {
+      var data = responseData(result);
+      trace("action.beginTopupResponse", { result: result, data: data });
+      if (!result.ok || (!isTrue(data.status) && !isTrue(data.success))) {
+        throw new Error(data.message || data.errorCode || "The coin slot rejected the request.");
+      }
+      activeVoucher = generatedVoucher(data) || activeVoucher;
+      displayTransaction(data);
+      if (!activeVoucher) throw new Error("The coin slot did not return a voucher code.");
+      if ($("compat-countdown")) $("compat-countdown").textContent = "Ready";
+      if ($("compat-progress")) $("compat-progress").textContent = "Coin slot active. Insert a coin now.";
+      pollCoin();
+    }).catch(function (error) {
+      trace("action.beginTopupFailed", { error: error && error.message, voucher: activeVoucher }, "error");
+      alertMessage(error.message);
+      if ($("compat-transaction")) $("compat-transaction").hidden = true;
+      if ($("compat-topup")) $("compat-topup").disabled = false;
+    });
   }
 
   function finishTopup() {
@@ -319,17 +333,26 @@
       var data = responseData(result);
       if (!result.ok || (!isTrue(data.status) && !isTrue(data.success))) throw new Error(data.message || data.errorCode || "The voucher could not be activated.");
       login(activeVoucher);
-    }).catch(function (error) { trace("action.finishTopupFailed", { error: error && error.message, voucher: activeVoucher }, "error"); alertMessage(error.message); });
+    }).catch(function (error) {
+      trace("action.finishTopupFailed", { error: error && error.message, voucher: activeVoucher }, "error");
+      alertMessage(error.message);
+    });
   }
 
   function cancelTopup() {
     trace("action.cancelTopup", { voucher: activeVoucher, totalCoin: totalCoinReceived });
+    if (totalCoinReceived > 0) {
+      trace("action.cancelTopupBlocked", { reason: "coin-already-received", totalCoin: totalCoinReceived }, "warn");
+      return;
+    }
     clearTimeout(pollTimer);
-    rpc("/cancelTopUp", "POST", { voucher: activeVoucher, mac: context.mac || "" }).catch(function () {}).then(function () {
+    rpc("/cancelTopUp", "POST", { voucher: activeVoucher, mac: context.mac || "" }).catch(function (error) {
+      trace("action.cancelTopupFailed", { error: error && error.message, voucher: activeVoucher }, "warn");
+    }).then(function () {
       activeVoucher = "";
       totalCoinReceived = 0;
-      $("compat-transaction").hidden = true;
-      $("compat-topup").disabled = false;
+      if ($("compat-transaction")) $("compat-transaction").hidden = true;
+      if ($("compat-topup")) $("compat-topup").disabled = false;
     });
   }
 
@@ -348,13 +371,16 @@
       });
       if (!rates.length) list.textContent = typeof data.raw === "string" ? data.raw : "No rates were returned.";
       list.hidden = false;
-    }).catch(function (error) { trace("action.showRatesFailed", { error: error && error.message }, "error"); alertMessage(error.message); });
+    }).catch(function (error) {
+      trace("action.showRatesFailed", { error: error && error.message }, "error");
+      alertMessage(error.message);
+    });
   }
 
   window.addEventListener("message", function (event) {
     var data = event.data || {};
     if (data.type && String(data.type).indexOf("pixiepoint:") === 0) trace("message.received", { origin: event.origin, data: data });
-    if (data.type === "pixiepoint:init") {
+    if (!window.PIXIEPOINT_BOOTSTRAP && data.type === "pixiepoint:init") {
       parentOrigin = event.origin;
       init(data);
     } else if (data.type === "pixiepoint:response" && pending[data.id]) {
