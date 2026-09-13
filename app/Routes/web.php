@@ -44,15 +44,6 @@ return static function (RouteManager $routes, array $c): void {
         $c['hotspot']->disconnected();
     })->name('hotspot.disconnected');
 
-    $routes->get('/admin/portal-emulator', [$c['emulator'], 'index'])
-        ->name('admin.portal_emulator')
-        ->auth()
-        ->middleware('prefab.access');
-    $routes->get('/emulator/', [$c['emulator'], 'index'])
-        ->name('emulator.compat')
-        ->auth()
-        ->middleware('prefab.access');
-
     $routes->matchMethods(['GET', 'POST'], '/setup', [$c['auth'], 'setup'])->name('setup');
     $routes->matchMethods(['GET', 'POST'], '/register', [$c['auth'], 'register'])->name('register');
     $routes->post('/login', [$c['auth'], 'login'])->name('login.submit');
@@ -66,7 +57,6 @@ return static function (RouteManager $routes, array $c): void {
     $routes->redirect('/admin', '/dashboard');
     $routes->get('/dashboard', [$c['dashboard'], 'index'])->name('dashboard')->auth()->middleware('prefab.access');
     $routes->post('/devices/claim', [$c['dashboard'], 'claimDevice'])->name('devices.claim')->auth()->middleware('prefab.access');
-
     $routes->get('/admin/select/router', [$c['admin.selection'], 'router'])->name('admin.select.router')->auth()->middleware('prefab.access');
 
     (require dirname(__DIR__) . '/Profile/routes.php')($routes, $c);
