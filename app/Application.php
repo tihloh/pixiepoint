@@ -20,8 +20,10 @@ use PixiePoint\App\Admin\Users\Controller as UsersController;
 use PixiePoint\App\Admin\Vendos\Api as VendoApi;
 use PixiePoint\App\Admin\Vendos\Controller as VendosController;
 use PixiePoint\App\Admin\Vendos\HotspotController as VendoHotspotController;
+use PixiePoint\App\Admin\VendoGateway\Controller as VendoGatewayAdminController;
 use PixiePoint\App\Admin\Vouchers\Controller as VouchersController;
 use PixiePoint\App\Api\AccountingController;
+use PixiePoint\App\Api\VendoGatewayController;
 use PixiePoint\App\Controllers\AuthController;
 use PixiePoint\App\Controllers\DashboardController;
 use PixiePoint\App\Controllers\DeviceInfoController;
@@ -84,6 +86,7 @@ final class Application
             'router.registration' => new RouterRegistrationController($app->db,$logs),
             'router.agent' => new RouterAgentController($app->db,$routerQueue),
             'admin.vendos' => new VendosController($app->db,$auth,$view,$logs,$themes),
+            'admin.vendo-gateway' => new VendoGatewayAdminController($app->db,$auth,$view,$logs,$app->config),
             'vendos.hotspot' => new VendoHotspotController($vendoApi,$view,$themes,$themeEngine,$portalAdapter,$app->db,$networkDevices,$points),
             'admin.vouchers' => new VouchersController($app->db,$auth,$view,$logs,$voucherEngine),
             'admin.devices' => new DevicesController($app->db,$auth,$view,$logs),
@@ -91,6 +94,7 @@ final class Application
             'admin.sales' => new SalesController($app->db,$auth,$view,$logs),
             'admin.logs' => new LogsController($app->db,$auth,$view,$logs),
             'api' => new AccountingController($app->db,$app->config,$networkDevices),
+            'vendo.gateway' => new VendoGatewayController($app->db,$app->config),
         ];
 
         $routes->middleware('prefab.access',static function(callable $next,RouteMatch $match) use($auth,$view,$logs){

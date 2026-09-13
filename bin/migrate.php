@@ -2,11 +2,14 @@
 
 declare(strict_types=1);
 
-require dirname(__DIR__) . '/src/App.php';
+$root = dirname(__DIR__);
+require $root . '/vendor/autoload.php';
+require $root . '/src/App.php';
 
 try {
-    new App(dirname(__DIR__));
-    fwrite(STDOUT, "PixiePoint database migrations completed.\n");
+    $app = new App($root);
+    (new Tihloh\VendoGateway\Database\Migrator($app->db))->migrate();
+    fwrite(STDOUT, "PixiePoint and Vendo Gateway database migrations completed.\n");
     exit(0);
 } catch (Throwable $exception) {
     fwrite(STDERR, "Migration failed: {$exception->getMessage()}\n");
