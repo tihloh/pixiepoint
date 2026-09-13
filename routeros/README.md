@@ -1,38 +1,32 @@
 # PixiePoint RouterOS login integration
 
-`LoginScript_PixiePoint.rsc` is the RouterOS v7 HotSpot on-login integration for PixiePoint.
+`LoginScript_PixiePoint.rsc` replaces the legacy JuanFi centralized login script on RouterOS v7.
 
-It keeps router-side responsibility small:
+It keeps the router-side responsibility deliberately small:
 
-- Enforces expiry for local HotSpot vouchers using a minimal-policy scheduler.
+- Enforces expiry for legacy local HotSpot vouchers using a minimal-policy scheduler.
 - Extends an existing expiry exactly once.
 - Posts an authenticated, structured login/sale event to PixiePoint.
 - Leaves a durable `pp-pending` retry marker when PixiePoint is unavailable.
 - Never reverses an already successful customer login when the hosted server is down.
-- Sends no third-party credentials and makes no unrelated API calls.
+- Sends no Telegram credentials and makes no third-party API calls.
 - Skips expiry scheduling for RADIUS users because RADIUS accounting is authoritative.
 
 ## Voucher metadata
 
-Local HotSpot user comments use:
+For JuanFi compatibility, local HotSpot user comments use:
 
 ```text
-duration,amount_pesos,is_extension
+duration,amount_pesos,is_extension,vendo_name
 ```
 
 Example:
 
 ```text
-1h,10,0
+1h,10,0,Main Vendo
 ```
 
-Before contacting the server, the script replaces that comment with a retry-safe record:
-
-```text
-pp-pending,event_key,duration,amount_pesos,is_extension
-```
-
-The record is cleared only after PixiePoint acknowledges the event. Repeated delivery is safe because the server enforces a unique event key.
+Before contacting the server, the script replaces that comment with a `pp-pending` record. The vendo name is Base64-encoded in this internal record so commas and non-ASCII names cannot corrupt retries. It clears the record only after PixiePoint acknowledges the event. Repeated delivery is safe because the server enforces a unique event key.
 
 ## Installation
 
@@ -42,4 +36,4 @@ The record is cleared only after PixiePoint acknowledges the event. Repeated del
 4. Paste the script into the relevant HotSpot user profile's `on-login` configuration, or save it as a system script called by `on-login`.
 5. Import a trusted CA chain into RouterOS so `check-certificate=yes` can validate `hs.portalx.win`.
 
-Do not reuse an API key across routers or place global platform secrets in RouterOS scripts.
+Do not reuse an API key across routers. Do not place Telegram bot tokens or global platform secrets in RouterOS scripts.

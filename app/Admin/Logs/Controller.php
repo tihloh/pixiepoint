@@ -26,8 +26,10 @@ final class Controller extends FeatureController
             $type=strtolower((string)$type);$key=$type.':'.$id;
             if(array_key_exists($key,$subjects))return $subjects[$key];
             if(in_array($type,['user','account'],true))return $subjects[$key]=$actorResolver($id);
-            if($type!=='router')return null;
-            $stmt=$this->db->prepare('SELECT name FROM routers WHERE id=? LIMIT 1');$stmt->execute([$id]);$value=$stmt->fetchColumn();
+            $map=['router'=>['routers','name'],'station'=>['vendos','name'],'vendo'=>['vendos','name']];
+            if(!isset($map[$type]))return null;
+            [$table,$column]=$map[$type];
+            $stmt=$this->db->prepare("SELECT {$column} FROM {$table} WHERE id=? LIMIT 1");$stmt->execute([$id]);$value=$stmt->fetchColumn();
             return $subjects[$key]=$value!==false?(string)$value:null;
         };
 
@@ -40,14 +42,22 @@ final class Controller extends FeatureController
 
     private function activity(array $log): string
     {
-        $who=(string)($log['who']??'Someone');$what=trim((string)($log['what']??''));$technical=is_array($log['technical']??null)?$log['technical']:[];$action=strtolower((string)($technical['action']??''));$message=strtolower((string)($technical['message']??''));
+        $who=(string)($log['who']??'Someone');
+        $what=trim((string)($log['what']??''));
+        $technical=is_array($log['technical']??null)?$log['technical']:[];
+        $action=strtolower((string)($technical['action']??''));
+        $message=strtolower((string)($technical['message']??''));
+
         if(str_contains($action,'logout'))return $who.' signed out.';
         if(str_contains($action,'login'))return $who.' signed in.';
         if(str_contains($action,'router')&&str_contains($action,'register'))return $who.' registered '.($what?:'a').' router from RouterOS.';
-        if(str_contains($action,'router')&&(str_contains($action,'portal_features')||str_contains($message,'portal feature')))return $who.' updated '.($what?:'the').' router portal features.';
+        if(str_contains($action,'router')&&(str_contains($action,'portal_features')||str_contains($message,'portal feature')))return $who.' updated MikroTik router and '.($what?:'its').' portal features.';
         if(str_contains($action,'router')&&str_contains($action,'updated'))return $who.' updated '.($what?:'the').' MikroTik router.';
+        if((str_contains($action,'station')||str_contains($action,'vendo'))&&str_contains($action,'portal_features'))return $who.' updated '.($what?:'the').' hotspot station portal features.';
+        if((str_contains($action,'station')||str_contains($action,'vendo'))&&str_contains($action,'updated'))return $who.' updated '.($what?:'the').' hotspot station.';
         if(str_contains($action,'created'))return $who.' created '.($what?:'an item').'.';
         if(str_contains($action,'deleted'))return $who.' deleted '.($what?:'an item').'.';
+
         $event=trim((string)($log['event']??$log['summary']??''));
         if($event==='')return $who.' performed an activity.';
         if(str_starts_with(strtolower($event),strtolower($who)))return $event;

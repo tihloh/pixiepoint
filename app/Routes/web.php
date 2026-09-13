@@ -26,8 +26,8 @@ return static function (RouteManager $routes, array $c): void {
         exit;
     })->name('hotspot.health');
 
-    $routes->get('/hotspot/compat', [$c['hosted_portal'], 'portal'])->name('hotspot.compat');
-    $routes->get('/hotspot/status', [$c['hosted_portal'], 'status'])->name('hotspot.status');
+    $routes->get('/hotspot/compat', [$c['vendos.hotspot'], 'portal'])->name('hotspot.compat');
+    $routes->get('/hotspot/status', [$c['vendos.hotspot'], 'status'])->name('hotspot.status');
     $routes->get('/hotspot/device-info', [$c['device_info'], 'show'])->name('hotspot.device_info');
     $routes->post('/hotspot/device-voucher', [$c['device_info'], 'saveVoucher'])->name('hotspot.device_voucher');
     $routes->post('/hotspot/authenticate', [$c['hotspot'], 'authenticate'])->name('hotspot.authenticate');
@@ -44,6 +44,15 @@ return static function (RouteManager $routes, array $c): void {
         $c['hotspot']->disconnected();
     })->name('hotspot.disconnected');
 
+    $routes->get('/admin/portal-emulator', [$c['emulator'], 'index'])
+        ->name('admin.portal_emulator')
+        ->auth()
+        ->middleware('prefab.access');
+    $routes->get('/emulator/', [$c['emulator'], 'index'])
+        ->name('emulator.compat')
+        ->auth()
+        ->middleware('prefab.access');
+
     $routes->matchMethods(['GET', 'POST'], '/setup', [$c['auth'], 'setup'])->name('setup');
     $routes->matchMethods(['GET', 'POST'], '/register', [$c['auth'], 'register'])->name('register');
     $routes->post('/login', [$c['auth'], 'login'])->name('login.submit');
@@ -57,12 +66,13 @@ return static function (RouteManager $routes, array $c): void {
     $routes->redirect('/admin', '/dashboard');
     $routes->get('/dashboard', [$c['dashboard'], 'index'])->name('dashboard')->auth()->middleware('prefab.access');
     $routes->post('/devices/claim', [$c['dashboard'], 'claimDevice'])->name('devices.claim')->auth()->middleware('prefab.access');
+
     $routes->get('/admin/select/router', [$c['admin.selection'], 'router'])->name('admin.select.router')->auth()->middleware('prefab.access');
 
     (require dirname(__DIR__) . '/Profile/routes.php')($routes, $c);
 
     $adminRoot = dirname(__DIR__) . '/Admin';
-    foreach (['Users', 'Permissions', 'Groups', 'Routers', 'Vouchers', 'Devices', 'Sessions', 'Sales', 'Logs', 'PortalThemes'] as $feature) {
+    foreach (['Users', 'Permissions', 'Groups', 'Routers', 'Vendos', 'Vouchers', 'Devices', 'Sessions', 'Sales', 'Logs', 'PortalThemes'] as $feature) {
         (require $adminRoot . '/' . $feature . '/routes.php')($routes, $c);
     }
 };

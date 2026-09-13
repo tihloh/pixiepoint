@@ -17,12 +17,15 @@ use PixiePoint\App\Admin\Sessions\Controller as SessionsController;
 use PixiePoint\App\Admin\Shared\SelectionController;
 use PixiePoint\App\Admin\Users\AvatarService;
 use PixiePoint\App\Admin\Users\Controller as UsersController;
+use PixiePoint\App\Admin\Vendos\Api as VendoApi;
+use PixiePoint\App\Admin\Vendos\Controller as VendosController;
+use PixiePoint\App\Admin\Vendos\HotspotController as VendoHotspotController;
 use PixiePoint\App\Admin\Vouchers\Controller as VouchersController;
 use PixiePoint\App\Api\AccountingController;
 use PixiePoint\App\Controllers\AuthController;
 use PixiePoint\App\Controllers\DashboardController;
 use PixiePoint\App\Controllers\DeviceInfoController;
-use PixiePoint\App\Controllers\HostedPortalController;
+use PixiePoint\App\Controllers\EmulatorController;
 use PixiePoint\App\Controllers\HotspotController;
 use PixiePoint\App\Models\Router as RouterModel;
 use PixiePoint\App\Portal\Adapters\MikroTikAdapter;
@@ -47,7 +50,7 @@ final class Application
         self::startSession($app->config);
         $prefab = PrefabKernel::boot($app->db, $root);
         $auth = new AuthContext($prefab['users'],$prefab['auth'],$prefab['permissions'],$app->db);
-        $themes = new PortalThemeManager($app->db, $root);
+        $themes = new PortalThemeManager($app->db, $root, (string) ($app->config['base_url'] ?? ''));
         $themeEngine = new ThemeEngine($themes);
         $portalAdapter = new MikroTikAdapter();
         $view = new View($app->config, $themes, $themeEngine, $portalAdapter);
@@ -57,6 +60,7 @@ final class Application
         $points = new PointWallet($app->db);
         $logs = $prefab['logs'];
         $routes = $prefab['routes'];
+        $vendoApi = new VendoApi($app->db);
         $routerQueue = new RouterCommandQueue($app->db);
         $avatars = new AvatarService($root);
 
@@ -65,7 +69,7 @@ final class Application
             'dashboard' => new DashboardController($app->db,$auth,$view,$devices,$points),
             'profile' => new ProfileController($auth,$view,$prefab['users'],$avatars),
             'hotspot' => new HotspotController($app->db,new RouterModel($app->db),$auth,$view,$devices),
-            'hosted_portal' => new HostedPortalController($app->db,$themes,$themeEngine,$portalAdapter,$networkDevices,$points),
+            'emulator' => new EmulatorController($app->db,$auth),
             'device_info' => new DeviceInfoController($app->db,$networkDevices,$points),
             'admin.users' => new UsersController($app->db,$auth,$view,$logs,$prefab['users'],$avatars),
             'admin.permissions' => new PermissionsController($app->db,$auth,$view,$logs,$prefab['permissions'],$prefab['users']),
@@ -76,6 +80,8 @@ final class Application
             'admin.portal-themes' => new PortalThemesController($app->db,$auth,$view,$logs,$themes),
             'router.registration' => new RouterRegistrationController($app->db,$logs),
             'router.agent' => new RouterAgentController($app->db,$routerQueue),
+            'admin.vendos' => new VendosController($app->db,$auth,$view,$logs,$themes),
+            'vendos.hotspot' => new VendoHotspotController($vendoApi,$view,$themes,$themeEngine,$portalAdapter,$app->db,$networkDevices,$points),
             'admin.vouchers' => new VouchersController($app->db,$auth,$view,$logs),
             'admin.devices' => new DevicesController($app->db,$auth,$view,$logs),
             'admin.sessions' => new SessionsController($app->db,$auth,$view,$logs),
