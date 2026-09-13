@@ -47,7 +47,7 @@ final class Application
         self::startSession($app->config);
         $prefab = PrefabKernel::boot($app->db, $root);
         $auth = new AuthContext($prefab['users'],$prefab['auth'],$prefab['permissions'],$app->db);
-        $themes = new PortalThemeManager($app->db, $root, (string) ($app->config['base_url'] ?? ''));
+        $themes = new PortalThemeManager($app->db, $root);
         $themeEngine = new ThemeEngine($themes);
         $portalAdapter = new MikroTikAdapter();
         $view = new View($app->config, $themes, $themeEngine, $portalAdapter);
