@@ -61,6 +61,9 @@ SQL);
         $this->db->exec('ALTER TABLE vendos ADD COLUMN IF NOT EXISTS portal_theme_id BIGINT UNSIGNED NULL AFTER interface_name');
         $this->db->exec('ALTER TABLE vendos ADD COLUMN IF NOT EXISTS debug_enabled TINYINT(1) NOT NULL DEFAULT 0 AFTER eload_enabled');
         $this->db->exec('ALTER TABLE vouchers ADD COLUMN IF NOT EXISTS router_id BIGINT UNSIGNED NULL AFTER id');
+        $this->db->exec('ALTER TABLE vouchers ADD COLUMN IF NOT EXISTS station_id BIGINT UNSIGNED NULL AFTER router_id');
+        $this->db->exec('ALTER TABLE vouchers ADD COLUMN IF NOT EXISTS batch_id BIGINT UNSIGNED NULL AFTER station_id');
+        $this->db->exec('ALTER TABLE vouchers ADD COLUMN IF NOT EXISTS archived_at DATETIME NULL AFTER enabled');
         $this->db->exec('ALTER TABLE devices ADD COLUMN IF NOT EXISTS uuid CHAR(36) NULL AFTER id');
         $this->db->exec('ALTER TABLE devices ADD COLUMN IF NOT EXISTS user_id BIGINT UNSIGNED NULL AFTER uuid');
         $this->db->exec('ALTER TABLE devices ADD COLUMN IF NOT EXISTS last_voucher VARCHAR(128) NULL AFTER mac');
@@ -98,6 +101,34 @@ SQL);
             $this->db->exec('ALTER TABLE vouchers ADD CONSTRAINT fk_vouchers_router FOREIGN KEY (router_id) REFERENCES routers(id) ON DELETE SET NULL');
         } catch (PDOException) {
         }
+
+        $this->db->exec(<<<'SQL'
+CREATE TABLE IF NOT EXISTS voucher_batches (
+    id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    batch_key CHAR(16) NOT NULL UNIQUE,
+    router_id BIGINT UNSIGNED NOT NULL,
+    station_id BIGINT UNSIGNED NULL,
+    created_by BIGINT UNSIGNED NULL,
+    platform VARCHAR(32) NOT NULL,
+    platform_profile VARCHAR(128) NULL,
+    promo_name VARCHAR(255) NULL,
+    quantity INT UNSIGNED NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_voucher_batches_router (router_id,created_at),
+    FOREIGN KEY(router_id) REFERENCES routers(id) ON DELETE CASCADE,
+    FOREIGN KEY(station_id) REFERENCES vendos(id) ON DELETE SET NULL,
+    FOREIGN KEY(created_by) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+SQL);
+        foreach([
+            'CREATE INDEX idx_vouchers_station ON vouchers (station_id)',
+            'CREATE INDEX idx_vouchers_batch ON vouchers (batch_id)',
+            'CREATE INDEX idx_vouchers_archive ON vouchers (router_id,archived_at)',
+        ] as $sql){try{$this->db->exec($sql);}catch(PDOException){}}
+        foreach([
+            'ALTER TABLE vouchers ADD CONSTRAINT fk_vouchers_station FOREIGN KEY (station_id) REFERENCES vendos(id) ON DELETE SET NULL',
+            'ALTER TABLE vouchers ADD CONSTRAINT fk_vouchers_batch FOREIGN KEY (batch_id) REFERENCES voucher_batches(id) ON DELETE SET NULL',
+        ] as $sql){try{$this->db->exec($sql);}catch(PDOException){}}
 
         $this->db->exec(<<<'SQL'
 UPDATE vouchers v

@@ -18,4 +18,11 @@ return static function (RouteManager $routes, array $c): void {
         ->auth()
         ->permission('vouchers.manage')
         ->middleware('prefab.access');
+
+    $routes
+        ->get('/admin/vouchers/export', [$c['admin.vouchers'], 'export'])
+        ->name('admin.vouchers.export')
+        ->auth()
+        ->permission('vouchers.manage')
+        ->middleware('prefab.access');
 };
