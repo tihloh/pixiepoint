@@ -62,7 +62,7 @@ final class HotspotController
 
     private function vendoOptions(array $stations): string
     {
-        $options='';$selected=false;foreach($stations as $station){if(trim((string)($station['baseUrl']??''))==='')continue;$options.='<option value="'.e($station['id']).'" data-base-url="'.e($station['baseUrl']).'" data-password-mode="'.e($station['passwordMode']).'" data-charging="'.($station['chargingEnabled']?'1':'0').'" data-eload="'.($station['eloadEnabled']?'1':'0').'"'.(!$selected?' selected':'').'>'.e($station['name']).'</option>';$selected=true;}return $options;
+        $options='';$selected=false;foreach($stations as $station){if(trim((string)($station['baseUrl']??''))==='')continue;$options.='<option value="'.e($station['id']).'" data-base-url="'.e($station['baseUrl']).'" data-password-mode="'.e($station['passwordMode']).'" data-charging="'.($station['chargingEnabled']?'1':'0').'" data-eload="'.($station['eloadEnabled']?'1':'0').'" data-debug="'.(!empty($station['debugEnabled'])?'1':'0').'"'.(!$selected?' selected':'').'>'.e($station['name']).'</option>';$selected=true;}return $options;
     }
 
     private function hotspotContext(): array

@@ -23,6 +23,11 @@ final class MikroTikAdapter implements PlatformAdapter
         $isLogin = str_contains($html, 'id="pp-login-card"');
         $origin = 'https://hs.portalx.win';
         $nonce = (string) time();
+        $html = preg_replace(
+            '~(<script\s+src="/assets/juanfi-compat\.js)(?:\?[^\"]*)?("\s*></script>)~i',
+            '$1?v=' . $nonce . '$2',
+            $html,
+        ) ?? $html;
 
         $contextData = [
             'mac' => (string) ($_GET['mac'] ?? $context->value('context.mac') ?? ''),

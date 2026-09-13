@@ -91,6 +91,7 @@ final class Api
                 'passwordMode' => $v['password_mode'] ?: 'blank',
                 'chargingEnabled' => $baseUrl !== '' && (bool) $v['charging_enabled'],
                 'eloadEnabled' => $baseUrl !== '' && (bool) $v['eload_enabled'],
+                'debugEnabled' => (bool) ($v['debug_enabled'] ?? false),
             ];
         }, $rows);
 
