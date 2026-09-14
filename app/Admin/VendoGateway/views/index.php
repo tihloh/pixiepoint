@@ -16,44 +16,16 @@ $gpioProfiles=[
             14=>'GPIO14 (D5) — SPI CLK / General I/O',
             16=>'GPIO16 (D0) — General output / wake',
         ],
-        'defaults'=>['coin'=>5,'relay'=>12,'status_led'=>16],
+        'defaults'=>['coin'=>5,'relay'=>12],
     ],
     'esp32'=>[
         'coin'=>[
-            4=>'GPIO4 — General I/O',
-            13=>'GPIO13 — HSPI MOSI / General I/O',
-            14=>'GPIO14 — HSPI CLK / General I/O',
-            16=>'GPIO16 — General I/O',
-            17=>'GPIO17 — General I/O',
-            18=>'GPIO18 — VSPI CLK / General I/O',
-            19=>'GPIO19 — VSPI MISO / General I/O',
-            21=>'GPIO21 — I²C SDA / General I/O',
-            22=>'GPIO22 — I²C SCL / General I/O',
-            23=>'GPIO23 — VSPI MOSI / General I/O',
-            25=>'GPIO25 — DAC1 / General I/O',
-            26=>'GPIO26 — DAC2 / General I/O',
-            27=>'GPIO27 — General I/O',
-            32=>'GPIO32 — ADC / General I/O',
-            33=>'GPIO33 — ADC / General I/O',
+            4=>'GPIO4 — General I/O',13=>'GPIO13 — HSPI MOSI / General I/O',14=>'GPIO14 — HSPI CLK / General I/O',16=>'GPIO16 — General I/O',17=>'GPIO17 — General I/O',18=>'GPIO18 — VSPI CLK / General I/O',19=>'GPIO19 — VSPI MISO / General I/O',21=>'GPIO21 — I²C SDA / General I/O',22=>'GPIO22 — I²C SCL / General I/O',23=>'GPIO23 — VSPI MOSI / General I/O',25=>'GPIO25 — DAC1 / General I/O',26=>'GPIO26 — DAC2 / General I/O',27=>'GPIO27 — General I/O',32=>'GPIO32 — ADC / General I/O',33=>'GPIO33 — ADC / General I/O',
         ],
         'output'=>[
-            4=>'GPIO4 — General I/O',
-            13=>'GPIO13 — HSPI MOSI / General I/O',
-            14=>'GPIO14 — HSPI CLK / General I/O',
-            16=>'GPIO16 — General I/O',
-            17=>'GPIO17 — General I/O',
-            18=>'GPIO18 — VSPI CLK / General I/O',
-            19=>'GPIO19 — VSPI MISO / General I/O',
-            21=>'GPIO21 — I²C SDA / General I/O',
-            22=>'GPIO22 — I²C SCL / General I/O',
-            23=>'GPIO23 — VSPI MOSI / General I/O',
-            25=>'GPIO25 — DAC1 / General I/O',
-            26=>'GPIO26 — DAC2 / General I/O',
-            27=>'GPIO27 — General I/O',
-            32=>'GPIO32 — ADC / General I/O',
-            33=>'GPIO33 — ADC / General I/O',
+            4=>'GPIO4 — General I/O',13=>'GPIO13 — HSPI MOSI / General I/O',14=>'GPIO14 — HSPI CLK / General I/O',16=>'GPIO16 — General I/O',17=>'GPIO17 — General I/O',18=>'GPIO18 — VSPI CLK / General I/O',19=>'GPIO19 — VSPI MISO / General I/O',21=>'GPIO21 — I²C SDA / General I/O',22=>'GPIO22 — I²C SCL / General I/O',23=>'GPIO23 — VSPI MOSI / General I/O',25=>'GPIO25 — DAC1 / General I/O',26=>'GPIO26 — DAC2 / General I/O',27=>'GPIO27 — General I/O',32=>'GPIO32 — ADC / General I/O',33=>'GPIO33 — ADC / General I/O',
         ],
-        'defaults'=>['coin'=>27,'relay'=>26,'status_led'=>25],
+        'defaults'=>['coin'=>27,'relay'=>26],
     ],
 ];
 $pinSelect=function(string $name,int $selected,array $options,string $class=''): string
@@ -98,7 +70,7 @@ $pinSelect=function(string $name,int $selected,array $options,string $class=''):
                         </div>
                     </div>
                     <div class="col-lg-7">
-                        <form method="post" class="border rounded p-3 js-vendo-form js-hardware-form" data-platform="<?= e($platform) ?>"><input type="hidden" name="_csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="device_id" value="<?= e($deviceId) ?>"><input type="hidden" name="action" value="save_config"><div class="d-flex justify-content-between align-items-center mb-1"><div class="fw-semibold">Hardware configuration</div><span class="badge text-bg-secondary text-uppercase"><?= e($platform) ?></span></div><div class="small text-body-secondary mb-3">Only safe pins supported by the detected ESP platform are shown. A pin selected for one purpose becomes unavailable in the other selectors.</div><div class="row g-2"><div class="col-12 col-md-4"><label>Coin input</label><?= $pinSelect('coin_pin',(int)($pins['coin']??$defaults['coin']),$profile['coin'],'js-pin-select') ?></div><div class="col-12 col-md-4"><label>Relay output</label><?= $pinSelect('relay_pin',(int)($pins['relay']??$defaults['relay']),$profile['output'],'js-pin-select') ?></div><div class="col-12 col-md-4"><label>External status LED</label><?= $pinSelect('status_led_pin',(int)($pins['status_led']??$defaults['status_led']),$profile['output'],'js-pin-select') ?></div><div class="col-12 col-md-4"><label>Coin settle time</label><div class="input-group"><input class="form-control" type="number" min="50" max="2000" name="coin_settle_ms" value="<?= (int)($coin['settle_ms']??350) ?>" required><span class="input-group-text">ms</span></div></div><div class="col-12"><button class="btn btn-primary">Save hardware configuration</button></div></div></form>
+                        <form method="post" class="border rounded p-3 js-vendo-form js-hardware-form" data-platform="<?= e($platform) ?>"><input type="hidden" name="_csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="device_id" value="<?= e($deviceId) ?>"><input type="hidden" name="action" value="save_config"><div class="d-flex justify-content-between align-items-center mb-1"><div class="fw-semibold">Hardware configuration</div><span class="badge text-bg-secondary text-uppercase"><?= e($platform) ?></span></div><div class="small text-body-secondary mb-3">The ESP built-in LED is reserved for device status and is no longer configurable. During normal ONLINE operation it only gives a short heartbeat. A GPIO selected for one configurable purpose becomes unavailable in the other selector.</div><div class="row g-2"><div class="col-12 col-md-6"><label>Coin input</label><?= $pinSelect('coin_pin',(int)($pins['coin']??$defaults['coin']),$profile['coin'],'js-pin-select') ?></div><div class="col-12 col-md-6"><label>Relay output</label><?= $pinSelect('relay_pin',(int)($pins['relay']??$defaults['relay']),$profile['output'],'js-pin-select') ?></div><div class="col-12 col-md-6"><label>Coin settle time</label><div class="input-group"><input class="form-control" type="number" min="50" max="2000" name="coin_settle_ms" value="<?= (int)($coin['settle_ms']??350) ?>" required><span class="input-group-text">ms</span></div></div><div class="col-12"><button class="btn btn-primary">Save hardware configuration</button></div></div></form>
                     </div>
                 </div>
             </td></tr>
@@ -114,12 +86,7 @@ const message=(text,ok=true)=>{box.innerHTML=`<div class="alert ${ok?'alert-succ
 const setBusy=(button,busy)=>{if(!button)return;if(busy){button.dataset.oldText=button.innerHTML;button.disabled=true;button.innerHTML='<span class="spinner-border spinner-border-sm me-1"></span>Working...';}else{button.disabled=false;if(button.dataset.oldText)button.innerHTML=button.dataset.oldText;}};
 const syncPinChoices=form=>{const selects=[...form.querySelectorAll('.js-pin-select')],chosen=selects.map(s=>s.value).filter(Boolean);selects.forEach(select=>[...select.options].forEach(option=>{if(!option.value)return;const used=option.value!==select.value&&chosen.includes(option.value);option.disabled=used;option.hidden=used;}));};
 document.querySelectorAll('.js-hardware-form').forEach(form=>{syncPinChoices(form);form.querySelectorAll('.js-pin-select').forEach(select=>select.addEventListener('change',()=>syncPinChoices(form)));});
-const updateUi=(form,data)=>{const id=form.querySelector('[name=device_id]')?.value,manage=document.querySelector(`[data-vendo-manage="${CSS.escape(id||'')}"]`),row=document.querySelector(`[data-vendo-row="${CSS.escape(id||'')}"]`);if(!manage||!row)return;
-if(data.action==='rename'&&data.vendo_name){row.querySelector('[data-vendo-name]').textContent=data.vendo_name;form.querySelector('[name=vendo_name]').value=data.vendo_name;}
-if(data.action==='coin_enable')manage.querySelector('[data-coin-state]').textContent='enable queued';
-if(data.action==='coin_disable')manage.querySelector('[data-coin-state]').textContent='disable queued';
-if(['activate','suspend','revoke'].includes(data.action)){const state=data.action==='activate'?'active':data.action==='suspend'?'suspended':'revoked',cls=state==='active'?'success':state==='suspended'?'warning':'danger';row.querySelector('[data-device-state]').innerHTML=`<span class="badge text-bg-${cls}">${state}</span>`;const b=manage.querySelector('[data-state-action]');if(b&&data.action!=='revoke'){if(state==='active'){b.value='suspend';b.textContent='Suspend';b.className='btn btn-sm btn-outline-warning';}else{b.value='activate';b.textContent='Activate';b.className='btn btn-sm btn-outline-success';}}}
-};
+const updateUi=(form,data)=>{const id=form.querySelector('[name=device_id]')?.value,manage=document.querySelector(`[data-vendo-manage="${CSS.escape(id||'')}"]`),row=document.querySelector(`[data-vendo-row="${CSS.escape(id||'')}"]`);if(!manage||!row)return;if(data.action==='rename'&&data.vendo_name){row.querySelector('[data-vendo-name]').textContent=data.vendo_name;form.querySelector('[name=vendo_name]').value=data.vendo_name;}if(data.action==='coin_enable')manage.querySelector('[data-coin-state]').textContent='enable queued';if(data.action==='coin_disable')manage.querySelector('[data-coin-state]').textContent='disable queued';if(['activate','suspend','revoke'].includes(data.action)){const state=data.action==='activate'?'active':data.action==='suspend'?'suspended':'revoked',cls=state==='active'?'success':state==='suspended'?'warning':'danger';row.querySelector('[data-device-state]').innerHTML=`<span class="badge text-bg-${cls}">${state}</span>`;const b=manage.querySelector('[data-state-action]');if(b&&data.action!=='revoke'){if(state==='active'){b.value='suspend';b.textContent='Suspend';b.className='btn btn-sm btn-outline-warning';}else{b.value='activate';b.textContent='Activate';b.className='btn btn-sm btn-outline-success';}}}};
 document.querySelectorAll('.js-vendo-form').forEach(form=>form.addEventListener('submit',async e=>{e.preventDefault();const button=e.submitter||form.querySelector('button[type=submit],button:not([type])'),fd=new FormData(form);if(button?.name&&!fd.has(button.name))fd.append(button.name,button.value);setBusy(button,true);try{const r=await fetch(location.pathname+location.search,{method:'POST',body:fd,headers:{'X-Requested-With':'XMLHttpRequest','Accept':'application/json'}});const data=await r.json().catch(()=>({ok:false,message:'Invalid server response.'}));message(data.message||'Action completed.',!!data.ok);if(data.ok)updateUi(form,data);}catch(err){message('Could not contact PixiePoint. Please try again.',false);}finally{setBusy(button,false);}}));
 })();
 </script>
