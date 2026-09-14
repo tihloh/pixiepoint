@@ -20,10 +20,12 @@ final class HotspotController
 
     public function portal(): never
     {
-        $context=$this->hotspotContext();$stations=$this->api->forHotspot($context['routerIdentity'],$context['serverAddress'],$context['ip'],$context['interfaceName']);$stationId=isset($stations[0]['id'])?(int)$stations[0]['id']:null;$routerId=$this->routerId($context['routerIdentity']);$resolved=(new PortalFeatureConfig($this->db))->resolve($routerId,$stationId);$theme=$this->themes->resolveByRouterIdentity($context['routerIdentity'],$stationId);$device=$this->portalDevice($context);$options=$this->vendoOptions($stations);$auth=$this->hasActiveHotspotSession();
+        $context=$this->hotspotContext();$stations=$this->api->forHotspot($context['routerIdentity'],$context['serverAddress'],$context['ip'],$context['interfaceName']);$stationId=isset($stations[0]['id'])?(int)$stations[0]['id']:null;$routerId=$this->routerId($context['routerIdentity']);$resolved=(new PortalFeatureConfig($this->db))->resolve($routerId,$stationId);$theme=$this->themes->resolveByRouterIdentity($context['routerIdentity'],$stationId);$device=$this->portalDevice($context);$options=$this->vendoOptions($stations);$auth=$this->hasActiveHotspotSession($context);
+        $_SESSION['hotspot']=['mac'=>$context['mac'],'ip'=>$context['ip'],'username'=>$context['username'],'router_identity'=>$context['routerIdentity'],'interface'=>$context['interfaceName'],'ssid'=>'','server_address'=>$context['serverAddress'],'login_url'=>$context['loginUrl'],'original_url'=>$context['originalUrl'],'chap_id'=>$context['chapId'],'chap_challenge'=>$context['chapChallenge']];
         $feature=static fn(string $key,bool $fallback=false):bool=>isset($resolved[$key])?(bool)$resolved[$key]['enabled']:$fallback;
         $html=$this->themeEngine->render($theme,'portal.html',$this->portalAdapter,[
-            'portal'=>['auth'=>$auth,'name'=>(string)($stations[0]['name']??'PixiePoint'),'vendo_options'=>$options,'device'=>$device,'debug'=>$this->debugDetails($context),'features'=>$resolved,'trial_minutes'=>(int)($resolved['trial']['config']['minutes']??10),'convert_points'=>(int)($resolved['points_convert']['config']['points']??10),'convert_minutes'=>(int)($resolved['points_convert']['config']['minutes']??5)],'context'=>$context,
+            'portal'=>['auth'=>$auth,'name'=>(string)($stations[0]['name']??'PixiePoint'),'vendo_options'=>$options,'device'=>$device,'debug'=>$this->debugDetails($context),'features'=>$resolved,'trial_minutes'=>(int)($resolved['trial']['config']['minutes']??10),'convert_points'=>(int)($resolved['points_convert']['config']['points']??10),'convert_minutes'=>(int)($resolved['points_convert']['config']['minutes']??5),'csrf'=>csrf_token()],
+            'context'=>$context,
         ],['voucher_login'=>$feature('voucher_login',true),'member_login'=>$feature('member_login'),'qr_scan'=>$feature('qr_scan'),'trial'=>$feature('trial'),'points'=>$feature('points'),'points_convert'=>$feature('points_convert'),'points_play'=>$feature('points_play'),'points_share'=>$feature('points_share'),'coin_slot'=>false]);
         $html=str_replace('/assets/juanfi-compat.js','/assets/hotspot-login.js',$html);
         $this->headers('text/html; charset=utf-8');echo $html;exit;
@@ -41,14 +43,11 @@ final class HotspotController
         if($identity==='')return 0;$stmt=$this->db->prepare('SELECT id FROM routers WHERE identity=? AND enabled=1 LIMIT 1');$stmt->execute([$identity]);return (int)($stmt->fetchColumn()?:0);
     }
 
-    private function hasActiveHotspotSession(): bool
-    {
-        foreach(['status_url','logout_url'] as $key){$value=trim((string)($_GET[$key]??''));if($value!==''&&!str_contains($value,'$('))return true;}return false;
-    }
+    private function hasActiveHotspotSession(array $context): bool{return trim((string)($context['logoutUrl']??''))!==''||trim((string)($context['refreshUrl']??''))!=='';}
 
     private function debugDetails(array $context): array
     {
-        if(!$this->api->hasDebugTarget($context['routerIdentity']))return [];return ['raw'=>['router_identity'=>$context['routerIdentity'],'server_address'=>$context['serverAddress'],'client_ip'=>$context['ip'],'interface'=>$context['interfaceName'],'mac'=>$context['mac']],'processed'=>$context,'matching'=>$this->api->debugForHotspot($context['routerIdentity'],$context['serverAddress'],$context['ip'],$context['interfaceName'])];
+        if(!$this->api->hasDebugTarget($context['routerIdentity']))return [];return ['raw'=>$_GET,'processed'=>$context,'matching'=>$this->api->debugForHotspot($context['routerIdentity'],$context['serverAddress'],$context['ip'],$context['interfaceName'])];
     }
 
     private function portalDevice(array $context): array
@@ -69,7 +68,9 @@ final class HotspotController
 
     private function hotspotContext(): array
     {
-        $raw=['router_identity'=>(string)($_GET['router_identity']??''),'server_address'=>(string)($_GET['server_address']??''),'client_ip'=>(string)($_GET['client_ip']??''),'interface'=>(string)($_GET['interface']??''),'mac'=>(string)($_GET['mac']??'')];[$data]=$this->validateQuery($raw);return ['routerIdentity'=>$data['router_identity'],'serverAddress'=>$data['server_address'],'ip'=>$data['client_ip'],'interfaceName'=>$data['interface'],'mac'=>$this->normalizeMac($data['mac'])];
+        $get=static function(string ...$keys):string{foreach($keys as $key){$value=trim((string)($_GET[$key]??''));if($value!=='')return $value;}return '';};
+        $routerIdentity=$get('router_identity','router-identity','identity');$serverAddress=$get('server_address','server-address');$ip=$get('client_ip','ip');$interface=$get('interface','interface_name','interface-name');$mac=$get('mac');
+        return ['routerIdentity'=>$routerIdentity,'serverAddress'=>$serverAddress,'ip'=>$ip,'interfaceName'=>$interface,'mac'=>$this->normalizeMac($mac),'username'=>$get('username'),'loginUrl'=>$get('login_url','link-login-only'),'originalUrl'=>$get('original_url','link-orig'),'chapId'=>$get('chap_id','chap-id'),'chapChallenge'=>$get('chap_challenge','chap-challenge'),'error'=>$get('error'),'logoutUrl'=>$get('logout_url','link-logout'),'refreshUrl'=>$get('status_url','link-status'),'sessionTimeLeft'=>$get('session_time_left','session-time-left'),'bytesIn'=>$get('bytes_in','bytes-in'),'bytesOut'=>$get('bytes_out','bytes-out'),'remainBytesTotal'=>$get('remain_bytes_total','remain-bytes-total')];
     }
 
     private function headers(string $contentType): void{header('Content-Type: '.$contentType);header('Access-Control-Allow-Origin: *');header('Cache-Control: no-store');}
