@@ -16,26 +16,47 @@ $gpioProfiles=[
             14=>'GPIO14 (D5) — SPI CLK / General I/O',
             16=>'GPIO16 (D0) — General output / wake',
         ],
+        'defaults'=>['coin'=>5,'relay'=>12,'status_led'=>16],
     ],
     'esp32'=>[
         'coin'=>[
-            1=>'GPIO1 — UART0 TX / General I/O',3=>'GPIO3 — UART0 RX / General I/O',4=>'GPIO4 — General I/O',5=>'GPIO5 — VSPI CS / General I/O',
-            12=>'GPIO12 — HSPI MISO / General I/O',13=>'GPIO13 — HSPI MOSI / General I/O',14=>'GPIO14 — HSPI CLK / General I/O',15=>'GPIO15 — HSPI CS / General I/O',
-            16=>'GPIO16 — General I/O',17=>'GPIO17 — General I/O',18=>'GPIO18 — VSPI CLK / General I/O',19=>'GPIO19 — VSPI MISO / General I/O',
-            21=>'GPIO21 — I²C SDA / General I/O',22=>'GPIO22 — I²C SCL / General I/O',23=>'GPIO23 — VSPI MOSI / General I/O',25=>'GPIO25 — DAC1 / General I/O',
-            26=>'GPIO26 — DAC2 / General I/O',27=>'GPIO27 — General I/O',32=>'GPIO32 — ADC / General I/O',33=>'GPIO33 — ADC / General I/O',
+            4=>'GPIO4 — General I/O',
+            13=>'GPIO13 — HSPI MOSI / General I/O',
+            14=>'GPIO14 — HSPI CLK / General I/O',
+            16=>'GPIO16 — General I/O',
+            17=>'GPIO17 — General I/O',
+            18=>'GPIO18 — VSPI CLK / General I/O',
+            19=>'GPIO19 — VSPI MISO / General I/O',
+            21=>'GPIO21 — I²C SDA / General I/O',
+            22=>'GPIO22 — I²C SCL / General I/O',
+            23=>'GPIO23 — VSPI MOSI / General I/O',
+            25=>'GPIO25 — DAC1 / General I/O',
+            26=>'GPIO26 — DAC2 / General I/O',
+            27=>'GPIO27 — General I/O',
+            32=>'GPIO32 — ADC / General I/O',
+            33=>'GPIO33 — ADC / General I/O',
         ],
         'output'=>[
-            1=>'GPIO1 — UART0 TX / General I/O',3=>'GPIO3 — UART0 RX / General I/O',4=>'GPIO4 — General I/O',5=>'GPIO5 — VSPI CS / General I/O',
-            12=>'GPIO12 — HSPI MISO / General I/O',13=>'GPIO13 — HSPI MOSI / General I/O',14=>'GPIO14 — HSPI CLK / General I/O',15=>'GPIO15 — HSPI CS / General I/O',
-            16=>'GPIO16 — General I/O',17=>'GPIO17 — General I/O',18=>'GPIO18 — VSPI CLK / General I/O',19=>'GPIO19 — VSPI MISO / General I/O',
-            21=>'GPIO21 — I²C SDA / General I/O',22=>'GPIO22 — I²C SCL / General I/O',23=>'GPIO23 — VSPI MOSI / General I/O',25=>'GPIO25 — DAC1 / General I/O',
-            26=>'GPIO26 — DAC2 / General I/O',27=>'GPIO27 — General I/O',32=>'GPIO32 — ADC / General I/O',33=>'GPIO33 — ADC / General I/O',
+            4=>'GPIO4 — General I/O',
+            13=>'GPIO13 — HSPI MOSI / General I/O',
+            14=>'GPIO14 — HSPI CLK / General I/O',
+            16=>'GPIO16 — General I/O',
+            17=>'GPIO17 — General I/O',
+            18=>'GPIO18 — VSPI CLK / General I/O',
+            19=>'GPIO19 — VSPI MISO / General I/O',
+            21=>'GPIO21 — I²C SDA / General I/O',
+            22=>'GPIO22 — I²C SCL / General I/O',
+            23=>'GPIO23 — VSPI MOSI / General I/O',
+            25=>'GPIO25 — DAC1 / General I/O',
+            26=>'GPIO26 — DAC2 / General I/O',
+            27=>'GPIO27 — General I/O',
+            32=>'GPIO32 — ADC / General I/O',
+            33=>'GPIO33 — ADC / General I/O',
         ],
+        'defaults'=>['coin'=>27,'relay'=>26,'status_led'=>25],
     ],
 ];
-$pinSelect=function(string $name,int $selected,array $options,string $class=''):
-    string
+$pinSelect=function(string $name,int $selected,array $options,string $class=''): string
 {
     $html='<select name="'.e($name).'" class="form-select '.e($class).'" required>';
     foreach($options as $gpio=>$label)$html.='<option value="'.(int)$gpio.'"'.((int)$gpio===$selected?' selected':'').'>'.e($label).'</option>';
@@ -55,7 +76,7 @@ $pinSelect=function(string $name,int $selected,array $options,string $class=''):
         <?php if(!$rows): ?><tr><td colspan="7" class="text-center text-body-secondary py-4">No Vendo devices are paired with this router yet.</td></tr><?php endif; ?>
         <?php foreach($rows as $i=>$row):
             $device=$row['device'];$binding=$row['binding'];$config=$row['config']??[];$reported=$row['reported']??[];$pins=$config['hardware']['pins']??$reported['hardware']['pins']??[];$coin=$config['coin']??$reported['coin']??[];$selected=(bool)($row['selected']??false);$online=$device&&$device->lastSeenAt&&$device->lastSeenAt->getTimestamp()>=time()-180;$deviceId=(string)$binding['gateway_device_id'];
-            $platform=strtolower((string)($reported['hardware']['platform']??''));if(!isset($gpioProfiles[$platform]))$platform='esp8266';$profile=$gpioProfiles[$platform];
+            $platform=strtolower((string)($reported['hardware']['platform']??''));if(!isset($gpioProfiles[$platform]))$platform='esp8266';$profile=$gpioProfiles[$platform];$defaults=$profile['defaults'];
         ?>
             <tr class="<?= $selected?'table-active':'' ?>" data-vendo-row="<?= e($deviceId) ?>">
                 <td><strong data-vendo-name><?= e($binding['vendo_name']?:'Vendo') ?></strong><div class="small text-body-secondary"><code><?= e($deviceId) ?></code></div></td>
@@ -77,7 +98,7 @@ $pinSelect=function(string $name,int $selected,array $options,string $class=''):
                         </div>
                     </div>
                     <div class="col-lg-7">
-                        <form method="post" class="border rounded p-3 js-vendo-form js-hardware-form" data-platform="<?= e($platform) ?>"><input type="hidden" name="_csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="device_id" value="<?= e($deviceId) ?>"><input type="hidden" name="action" value="save_config"><div class="d-flex justify-content-between align-items-center mb-1"><div class="fw-semibold">Hardware configuration</div><span class="badge text-bg-secondary text-uppercase"><?= e($platform) ?></span></div><div class="small text-body-secondary mb-3">Only pins supported by the detected ESP platform are shown. A pin selected for one purpose becomes unavailable in the other selectors.</div><div class="row g-2"><div class="col-12 col-md-4"><label>Coin input</label><?= $pinSelect('coin_pin',(int)($pins['coin']??5),$profile['coin'],'js-pin-select') ?></div><div class="col-12 col-md-4"><label>Relay output</label><?= $pinSelect('relay_pin',(int)($pins['relay']??12),$profile['output'],'js-pin-select') ?></div><div class="col-12 col-md-4"><label>External status LED</label><?= $pinSelect('status_led_pin',(int)($pins['status_led']??16),$profile['output'],'js-pin-select') ?></div><div class="col-12 col-md-4"><label>Coin settle time</label><div class="input-group"><input class="form-control" type="number" min="50" max="2000" name="coin_settle_ms" value="<?= (int)($coin['settle_ms']??350) ?>" required><span class="input-group-text">ms</span></div></div><div class="col-12"><button class="btn btn-primary">Save hardware configuration</button></div></div></form>
+                        <form method="post" class="border rounded p-3 js-vendo-form js-hardware-form" data-platform="<?= e($platform) ?>"><input type="hidden" name="_csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="device_id" value="<?= e($deviceId) ?>"><input type="hidden" name="action" value="save_config"><div class="d-flex justify-content-between align-items-center mb-1"><div class="fw-semibold">Hardware configuration</div><span class="badge text-bg-secondary text-uppercase"><?= e($platform) ?></span></div><div class="small text-body-secondary mb-3">Only safe pins supported by the detected ESP platform are shown. A pin selected for one purpose becomes unavailable in the other selectors.</div><div class="row g-2"><div class="col-12 col-md-4"><label>Coin input</label><?= $pinSelect('coin_pin',(int)($pins['coin']??$defaults['coin']),$profile['coin'],'js-pin-select') ?></div><div class="col-12 col-md-4"><label>Relay output</label><?= $pinSelect('relay_pin',(int)($pins['relay']??$defaults['relay']),$profile['output'],'js-pin-select') ?></div><div class="col-12 col-md-4"><label>External status LED</label><?= $pinSelect('status_led_pin',(int)($pins['status_led']??$defaults['status_led']),$profile['output'],'js-pin-select') ?></div><div class="col-12 col-md-4"><label>Coin settle time</label><div class="input-group"><input class="form-control" type="number" min="50" max="2000" name="coin_settle_ms" value="<?= (int)($coin['settle_ms']??350) ?>" required><span class="input-group-text">ms</span></div></div><div class="col-12"><button class="btn btn-primary">Save hardware configuration</button></div></div></form>
                     </div>
                 </div>
             </td></tr>
