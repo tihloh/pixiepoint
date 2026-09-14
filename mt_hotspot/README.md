@@ -1,37 +1,54 @@
-# PixiePoint local JuanFi bridge
+# PixiePoint MikroTik HotSpot package
 
-This directory is the small bootstrap installed on MikroTik. The complete customer interface, styling, and JuanFi workflow are downloaded from `https://hs.portalx.win` and rendered natively into the local document. There is no iframe and therefore no nested viewport or double scrollbar.
+This directory is the MikroTik HotSpot package installed on the router.
 
-The document retains the MikroTik origin so the downloaded application can communicate with an unchanged ESP such as `http://10.0.0.2`. A top-level HTTPS page could not reliably make that HTTP private-network request. The bootstrap also computes MikroTik HTTP-CHAP locally, so the hosted site never needs direct router access.
+PixiePoint keeps the customer portal, theme engine, `{{ }}` rendering, voucher validation, and access-method logic on the PixiePoint server. The MikroTik files only provide the native RouterOS HotSpot handoff and the standard HotSpot support pages.
 
 ## Install
 
-1. Edit `vendo-config.js`. Set the hosted origin and list every allowed local vendo. This file is the local security allowlist.
-2. Upload all files in this directory to `flash/mt_hotspot`.
-3. Configure RouterOS:
+1. Upload the contents of this directory to `flash/mt_hotspot` on the MikroTik router.
+2. Configure the HotSpot profile:
 
 ```routeros
 /ip hotspot profile set [find name="hsprof1"] html-directory="flash/mt_hotspot"
+```
+
+3. Allow the PixiePoint portal before authentication:
+
+```routeros
 /ip hotspot walled-garden add dst-host=hs.portalx.win
 ```
 
-Use `passwordMode: "blank"` for standard JuanFi voucher users whose password is empty, or `passwordMode: "voucher"` when username and password are the same.
+## Login flow
 
-## Runtime behavior
+`login.html` follows the same native external-portal pattern as a standard MikroTik HotSpot integration:
 
-- `login.html` never navigates while checking availability.
-- It polls `/hotspot/health` asynchronously and shows a persistent local error screen if DNS, internet, TLS, CORS, the PHP app, or its database is unavailable.
-- Only after a valid health response does it download the hosted stylesheet and portal application.
-- If PixiePoint is reachable but the ESP is not, the hosted UI remains responsive and reports the local vendo failure separately.
-- Coin checks use background AJAX and update the visible transaction without page reloads.
+```text
+MikroTik login.html
+        ↓
+https://hs.portalx.win/hotspot/login
+        ↓
+PixiePoint resolves router/station/theme/features
+        ↓
+ThemeEngine renders the portal server-side
+        ↓
+Voucher is validated by PixiePoint
+        ↓
+PixiePoint submits username/password to $(link-login-only)
+        ↓
+MikroTik completes PAP or HTTP-CHAP authentication
+```
 
-All customer-facing behavior stays in the hosted `juanfi-compat.js` application. The MikroTik files contain no rates, transaction rules, product catalog, account UI, sales logic, or operator interface. `vendo-config.js` contains only the locally trusted ESP addresses and feature switches, while `md5.js` performs the required local CHAP calculation.
+The redirect forwards the native MikroTik variables required by PixiePoint, including router identity, server address, login URL, original destination, client IP/MAC, error state, and CHAP challenge values.
 
-The hosted compatibility layer currently implements coin/voucher login, legacy rate parsing, voucher extension and conversion, charging-station discovery and charging top-up. It can detect the JuanFi e-load service, but purchasing remains hidden by default and must not be enabled until the compressed product catalog and real transaction flow pass a physical-device test.
+## Platform separation
 
-## Security notes
+The theme remains platform-neutral. MikroTik-specific values are translated into PixiePoint's portal context by the MikroTik adapter. Theme files do not need RouterOS `$(...)` variables.
 
-- Treat `vendo-config.js` as router configuration and restrict MikroTik administrative access.
-- Do not put Telegram tokens, database passwords, API keys, or operator credentials in hotspot files or ESP-visible requests.
-- Rotate any secrets embedded in the former JuanFi login script before deployment.
-- Keep the ESP on the hotspot LAN and block management access from untrusted upstream networks.
+The other files in this directory (`alogin.html`, `error.html`, `logout.html`, `status.html`, and related RouterOS files) remain part of the complete MikroTik HotSpot package and should be uploaded together.
+
+## Notes
+
+- Do not use the old hosted-embed/bootstrap flow from earlier versions of this package.
+- `md5.js` remains in the package for compatibility with standard MikroTik HotSpot pages, although PixiePoint's hosted voucher flow handles its own authentication handoff.
+- Keep `hs.portalx.win` reachable through the HotSpot walled garden for unauthenticated clients.
