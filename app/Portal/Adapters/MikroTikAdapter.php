@@ -13,37 +13,44 @@ final class MikroTikAdapter implements PlatformAdapter
 
     public function transform(string $html,ThemeContext $context): string
     {
-        $isLogin=str_contains($html,'id="pp-login-card"');
-        $data=[
-            'mac'=>(string)($context->value('context.mac')??''),
-            'ip'=>(string)($context->value('context.ip')??''),
-            'username'=>(string)($context->value('context.username')??''),
-            'routerIdentity'=>(string)($context->value('context.routerIdentity')??''),
-            'interfaceName'=>(string)($context->value('context.interfaceName')??''),
-            'serverAddress'=>(string)($context->value('context.serverAddress')??''),
-            'loginUrl'=>(string)($context->value('context.loginUrl')??''),
-            'originalUrl'=>(string)($context->value('context.originalUrl')??''),
-            'error'=>(string)($context->value('context.error')??''),
-        ];
+        $isLogin=preg_match('/\bid\s*=\s*(["\'])pp-login-card\1/i',$html)===1;
+        if(!$isLogin)return $html;
 
-        if($isLogin){
-            $csrf=(string)($context->value('portal.csrf')??'');
-            $html=preg_replace('/<form\s+id="compat-voucher-form"([^>]*)>/i','<form id="compat-voucher-form"$1 method="post" action="/hotspot/authenticate"><input type="hidden" name="_csrf" value="'.e($csrf).'">',$html,1)??$html;
-            $html=preg_replace('/<input\s+id="compat-voucher"(?![^>]*\bname=)([^>]*)>/i','<input id="compat-voucher" name="voucher"$1>',$html,1)??$html;
-            $script='<script>window.PIXIEPOINT_CONTEXT='.$this->json($data).';window.PIXIEPOINT_CHAP='.$this->json(['id'=>(string)($context->value('context.chapId')??''),'challenge'=>(string)($context->value('context.chapChallenge')??'')]).';window.PIXIEPOINT_SERVER_RENDERED=true;</script>';
-        }else{
-            $script='<script>window.PIXIEPOINT_SESSION='.$this->json([
-                'username'=>$data['username'],'mac'=>$data['mac'],'ip'=>$data['ip'],'routerIdentity'=>$data['routerIdentity'],'serverAddress'=>$data['serverAddress'],'interfaceName'=>$data['interfaceName'],
-                'sessionTimeLeft'=>(string)($context->value('context.sessionTimeLeft')??''),'bytesIn'=>(string)($context->value('context.bytesIn')??''),'bytesOut'=>(string)($context->value('context.bytesOut')??''),
-                'remainBytesTotal'=>(string)($context->value('context.remainBytesTotal')??''),'refreshUrl'=>(string)($context->value('context.refreshUrl')??''),'logoutUrl'=>(string)($context->value('context.logoutUrl')??''),'loginUrl'=>$data['loginUrl'],
-            ]).';window.PIXIEPOINT_SERVER_RENDERED=true;</script>';
-        }
+        $loginUrl=(string)($context->value('context.loginUrl')??'');
+        $destination=(string)($context->value('context.originalUrl')??'');
+        $chapId=(string)($context->value('context.chapId')??'');
+        $chapChallenge=(string)($context->value('context.chapChallenge')??'');
+        $hasChap=$chapId!==''&&$chapChallenge!=='';
 
-        return preg_match('/<\/body\s*>/i',$html)?(preg_replace('/<\/body\s*>/i',$script.'</body>',$html,1)??$html):$html.$script;
+        $html=preg_replace_callback('/<form\b[^>]*\bid\s*=\s*(["\'])compat-voucher-form\1[^>]*>/i',static function(array $m)use($loginUrl,$hasChap):string{
+            $tag=preg_replace('/\s+(?:name|method|action|onsubmit)\s*=\s*(?:"[^"]*"|\'[^\']*\'|[^\s>]+)/i','',$m[0])??$m[0];
+            $tag=rtrim(substr($tag,0,-1)).' name="login" method="post" action="'.e($loginUrl).'"'.($hasChap?' onsubmit="return doLogin()"':'').'>';
+            return $tag.'<input type="hidden" name="password" value=""><input type="hidden" name="dst" value="'.e($destination).'"><input type="hidden" name="popup" value="true">';
+        },$html,1)??$html;
+
+        $html=preg_replace_callback('/<input\b[^>]*\bid\s*=\s*(["\'])compat-voucher\1[^>]*>/i',static function(array $m):string{
+            $tag=preg_replace('/\s+name\s*=\s*(?:"[^"]*"|\'[^\']*\'|[^\s>]+)/i','',$m[0])??$m[0];
+            return rtrim(substr($tag,0,-1)).' name="username">';
+        },$html,1)??$html;
+
+        if(!$hasChap)return $html;
+
+        $native='<form name="sendin" action="'.e($loginUrl).'" method="post" style="display:none">'
+            .'<input type="hidden" name="username">'
+            .'<input type="hidden" name="password">'
+            .'<input type="hidden" name="dst" value="'.e($destination).'">'
+            .'<input type="hidden" name="popup" value="true">'
+            .'</form>'
+            .'<script src="/assets/md5.js"></script>'
+            .'<script>function doLogin(){document.sendin.username.value=document.login.username.value;document.sendin.password.value=hexMD5('.$this->chapLiteral($chapId).'+document.login.password.value+'.$this->chapLiteral($chapChallenge).');document.sendin.submit();return false;}</script>';
+
+        return preg_match('/<\/body\s*>/i',$html)?(preg_replace('/<\/body\s*>/i',$native.'</body>',$html,1)??$html):$html.$native;
     }
 
-    private function json(array $value): string
+    private function chapLiteral(string $value): string
     {
-        return json_encode($value,JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE|JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT)?:'{}';
+        $bytes=preg_replace_callback('/\\\\([0-7]{3})/',static fn(array $m):string=>chr(octdec($m[1])),$value)??$value;
+        $encoded='';for($i=0,$length=strlen($bytes);$i<$length;$i++)$encoded.=sprintf('\\%03o',ord($bytes[$i]));
+        return "'".$encoded."'";
     }
 }
