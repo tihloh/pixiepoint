@@ -20,14 +20,20 @@ final class HotspotController
 
     public function portal(): never
     {
-        $context=$this->hotspotContext();$stations=$this->api->forHotspot($context['routerIdentity'],$context['serverAddress'],$context['ip'],$context['interfaceName']);$stationId=isset($stations[0]['id'])?(int)$stations[0]['id']:null;$routerId=$this->routerId($context['routerIdentity']);$resolved=(new PortalFeatureConfig($this->db))->resolve($routerId,$stationId);$theme=$this->themes->resolveByRouterIdentity($context['routerIdentity'],$stationId);$device=$this->portalDevice($context);$options=$this->vendoOptions($stations);$auth=$this->hasActiveHotspotSession($context);
-        $_SESSION['hotspot']=['mac'=>$context['mac'],'ip'=>$context['ip'],'username'=>$context['username'],'router_identity'=>$context['routerIdentity'],'interface'=>$context['interfaceName'],'ssid'=>'','server_address'=>$context['serverAddress'],'login_url'=>$context['loginUrl'],'original_url'=>$context['originalUrl'],'chap_id'=>$context['chapId'],'chap_challenge'=>$context['chapChallenge']];
+        $context=$this->hotspotContext();
+        if($this->isMikroTikLoginHandoff()){
+            $_SESSION['hotspot']=$this->sessionContext($context);
+            header('Location: /hotspot/login',true,302);
+            exit;
+        }
+        $stations=$this->api->forHotspot($context['routerIdentity'],$context['serverAddress'],$context['ip'],$context['interfaceName']);$stationId=isset($stations[0]['id'])?(int)$stations[0]['id']:null;$routerId=$this->routerId($context['routerIdentity']);$resolved=(new PortalFeatureConfig($this->db))->resolve($routerId,$stationId);$theme=$this->themes->resolveByRouterIdentity($context['routerIdentity'],$stationId);$device=$this->portalDevice($context);$options=$this->vendoOptions($stations);$auth=$this->hasActiveHotspotSession($context);
+        $_SESSION['hotspot']=$this->sessionContext($context);
         $feature=static fn(string $key,bool $fallback=false):bool=>isset($resolved[$key])?(bool)$resolved[$key]['enabled']:$fallback;
         $html=$this->themeEngine->render($theme,'portal.html',$this->portalAdapter,[
             'portal'=>['auth'=>$auth,'name'=>(string)($stations[0]['name']??'PixiePoint'),'vendo_options'=>$options,'device'=>$device,'debug'=>$this->debugDetails($context),'features'=>$resolved,'trial_minutes'=>(int)($resolved['trial']['config']['minutes']??10),'convert_points'=>(int)($resolved['points_convert']['config']['points']??10),'convert_minutes'=>(int)($resolved['points_convert']['config']['minutes']??5),'csrf'=>csrf_token()],
             'context'=>$context,
         ],['voucher_login'=>$feature('voucher_login',true),'member_login'=>$feature('member_login'),'qr_scan'=>$feature('qr_scan'),'trial'=>$feature('trial'),'points'=>$feature('points'),'points_convert'=>$feature('points_convert'),'points_play'=>$feature('points_play'),'points_share'=>$feature('points_share'),'coin_slot'=>false]);
-        $html=str_replace('/assets/juanfi-compat.js','/assets/hotspot-login.js',$html);
+        $html=str_replace(['<script src="/assets/juanfi-compat.js"></script>','<script src="/assets/hotspot-login.js"></script>'],'',$html);
         $this->headers('text/html; charset=utf-8');echo $html;exit;
     }
 
@@ -68,9 +74,17 @@ final class HotspotController
 
     private function hotspotContext(): array
     {
-        $get=static function(string ...$keys):string{foreach($keys as $key){$value=trim((string)($_GET[$key]??''));if($value!=='')return $value;}return '';};
-        $routerIdentity=$get('router_identity','router-identity','identity');$serverAddress=$get('server_address','server-address');$ip=$get('client_ip','ip');$interface=$get('interface','interface_name','interface-name');$mac=$get('mac');
-        return ['routerIdentity'=>$routerIdentity,'serverAddress'=>$serverAddress,'ip'=>$ip,'interfaceName'=>$interface,'mac'=>$this->normalizeMac($mac),'username'=>$get('username'),'loginUrl'=>$get('login_url','link-login-only'),'originalUrl'=>$get('original_url','link-orig'),'chapId'=>$get('chap_id','chap-id'),'chapChallenge'=>$get('chap_challenge','chap-challenge'),'error'=>$get('error'),'logoutUrl'=>$get('logout_url','link-logout'),'refreshUrl'=>$get('status_url','link-status'),'sessionTimeLeft'=>$get('session_time_left','session-time-left'),'bytesIn'=>$get('bytes_in','bytes-in'),'bytesOut'=>$get('bytes_out','bytes-out'),'remainBytesTotal'=>$get('remain_bytes_total','remain-bytes-total')];
+        $session=is_array($_SESSION['hotspot']??null)?$_SESSION['hotspot']:[];
+        $get=static function(array $session,string ...$keys):string{foreach($keys as $key){$value=trim((string)($_GET[$key]??''));if($value!=='')return $value;}foreach($keys as $key){$value=trim((string)($session[$key]??''));if($value!=='')return $value;}return '';};
+        $routerIdentity=$get($session,'router_identity','router-identity','identity');$serverAddress=$get($session,'server_address','server-address');$ip=$get($session,'client_ip','ip');$interface=$get($session,'interface','interface_name','interface-name');$mac=$get($session,'mac');
+        return ['routerIdentity'=>$routerIdentity,'serverAddress'=>$serverAddress,'ip'=>$ip,'interfaceName'=>$interface,'mac'=>$this->normalizeMac($mac),'username'=>$get($session,'username'),'loginUrl'=>$get($session,'login_url','link-login-only'),'originalUrl'=>$get($session,'original_url','link-orig'),'originalUrlEsc'=>$get($session,'original_url_esc','link-orig-esc'),'chapId'=>$get($session,'chap_id','chap-id'),'chapChallenge'=>$get($session,'chap_challenge','chap-challenge'),'error'=>$get($session,'error'),'trial'=>$get($session,'trial'),'macEsc'=>$get($session,'mac_esc','mac-esc'),'logoutUrl'=>$get($session,'logout_url','link-logout'),'refreshUrl'=>$get($session,'status_url','link-status'),'sessionTimeLeft'=>$get($session,'session_time_left','session-time-left'),'bytesIn'=>$get($session,'bytes_in','bytes-in'),'bytesOut'=>$get($session,'bytes_out','bytes-out'),'remainBytesTotal'=>$get($session,'remain_bytes_total','remain-bytes-total')];
+    }
+
+    private function isMikroTikLoginHandoff(): bool{return isset($_GET['link-login-only'])||isset($_GET['login_url']);}
+
+    private function sessionContext(array $context): array
+    {
+        return ['mac'=>$context['mac'],'mac_esc'=>$context['macEsc']??'','ip'=>$context['ip'],'username'=>$context['username'],'router_identity'=>$context['routerIdentity'],'interface'=>$context['interfaceName'],'ssid'=>'','server_address'=>$context['serverAddress'],'login_url'=>$context['loginUrl'],'original_url'=>$context['originalUrl'],'original_url_esc'=>$context['originalUrlEsc']??'','chap_id'=>$context['chapId'],'chap_challenge'=>$context['chapChallenge'],'error'=>$context['error'],'trial'=>$context['trial']??'','logout_url'=>$context['logoutUrl']??'','status_url'=>$context['refreshUrl']??'','session_time_left'=>$context['sessionTimeLeft']??'','bytes_in'=>$context['bytesIn']??'','bytes_out'=>$context['bytesOut']??'','remain_bytes_total'=>$context['remainBytesTotal']??''];
     }
 
     private function headers(string $contentType): void{header('Content-Type: '.$contentType);header('Access-Control-Allow-Origin: *');header('Cache-Control: no-store');}
