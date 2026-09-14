@@ -1,30 +1,13 @@
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html>
+<html>
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <title>Opening Portal...</title>
+  <title>Redirecting...</title>
+  <meta http-equiv="refresh" content="0; url=https://hs.portalx.win/hotspot/login?router_identity=$(identity)&server-address=$(server-address)&link-login-only=$(link-login-only)&link-orig=$(link-orig)&link-orig-esc=$(link-orig-esc)&error=$(error)&username=$(username)&chap-id=$(chap-id)&chap-challenge=$(chap-challenge)&ip=$(ip)&mac=$(mac)&mac-esc=$(mac-esc)&trial=$(trial)">
 </head>
 <body>
-  <p>Opening portal...</p>
-  <script>
-    (function () {
-      var p = new URLSearchParams();
-      p.set('router_identity', '$(identity)');
-      p.set('server_address', '$(server-address)');
-      p.set('client_ip', '$(ip)');
-      p.set('interface', '$(interface-name)');
-      p.set('mac', '$(mac)');
-      p.set('username', '$(username)');
-      p.set('login_url', '$(link-login-only)');
-      p.set('original_url', '$(link-orig)');
-      p.set('chap_id', '$(chap-id)');
-      p.set('chap_challenge', '$(chap-challenge)');
-      p.set('error', '$(error)');
-      history.replaceState(null, '', location.pathname + '?' + p.toString());
-    })();
-  </script>
-  <script src="https://hs.portalx.win/assets/hotspot-embed.js?v=2"></script>
+  <p>Please wait... redirecting to PixiePoint.</p>
 </body>
 </html>
