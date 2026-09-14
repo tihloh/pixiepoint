@@ -187,11 +187,11 @@ final class Controller extends FeatureController
         }
 
         $features = new PortalFeatureConfig($this->db);
-        $stmt = $this->db->prepare('SELECT v.*,r.identity router_identity FROM vendos v JOIN routers r ON r.id=v.router_id WHERE v.router_id=? ORDER BY v.created_at DESC');
+        $stmt = $this->db->prepare('SELECT v.*,r.identity router_identity,b.gateway_device_id FROM vendos v JOIN routers r ON r.id=v.router_id LEFT JOIN vendo_gateway_bindings b ON b.vendo_id=v.id WHERE v.router_id=? ORDER BY v.created_at DESC');
         $stmt->execute([$routerId]);
         $stations = $stmt->fetchAll();
         foreach ($stations as &$station) {
-            $station['has_vendo'] = trim((string) ($station['base_url'] ?? '')) !== '';
+            $station['has_vendo'] = trim((string) ($station['base_url'] ?? '')) !== '' || trim((string) ($station['gateway_device_id'] ?? '')) !== '';
             $station['feature_settings'] = $features->raw('station',(int) $station['id']);
             $station['resolved_features'] = $features->resolve($routerId,(int) $station['id']);
         }
