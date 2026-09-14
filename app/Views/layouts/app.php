@@ -102,8 +102,6 @@ $sidebarReturn = preg_match('#^/(?:admin|dashboard)(?:/|$)#', $path) ? ($path . 
                                 <a class="nav-link mt-2 px-2 py-1<?= $active('/admin/routers/' . (int)$selectedRouter['id']) ?>"
                                     href="/admin/routers/<?= e($selectedRouter['id']) ?>">Router dashboard</a>
                                 <div class="nav-group-label mt-2">Router management</div>
-                                <?php if ($access['vendos'] ?? false): ?><a class="nav-link<?= $active('/admin/vendo-gateway') ?>"
-                                        href="/admin/vendo-gateway">Vendo Gateway</a><?php endif; ?>
                                 <?php if ($access['vouchers'] ?? false): ?><a class="nav-link<?= $active('/admin/vouchers') ?>"
                                         href="/admin/vouchers">Vouchers</a><?php endif; ?>
                                 <?php if ($access['devices'] ?? false): ?><a class="nav-link<?= $active('/admin/devices') ?>"
