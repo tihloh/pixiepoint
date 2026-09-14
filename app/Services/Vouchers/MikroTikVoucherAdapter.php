@@ -26,9 +26,9 @@ final class MikroTikVoucherAdapter implements VoucherPlatformAdapter
         ];
         $profile = trim((string) ($batch['platform_profile'] ?? ''));
         foreach($vouchers as $voucher){
-            $code=$this->quote((string)$voucher['code']);$password=$this->quote((string)$voucher['password']);
+            $code=$this->quote((string)$voucher['code']);
             $comment=max(1,(int)$voucher['duration_minutes']) . 'm,0,0,' . ($station['name']??'Voucher');
-            $command='/ip hotspot user add name=' . $code . ' password=' . $password;
+            $command='/ip hotspot user add name=' . $code . ' password=""';
             if($profile!=='')$command.=' profile=' . $this->quote($profile);
             $command.=' limit-uptime=' . max(1,(int)$voucher['duration_minutes']) . 'm';
             if(!empty($voucher['data_limit_mb']))$command.=' limit-bytes-total=' . ((int)$voucher['data_limit_mb']*1048576);
