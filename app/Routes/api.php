@@ -7,9 +7,8 @@ use Tihloh\Prefab\Routes\RouteManager;
 return static function (RouteManager $routes, array $c): void {
     // Native Vendo Gateway protocol endpoints.
     $routes->get('/vendo/v1/discover', [$c['vendo.gateway'], 'discover'])->name('vendo.discover');
-    $routes->post('/vendo/v1/pairings', [$c['vendo.gateway'], 'pair'])->name('vendo.pair');
-    $routes->get('/vendo/v1/pairings/{id}', [$c['vendo.gateway'], 'pairingStatus'])->name('vendo.pairing.status');
-    $routes->post('/vendo/v1/pairings/{id}/ack', [$c['vendo.gateway'], 'pairingAck'])->name('vendo.pairing.ack');
+    $routes->post('/vendo/v1/pairings', [$c['vendo.gateway'], 'pair'])->name('vendo.enroll');
+    $routes->post('/vendo/v1/pairings/{id}/ack', [$c['vendo.gateway'], 'pairingAck'])->name('vendo.enrollment.ack');
     $routes->post('/vendo/v1/heartbeat', [$c['vendo.gateway'], 'heartbeat'])->name('vendo.heartbeat');
     $routes->post('/vendo/v1/sync', [$c['vendo.gateway'], 'sync'])->name('vendo.sync');
     $routes->post('/vendo/v1/events', [$c['vendo.gateway'], 'events'])->name('vendo.events');
@@ -19,30 +18,10 @@ return static function (RouteManager $routes, array $c): void {
     $routes->post('/vendo/v1/state', [$c['vendo.gateway'], 'state'])->name('vendo.state');
     $routes->post('/vendo/v1/firmware/check', [$c['vendo.gateway'], 'firmware'])->name('vendo.firmware');
 
-    // Lightweight service health endpoint used by the hotspot integration.
-    $routes
-        ->get('/hotspot/health', [$c['api'], 'health'])
-        ->name('api.health');
-
-    // Legacy query-style Router Agent routes are kept for compatibility.
-    $routes
-        ->get('/api/router/install', [$c['router.agent'], 'install'])
-        ->name('api.router.install');
-
-    $routes
-        ->get('/api/router/poll', [$c['router.agent'], 'poll'])
-        ->name('api.router.poll');
-
-    $routes
-        ->get('/api/router/ack', [$c['router.agent'], 'ack'])
-        ->name('api.router.ack');
-
-    // MikroTik accounting and login-event ingestion.
-    $routes
-        ->post('/api/accounting', [$c['api'], 'accounting'])
-        ->name('api.accounting');
-
-    $routes
-        ->post('/api/router/login-event', [$c['api'], 'loginEvent'])
-        ->name('api.router.login-event');
+    $routes->get('/hotspot/health', [$c['api'], 'health'])->name('api.health');
+    $routes->get('/api/router/install', [$c['router.agent'], 'install'])->name('api.router.install');
+    $routes->get('/api/router/poll', [$c['router.agent'], 'poll'])->name('api.router.poll');
+    $routes->get('/api/router/ack', [$c['router.agent'], 'ack'])->name('api.router.ack');
+    $routes->post('/api/accounting', [$c['api'], 'accounting'])->name('api.accounting');
+    $routes->post('/api/router/login-event', [$c['api'], 'loginEvent'])->name('api.router.login-event');
 };
