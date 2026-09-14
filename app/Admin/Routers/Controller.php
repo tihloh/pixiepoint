@@ -192,6 +192,7 @@ final class Controller extends FeatureController
         $stations = $stmt->fetchAll();
         foreach ($stations as &$station) {
             $station['has_vendo'] = trim((string) ($station['base_url'] ?? '')) !== '' || trim((string) ($station['gateway_device_id'] ?? '')) !== '';
+            $station['effective_type'] = $station['has_vendo'] || (string)($station['station_type'] ?? 'hotspot') === 'vendo_gateway' ? 'vendo_gateway' : 'hotspot';
             $station['feature_settings'] = $features->raw('station',(int) $station['id']);
             $station['resolved_features'] = $features->resolve($routerId,(int) $station['id']);
         }
