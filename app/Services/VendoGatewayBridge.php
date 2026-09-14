@@ -18,23 +18,27 @@ final class VendoGatewayBridge implements EventHandler
 
     public function register(Gateway $gateway): void
     {
-        $gateway->dispatcher->listen('coin.inserted', $this);
+        $gateway->dispatcher->listen('coin.inserted',$this);
     }
 
     public function handle(DeviceEvent $event): void
     {
-        if($event->type !== 'coin.inserted')return;
-        $binding=$this->binding($event->deviceId);
-        $channel=max(1,(int)($event->payload['channel']??1));
-        $pulses=max(0,(int)($event->payload['pulses']??0));
+        if($event->type!=='coin.inserted')return;
+        $binding=$this->binding($event->deviceId);$channel=max(1,(int)($event->payload['channel']??1));$pulses=max(0,(int)($event->payload['pulses']??0));
         $stmt=$this->db->prepare('INSERT IGNORE INTO vendo_gateway_coin_events(event_id,gateway_device_id,vendo_id,sequence_no,channel,pulses,occurred_at,received_at) VALUES(?,?,?,?,?,?,?,?)');
-        $stmt->execute([$event->eventId,$event->deviceId,$binding['vendo_id']??null,$event->sequence,$channel,$pulses,$event->occurredAt?->format('Y-m-d H:i:s'),$event->receivedAt->format('Y-m-d H:i:s')]);
+        $stmt->execute([$event->eventId,$event->deviceId,$binding['station_id']??null,$event->sequence,$channel,$pulses,$event->occurredAt?->format('Y-m-d H:i:s'),$event->receivedAt->format('Y-m-d H:i:s')]);
     }
 
-    public function bind(string $deviceId,int $vendoId): void
+    public function bind(string $deviceId,int $stationId,string $name=''): void
     {
-        $stmt=$this->db->prepare('INSERT INTO vendo_gateway_bindings(gateway_device_id,vendo_id,created_at,updated_at) VALUES(?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP()) ON DUPLICATE KEY UPDATE vendo_id=VALUES(vendo_id),updated_at=UTC_TIMESTAMP()');
-        $stmt->execute([$deviceId,$vendoId]);
+        $name=trim($name);if($name==='')$name='Vendo';
+        $stmt=$this->db->prepare('INSERT INTO vendo_gateway_bindings(gateway_device_id,vendo_id,name,created_at,updated_at) VALUES(?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP()) ON DUPLICATE KEY UPDATE vendo_id=VALUES(vendo_id),name=VALUES(name),updated_at=UTC_TIMESTAMP()');
+        $stmt->execute([$deviceId,$stationId,$name]);
+    }
+
+    public function rename(string $deviceId,string $name): void
+    {
+        $name=trim($name);if($name==='')$name='Vendo';$this->db->prepare('UPDATE vendo_gateway_bindings SET name=? WHERE gateway_device_id=?')->execute([$name,$deviceId]);
     }
 
     public function unbind(string $deviceId): void
@@ -44,18 +48,13 @@ final class VendoGatewayBridge implements EventHandler
 
     public function binding(string $deviceId): ?array
     {
-        $stmt=$this->db->prepare('SELECT b.gateway_device_id,b.vendo_id,v.name vendo_name,v.router_id FROM vendo_gateway_bindings b LEFT JOIN vendos v ON v.id=b.vendo_id WHERE b.gateway_device_id=? LIMIT 1');
-        $stmt->execute([$deviceId]);
-        return $stmt->fetch()?:null;
+        $stmt=$this->db->prepare('SELECT b.gateway_device_id,b.vendo_id station_id,b.name vendo_name,v.router_id,v.name station_name FROM vendo_gateway_bindings b LEFT JOIN vendos v ON v.id=b.vendo_id WHERE b.gateway_device_id=? LIMIT 1');$stmt->execute([$deviceId]);return $stmt->fetch()?:null;
     }
 
     public function bindings(?int $routerId=null): array
     {
-        $sql='SELECT b.gateway_device_id,b.vendo_id,b.created_at,b.updated_at,v.name vendo_name,v.router_id FROM vendo_gateway_bindings b LEFT JOIN vendos v ON v.id=b.vendo_id';
-        $params=[];
-        if($routerId){$sql.=' WHERE v.router_id=?';$params[]=$routerId;}
-        $sql.=' ORDER BY v.name,b.gateway_device_id';
-        $stmt=$this->db->prepare($sql);$stmt->execute($params);return $stmt->fetchAll();
+        $sql='SELECT b.gateway_device_id,b.vendo_id station_id,b.name vendo_name,b.created_at,b.updated_at,v.name station_name,v.router_id FROM vendo_gateway_bindings b LEFT JOIN vendos v ON v.id=b.vendo_id';$params=[];
+        if($routerId){$sql.=' WHERE v.router_id=?';$params[]=$routerId;}$sql.=' ORDER BY v.name,b.name,b.gateway_device_id';$stmt=$this->db->prepare($sql);$stmt->execute($params);return $stmt->fetchAll();
     }
 
     private function migrate(): void
@@ -63,13 +62,17 @@ final class VendoGatewayBridge implements EventHandler
         $this->db->exec(<<<'SQL'
 CREATE TABLE IF NOT EXISTS vendo_gateway_bindings (
     gateway_device_id VARCHAR(64) PRIMARY KEY,
-    vendo_id BIGINT UNSIGNED NOT NULL UNIQUE,
+    vendo_id BIGINT UNSIGNED NOT NULL,
+    name VARCHAR(160) NOT NULL DEFAULT 'Vendo',
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_vg_bindings_vendo (vendo_id),
     FOREIGN KEY(vendo_id) REFERENCES vendos(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 SQL);
+        try{$this->db->exec("ALTER TABLE vendo_gateway_bindings ADD COLUMN IF NOT EXISTS name VARCHAR(160) NOT NULL DEFAULT 'Vendo' AFTER vendo_id");}catch(\Throwable){}
+        foreach(['vendo_id','uq_vendo_gateway_bindings_vendo'] as $index){try{$this->db->exec('ALTER TABLE vendo_gateway_bindings DROP INDEX '.$index);}catch(\Throwable){}}
+        try{$this->db->exec('CREATE INDEX idx_vg_bindings_vendo ON vendo_gateway_bindings (vendo_id)');}catch(\Throwable){}
         $this->db->exec(<<<'SQL'
 CREATE TABLE IF NOT EXISTS vendo_gateway_coin_events (
     id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
