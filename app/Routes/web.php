@@ -26,6 +26,7 @@ return static function (RouteManager $routes, array $c): void {
         exit;
     })->name('hotspot.health');
 
+    $routes->get('/hotspot/login', [$c['vendos.hotspot'], 'portal'])->name('hotspot.login');
     $routes->get('/hotspot/compat', [$c['vendos.hotspot'], 'portal'])->name('hotspot.compat');
     $routes->get('/hotspot/status', [$c['vendos.hotspot'], 'status'])->name('hotspot.status');
     $routes->get('/hotspot/device-info', [$c['device_info'], 'show'])->name('hotspot.device_info');
