@@ -32,7 +32,10 @@ final class Controller extends FeatureController
         $user=$this->auth->requireAccount();$userId=(int)$user['id'];$platformOwner=$this->auth->isPlatformOwner();$access=new RouterAccess($this->db);
         $routerId=max(0,(int)($_SESSION['pixiepoint_selected_router_id']??0));if($routerId<1)redirect('/admin/routers');
         if(!$access->canView($routerId,$userId,$platformOwner)){unset($_SESSION['pixiepoint_selected_router_id']);redirect('/admin/routers');}
-        if($this->isPost()){$this->handlePost($access,$userId,$platformOwner,$routerId);$return=(string)($_POST['return_to']??'');redirect($return==='/admin/routers'?'/admin/routers':'/admin/vendo-gateway');}
+        if($this->isPost()){
+            $this->handlePost($access,$userId,$platformOwner,$routerId);$return=trim((string)($_POST['return_to']??''));
+            if($return==='/admin/routers'||preg_match('~^/admin/routers/\d+$~',$return))redirect($return);redirect('/admin/vendo-gateway');
+        }
         $stmt=$this->db->prepare('SELECT id,name FROM vendos WHERE router_id=? AND enabled=1 ORDER BY name');$stmt->execute([$routerId]);$stations=$stmt->fetchAll();$rows=[];
         foreach($this->bridge->bindings($routerId) as $binding){$device=$this->gateway?->devices->get((string)$binding['gateway_device_id']);$rows[]=['binding'=>$binding,'device'=>$device,'capabilities'=>$device&&$this->gateway?$this->gateway->devices->capabilities($device->deviceId):[]];}
         $flash=$_SESSION['admin_flash']??null;unset($_SESSION['admin_flash']);if(!$this->gateway)$flash=($flash??'').'<div class="alert">VENDO_GATEWAY_MASTER_KEY is not configured. Set a random key of at least 32 characters before enrolling devices.</div>';
