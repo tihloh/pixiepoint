@@ -415,16 +415,16 @@
         },
         {
             "name": "tihloh/vendo-gateway",
-            "version": "v1.0.0",
+            "version": "v1.1.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/tihloh/vendo-gateway.git",
-                "reference": "bd4f4de74b81bc34ba88d8b6767cd1f081a8ec69"
+                "reference": "82c2c637f4afb9a44cfac86009fb7cb81ecb8ecf"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tihloh/vendo-gateway/zipball/bd4f4de74b81bc34ba88d8b6767cd1f081a8ec69",
-                "reference": "bd4f4de74b81bc34ba88d8b6767cd1f081a8ec69",
+                "url": "https://api.github.com/repos/tihloh/vendo-gateway/zipball/82c2c637f4afb9a44cfac86009fb7cb81ecb8ecf",
+                "reference": "82c2c637f4afb9a44cfac86009fb7cb81ecb8ecf",
                 "shasum": ""
             },
             "require": {
@@ -464,7 +464,7 @@
                 "issues": "https://github.com/tihloh/vendo-gateway/issues",
                 "source": "https://github.com/tihloh/vendo-gateway"
             },
-            "time": "2026-09-13T16:04:02+00:00"
+            "time": "2026-09-14T01:08:08+00:00"
         }
     ],
     "packages-dev": [],
