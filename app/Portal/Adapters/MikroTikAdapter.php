@@ -22,7 +22,7 @@ final class MikroTikAdapter implements PlatformAdapter
         $chapChallenge=(string)($context->value('context.chapChallenge')??'');
         $hasChap=$chapId!==''&&$chapChallenge!=='';
 
-        $html=preg_replace_callback('/<form\b[^>]*\bid\s*=\s*(["\'])compat-voucher-form\1[^>]*>/i',static function(array $m)use($loginUrl,$hasChap):string{
+        $html=preg_replace_callback('/<form\b[^>]*\bid\s*=\s*(["\'])compat-voucher-form\1[^>]*>/i',static function(array $m)use($loginUrl,$destination,$hasChap):string{
             $tag=preg_replace('/\s+(?:name|method|action|onsubmit)\s*=\s*(?:"[^"]*"|\'[^\']*\'|[^\s>]+)/i','',$m[0])??$m[0];
             $tag=rtrim(substr($tag,0,-1)).' name="login" method="post" action="'.e($loginUrl).'"'.($hasChap?' onsubmit="return doLogin()"':'').'>';
             return $tag.'<input type="hidden" name="password" value=""><input type="hidden" name="dst" value="'.e($destination).'"><input type="hidden" name="popup" value="true">';
@@ -42,7 +42,7 @@ final class MikroTikAdapter implements PlatformAdapter
             .'<input type="hidden" name="popup" value="true">'
             .'</form>'
             .'<script src="/assets/md5.js"></script>'
-            .'<script>function doLogin(){document.sendin.username.value=document.login.username.value;document.sendin.password.value=hexMD5('.$this->chapLiteral($chapId).'+document.login.password.value+'.$this->chapLiteral($chapChallenge).');document.sendin.submit();return false;}</script>';
+            .'<script>function doLogin(){document.sendin.username.value=document.login.username.value;document.sendin.password.value=hexMD5('.$this->chapLiteral($chapId).'+'.$this->chapLiteral($chapChallenge).');document.sendin.submit();return false;}</script>';
 
         return preg_match('/<\/body\s*>/i',$html)?(preg_replace('/<\/body\s*>/i',$native.'</body>',$html,1)??$html):$html.$native;
     }
