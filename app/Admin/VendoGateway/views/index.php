@@ -1,4 +1,47 @@
-<?php declare(strict_types=1); ?>
+<?php declare(strict_types=1);
+$gpioProfiles=[
+    'esp8266'=>[
+        'coin'=>[
+            4=>'GPIO4 (D2) — General I/O',
+            5=>'GPIO5 (D1) — General I/O',
+            12=>'GPIO12 (D6) — SPI MISO / General I/O',
+            13=>'GPIO13 (D7) — SPI MOSI / General I/O',
+            14=>'GPIO14 (D5) — SPI CLK / General I/O',
+        ],
+        'output'=>[
+            4=>'GPIO4 (D2) — General I/O',
+            5=>'GPIO5 (D1) — General I/O',
+            12=>'GPIO12 (D6) — SPI MISO / General I/O',
+            13=>'GPIO13 (D7) — SPI MOSI / General I/O',
+            14=>'GPIO14 (D5) — SPI CLK / General I/O',
+            16=>'GPIO16 (D0) — General output / wake',
+        ],
+    ],
+    'esp32'=>[
+        'coin'=>[
+            1=>'GPIO1 — UART0 TX / General I/O',3=>'GPIO3 — UART0 RX / General I/O',4=>'GPIO4 — General I/O',5=>'GPIO5 — VSPI CS / General I/O',
+            12=>'GPIO12 — HSPI MISO / General I/O',13=>'GPIO13 — HSPI MOSI / General I/O',14=>'GPIO14 — HSPI CLK / General I/O',15=>'GPIO15 — HSPI CS / General I/O',
+            16=>'GPIO16 — General I/O',17=>'GPIO17 — General I/O',18=>'GPIO18 — VSPI CLK / General I/O',19=>'GPIO19 — VSPI MISO / General I/O',
+            21=>'GPIO21 — I²C SDA / General I/O',22=>'GPIO22 — I²C SCL / General I/O',23=>'GPIO23 — VSPI MOSI / General I/O',25=>'GPIO25 — DAC1 / General I/O',
+            26=>'GPIO26 — DAC2 / General I/O',27=>'GPIO27 — General I/O',32=>'GPIO32 — ADC / General I/O',33=>'GPIO33 — ADC / General I/O',
+        ],
+        'output'=>[
+            1=>'GPIO1 — UART0 TX / General I/O',3=>'GPIO3 — UART0 RX / General I/O',4=>'GPIO4 — General I/O',5=>'GPIO5 — VSPI CS / General I/O',
+            12=>'GPIO12 — HSPI MISO / General I/O',13=>'GPIO13 — HSPI MOSI / General I/O',14=>'GPIO14 — HSPI CLK / General I/O',15=>'GPIO15 — HSPI CS / General I/O',
+            16=>'GPIO16 — General I/O',17=>'GPIO17 — General I/O',18=>'GPIO18 — VSPI CLK / General I/O',19=>'GPIO19 — VSPI MISO / General I/O',
+            21=>'GPIO21 — I²C SDA / General I/O',22=>'GPIO22 — I²C SCL / General I/O',23=>'GPIO23 — VSPI MOSI / General I/O',25=>'GPIO25 — DAC1 / General I/O',
+            26=>'GPIO26 — DAC2 / General I/O',27=>'GPIO27 — General I/O',32=>'GPIO32 — ADC / General I/O',33=>'GPIO33 — ADC / General I/O',
+        ],
+    ],
+];
+$pinSelect=function(string $name,int $selected,array $options,string $class=''):
+    string
+{
+    $html='<select name="'.e($name).'" class="form-select '.e($class).'" required>';
+    foreach($options as $gpio=>$label)$html.='<option value="'.(int)$gpio.'"'.((int)$gpio===$selected?' selected':'').'>'.e($label).'</option>';
+    return $html.'</select>';
+};
+?>
 <div class="container-fluid py-3">
     <div id="vendo-ajax-message"><?= $flash ?? '' ?></div>
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-3">
@@ -10,11 +53,14 @@
         <div class="card-header d-flex justify-content-between align-items-center"><span>Connected Vendos</span><span class="badge text-bg-secondary"><?= count($rows) ?></span></div>
         <div class="table-responsive"><table class="table table-hover align-middle mb-0"><thead><tr><th>Vendo</th><th>Station</th><th>Device</th><th>Firmware</th><th>Connection</th><th>State</th><th class="text-end">Actions</th></tr></thead><tbody>
         <?php if(!$rows): ?><tr><td colspan="7" class="text-center text-body-secondary py-4">No Vendo devices are paired with this router yet.</td></tr><?php endif; ?>
-        <?php foreach($rows as $i=>$row): $device=$row['device'];$binding=$row['binding'];$config=$row['config']??[];$reported=$row['reported']??[];$pins=$config['hardware']['pins']??$reported['hardware']['pins']??[];$coin=$config['coin']??$reported['coin']??[];$selected=(bool)($row['selected']??false);$online=$device&&$device->lastSeenAt&&$device->lastSeenAt->getTimestamp()>=time()-180;$deviceId=(string)$binding['gateway_device_id']; ?>
+        <?php foreach($rows as $i=>$row):
+            $device=$row['device'];$binding=$row['binding'];$config=$row['config']??[];$reported=$row['reported']??[];$pins=$config['hardware']['pins']??$reported['hardware']['pins']??[];$coin=$config['coin']??$reported['coin']??[];$selected=(bool)($row['selected']??false);$online=$device&&$device->lastSeenAt&&$device->lastSeenAt->getTimestamp()>=time()-180;$deviceId=(string)$binding['gateway_device_id'];
+            $platform=strtolower((string)($reported['hardware']['platform']??''));if(!isset($gpioProfiles[$platform]))$platform='esp8266';$profile=$gpioProfiles[$platform];
+        ?>
             <tr class="<?= $selected?'table-active':'' ?>" data-vendo-row="<?= e($deviceId) ?>">
                 <td><strong data-vendo-name><?= e($binding['vendo_name']?:'Vendo') ?></strong><div class="small text-body-secondary"><code><?= e($deviceId) ?></code></div></td>
                 <td><?= e($binding['station_name']?:'—') ?></td>
-                <td><?= $device?e(trim(($device->hardwareModel??'').' '.($device->hardwareRevision??''))):'<span class="text-danger">Missing</span>' ?></td>
+                <td><?= $device?e(trim(($device->hardwareModel??'').' '.($device->hardwareRevision??''))):'<span class="text-danger">Missing</span>' ?><div class="small text-body-secondary text-uppercase"><?= e($platform) ?></div></td>
                 <td><?= $device?e($device->firmwareVersion??'—'):'—' ?></td>
                 <td><span class="badge text-bg-<?= $online?'success':'secondary' ?>"><?= $online?'Online':'Offline' ?></span><?php if(!empty($reported['ip'])):?><div class="small text-body-secondary"><?= e($reported['ip']) ?></div><?php endif;?></td>
                 <td><span data-device-state><?= $device?'<span class="badge text-bg-'.($device->state==='active'?'success':($device->state==='suspended'?'warning':'danger')).'">'.e($device->state).'</span>':'—' ?></span><?php if($device&&$device->lastSeenAt):?><div class="small text-body-secondary">Seen <?= e($device->lastSeenAt->format('Y-m-d H:i:s')) ?></div><?php endif;?></td>
@@ -31,7 +77,7 @@
                         </div>
                     </div>
                     <div class="col-lg-7">
-                        <form method="post" class="border rounded p-3 js-vendo-form"><input type="hidden" name="_csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="device_id" value="<?= e($deviceId) ?>"><input type="hidden" name="action" value="save_config"><div class="fw-semibold mb-1">Hardware configuration</div><div class="small text-body-secondary mb-3">Saved in PixiePoint and synchronized to the ESP.</div><div class="row g-2"><div class="col-6 col-md-3"><label>Coin GPIO</label><input type="number" min="1" max="39" name="coin_pin" value="<?= (int)($pins['coin']??5) ?>" required></div><div class="col-6 col-md-3"><label>Relay GPIO</label><input type="number" min="1" max="39" name="relay_pin" value="<?= (int)($pins['relay']??12) ?>" required></div><div class="col-6 col-md-3"><label>Status LED GPIO</label><input type="number" min="1" max="39" name="status_led_pin" value="<?= (int)($pins['status_led']??13) ?>" required></div><div class="col-6 col-md-3"><label>Settle ms</label><input type="number" min="50" max="2000" name="coin_settle_ms" value="<?= (int)($coin['settle_ms']??350) ?>" required></div><div class="col-12"><button class="button">Save hardware configuration</button></div></div></form>
+                        <form method="post" class="border rounded p-3 js-vendo-form js-hardware-form" data-platform="<?= e($platform) ?>"><input type="hidden" name="_csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="device_id" value="<?= e($deviceId) ?>"><input type="hidden" name="action" value="save_config"><div class="d-flex justify-content-between align-items-center mb-1"><div class="fw-semibold">Hardware configuration</div><span class="badge text-bg-secondary text-uppercase"><?= e($platform) ?></span></div><div class="small text-body-secondary mb-3">Only pins supported by the detected ESP platform are shown. A pin selected for one purpose becomes unavailable in the other selectors.</div><div class="row g-2"><div class="col-12 col-md-4"><label>Coin input</label><?= $pinSelect('coin_pin',(int)($pins['coin']??5),$profile['coin'],'js-pin-select') ?></div><div class="col-12 col-md-4"><label>Relay output</label><?= $pinSelect('relay_pin',(int)($pins['relay']??12),$profile['output'],'js-pin-select') ?></div><div class="col-12 col-md-4"><label>External status LED</label><?= $pinSelect('status_led_pin',(int)($pins['status_led']??16),$profile['output'],'js-pin-select') ?></div><div class="col-12 col-md-4"><label>Coin settle time</label><div class="input-group"><input class="form-control" type="number" min="50" max="2000" name="coin_settle_ms" value="<?= (int)($coin['settle_ms']??350) ?>" required><span class="input-group-text">ms</span></div></div><div class="col-12"><button class="btn btn-primary">Save hardware configuration</button></div></div></form>
                     </div>
                 </div>
             </td></tr>
@@ -45,6 +91,8 @@ const box=document.getElementById('vendo-ajax-message');
 const esc=s=>$('<div>').text(s??'').html();
 const message=(text,ok=true)=>{box.innerHTML=`<div class="alert ${ok?'alert-success':'alert-danger'}">${esc(text)}</div>`;box.scrollIntoView({behavior:'smooth',block:'nearest'});};
 const setBusy=(button,busy)=>{if(!button)return;if(busy){button.dataset.oldText=button.innerHTML;button.disabled=true;button.innerHTML='<span class="spinner-border spinner-border-sm me-1"></span>Working...';}else{button.disabled=false;if(button.dataset.oldText)button.innerHTML=button.dataset.oldText;}};
+const syncPinChoices=form=>{const selects=[...form.querySelectorAll('.js-pin-select')],chosen=selects.map(s=>s.value).filter(Boolean);selects.forEach(select=>[...select.options].forEach(option=>{if(!option.value)return;const used=option.value!==select.value&&chosen.includes(option.value);option.disabled=used;option.hidden=used;}));};
+document.querySelectorAll('.js-hardware-form').forEach(form=>{syncPinChoices(form);form.querySelectorAll('.js-pin-select').forEach(select=>select.addEventListener('change',()=>syncPinChoices(form)));});
 const updateUi=(form,data)=>{const id=form.querySelector('[name=device_id]')?.value,manage=document.querySelector(`[data-vendo-manage="${CSS.escape(id||'')}"]`),row=document.querySelector(`[data-vendo-row="${CSS.escape(id||'')}"]`);if(!manage||!row)return;
 if(data.action==='rename'&&data.vendo_name){row.querySelector('[data-vendo-name]').textContent=data.vendo_name;form.querySelector('[name=vendo_name]').value=data.vendo_name;}
 if(data.action==='coin_enable')manage.querySelector('[data-coin-state]').textContent='enable queued';
