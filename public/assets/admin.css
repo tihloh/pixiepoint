@@ -114,7 +114,7 @@ main .table tbody tr:last-child > * { border-bottom-width: 0; }
 main .empty { color: var(--bs-secondary-color); text-align: center; }
 
 /* Normalize raw admin form controls used by compact PHP views. */
-main .modal label:not(:has(> input[type="checkbox"])) {
+main .modal label {
   display: block;
   margin-bottom: .35rem;
 }
@@ -138,14 +138,8 @@ main .modal textarea:focus {
   border-color: #7c5cff;
   box-shadow: 0 0 0 .2rem rgba(124,92,255,.15);
 }
-main .modal label:has(> input[type="checkbox"]) {
-  display: inline-flex;
-  align-items: center;
-  gap: .55rem;
-  margin: 0;
-  cursor: pointer;
-}
-main .modal input[type="checkbox"] {
+main .modal label > input[type="checkbox"] {
+  display: inline-block;
   appearance: none;
   -webkit-appearance: none;
   width: 1.15rem !important;
@@ -153,9 +147,8 @@ main .modal input[type="checkbox"] {
   min-width: 1.15rem;
   min-height: 1.15rem !important;
   padding: 0 !important;
-  margin: 0;
-  flex: 0 0 1.15rem;
-  vertical-align: middle;
+  margin: 0 .45rem 0 0;
+  vertical-align: -.2rem;
   border: 1px solid #526980;
   border-radius: .3rem;
   background-color: #081423;
@@ -164,12 +157,12 @@ main .modal input[type="checkbox"] {
   background-size: .8rem .8rem;
   cursor: pointer;
 }
-main .modal input[type="checkbox"]:checked {
+main .modal label > input[type="checkbox"]:checked {
   border-color: #7c5cff;
   background-color: #7c5cff;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='2.2' d='m3 8 3 3 7-7'/%3E%3C/svg%3E");
 }
-main .modal input[type="checkbox"]:focus-visible {
+main .modal label > input[type="checkbox"]:focus-visible {
   outline: 0;
   box-shadow: 0 0 0 .2rem rgba(124,92,255,.2);
 }
