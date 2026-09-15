@@ -107,7 +107,15 @@ final class View
         ];
 
         $html = strtr($html, $replacements);
-        $html = preg_replace('/<input(?![^>]*\bclass=)([^>]*)>/i', '<input class="form-control"$1>', $html) ?? $html;
+        $html = preg_replace_callback('/<input\b([^>]*)>/i', static function(array $match):string{
+            $attrs=$match[1];
+            if(preg_match('/\bclass\s*=/i',$attrs))return $match[0];
+            $type='text';
+            if(preg_match('/\btype\s*=\s*(["\'])(.*?)\1/i',$attrs,$m))$type=strtolower($m[2]);
+            if(in_array($type,['checkbox','radio'],true))return '<input class="form-check-input"'.$attrs.'>';
+            if($type==='hidden')return $match[0];
+            return '<input class="form-control"'.$attrs.'>';
+        }, $html) ?? $html;
         $html = preg_replace('/<select(?![^>]*\bclass=)([^>]*)>/i', '<select class="form-select"$1>', $html) ?? $html;
         $html = preg_replace('/<textarea(?![^>]*\bclass=)([^>]*)>/i', '<textarea class="form-control"$1>', $html) ?? $html;
         $html = preg_replace_callback('/<label([^>]*)>/i', static function (array $match): string {
