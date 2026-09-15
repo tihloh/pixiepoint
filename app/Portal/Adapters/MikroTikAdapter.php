@@ -42,7 +42,7 @@ final class MikroTikAdapter implements PlatformAdapter
             .'<input type="hidden" name="popup" value="true">'
             .'</form>'
             .'<script src="/assets/md5.js"></script>'
-            .'<script>function doLogin(){document.sendin.username.value=document.login.username.value;document.sendin.password.value=hexMD5('.$this->chapLiteral($chapId).'+'.$this->chapLiteral($chapChallenge).');document.sendin.submit();return false;}</script>';
+            .'<script>function doLogin(){var vc=document.login.username.value;document.sendin.username.value=vc;document.sendin.password.value=hexMD5('.$this->chapLiteral($chapId).'+""+'.$this->chapLiteral($chapChallenge).');document.sendin.submit();return false;}</script>';
 
         return preg_match('/<\/body\s*>/i',$html)?(preg_replace('/<\/body\s*>/i',$native.'</body>',$html,1)??$html):$html.$native;
     }
