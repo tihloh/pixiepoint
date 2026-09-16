@@ -11,7 +11,7 @@ $active = static fn(string $href): string => $path === $href || ($href !== '/das
 $sidebarUser = $dashboard ? (is_array($GLOBALS['pixiepoint_sidebar_user'] ?? null) ? $GLOBALS['pixiepoint_sidebar_user'] : []) : [];
 $sidebarRouters = $dashboard ? (is_array($GLOBALS['pixiepoint_sidebar_routers'] ?? null) ? $GLOBALS['pixiepoint_sidebar_routers'] : []) : [];
 $selectedRouter = $dashboard && is_array($GLOBALS['pixiepoint_selected_router'] ?? null) ? $GLOBALS['pixiepoint_selected_router'] : null;
-$routerContext = $selectedRouter && (preg_match('#^/admin/routers/\d+(?:/|$)#', $path) || preg_match('#^/admin/(?:vouchers|sessions|devices)(?:/|$)#', $path));
+$routerContext = $selectedRouter && (preg_match('#^/admin/routers/\d+(?:/|$)#', $path) || preg_match('#^/admin/(?:vouchers|sessions|devices|sales)(?:/|$)#', $path));
 $hasNetwork = ($access['routers'] ?? false) && count($sidebarRouters) > 0;
 $sidebarName = trim((string) ($sidebarUser['name'] ?? '')) ?: 'User';
 $sidebarRole = match ((string) ($sidebarUser['platform_role'] ?? 'member')) {
