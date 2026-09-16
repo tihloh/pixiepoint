@@ -1,13 +1,14 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <title>Redirecting...</title>
-  <meta http-equiv="refresh" content="0; url=http://hs.portalx.win/hotspot?router_identity=$(identity)&server-address=$(server-address)&link-login-only=$(link-login-only)&link-orig=$(link-orig)&link-orig-esc=$(link-orig-esc)&error=$(error)&username=$(username)&chap-id=$(chap-id)&chap-challenge=$(chap-challenge)&ip=$(ip)&mac=$(mac)&mac-esc=$(mac-esc)&trial=$(trial)">
-</head>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta http-equiv="Cache-Control" content="no-store"><title>PixiePoint</title></head>
 <body>
-  <p>Please wait... redirecting to PixiePoint.</p>
+<div id="pp-local-fallback">Loading PixiePoint…</div>
+<script>
+(function(){
+  var p=new URLSearchParams();
+  p.set('router_identity','$(identity)');p.set('server_address','$(server-address)');p.set('login_url','$(link-login-only)');p.set('original_url','$(link-orig)');p.set('original_url_esc','$(link-orig-esc)');p.set('error','$(error)');p.set('username','$(username)');p.set('chap_id','$(chap-id)');p.set('chap_challenge','$(chap-challenge)');p.set('client_ip','$(ip)');p.set('mac','$(mac)');p.set('mac_esc','$(mac-esc)');p.set('trial','$(trial)');
+  fetch('http://hs.portalx.win/hotspot/login?'+p.toString(),{cache:'no-store'}).then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.text();}).then(function(html){html=html.replace(/<head([^>]*)>/i,'<head$1><base href="http://hs.portalx.win/">');document.open();document.write(html);document.close();}).catch(function(){document.getElementById('pp-local-fallback').innerHTML='<p>PixiePoint is temporarily unavailable.</p><form action="$(link-login-only)" method="post"><input name="username" placeholder="Username" required><input name="password" type="password" placeholder="Password"><input type="hidden" name="dst" value="$(link-orig)"><button type="submit">Login</button></form>';});
+})();
+</script>
 </body>
 </html>
