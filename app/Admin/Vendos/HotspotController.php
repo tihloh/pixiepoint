@@ -21,9 +21,9 @@ final class HotspotController
     public function portal(): never
     {
         $context=$this->hotspotContext();
-        if($this->isMikroTikLoginHandoff()){
+        if($this->isMikroTikHandoff()){
             $_SESSION['hotspot']=$this->sessionContext($context);
-            header('Location: /hotspot/login',true,302);
+            header('Location: /hotspot',true,302);
             exit;
         }
         $stations=$this->api->forHotspot($context['routerIdentity'],$context['serverAddress'],$context['ip'],$context['interfaceName']);$stationId=isset($stations[0]['id'])?(int)$stations[0]['id']:null;$routerId=$this->routerId($context['routerIdentity']);$resolved=(new PortalFeatureConfig($this->db))->resolve($routerId,$stationId);$theme=$this->themes->resolveByRouterIdentity($context['routerIdentity'],$stationId);$device=$this->portalDevice($context);$options=$this->vendoOptions($stations);$auth=$this->hasActiveHotspotSession($context);
@@ -80,7 +80,7 @@ final class HotspotController
         return ['routerIdentity'=>$routerIdentity,'serverAddress'=>$serverAddress,'ip'=>$ip,'interfaceName'=>$interface,'mac'=>$this->normalizeMac($mac),'username'=>$get($session,'username'),'loginUrl'=>$get($session,'login_url','link-login-only'),'originalUrl'=>$get($session,'original_url','link-orig'),'originalUrlEsc'=>$get($session,'original_url_esc','link-orig-esc'),'chapId'=>$get($session,'chap_id','chap-id'),'chapChallenge'=>$get($session,'chap_challenge','chap-challenge'),'error'=>$get($session,'error'),'trial'=>$get($session,'trial'),'macEsc'=>$get($session,'mac_esc','mac-esc'),'logoutUrl'=>$get($session,'logout_url','link-logout'),'refreshUrl'=>$get($session,'status_url','link-status'),'sessionTimeLeft'=>$get($session,'session_time_left','session-time-left'),'bytesIn'=>$get($session,'bytes_in','bytes-in'),'bytesOut'=>$get($session,'bytes_out','bytes-out'),'remainBytesTotal'=>$get($session,'remain_bytes_total','remain-bytes-total')];
     }
 
-    private function isMikroTikLoginHandoff(): bool{return isset($_GET['link-login-only'])||isset($_GET['login_url']);}
+    private function isMikroTikHandoff(): bool{return isset($_GET['link-login-only'])||isset($_GET['login_url'])||isset($_GET['status_url'])||isset($_GET['logout_url'])||isset($_GET['disconnected']);}
 
     private function sessionContext(array $context): array
     {
