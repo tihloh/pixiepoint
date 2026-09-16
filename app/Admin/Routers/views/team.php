@@ -17,7 +17,7 @@ $roleLabels = [
 
 <div class="heading">
     <div>
-        <h1>Router team</h1>
+        <h1>Gateway team</h1>
         <?php if ($router): ?>
             <p class="muted">
                 <?= e($router['name']) ?>
@@ -32,7 +32,7 @@ $roleLabels = [
                 Add team member
             </button>
         <?php endif; ?>
-        <a class="btn btn-outline-secondary" href="/admin/routers">Back to routers</a>
+        <a class="btn btn-outline-secondary" href="/admin/routers">Back to gateways</a>
     </div>
 </div>
 

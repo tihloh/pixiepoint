@@ -149,12 +149,12 @@ ROS;
         $router = $stmt->fetch();
 
         if (!$router) {
-            $_SESSION['admin_flash'] = '<div class="alert">Router not found.</div>';
+            $_SESSION['admin_flash'] = '<div class="alert">Gateway not found.</div>';
             redirect('/admin/routers');
         }
 
         if (!(int) $router['enabled']) {
-            $_SESSION['admin_flash'] = '<div class="alert">Enable this router before sending a test command.</div>';
+            $_SESSION['admin_flash'] = '<div class="alert">Enable this gateway before sending a test command.</div>';
             redirect('/admin/routers');
         }
 

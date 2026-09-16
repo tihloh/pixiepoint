@@ -37,7 +37,7 @@
             <thead>
                 <tr>
                     <th>Time</th>
-                    <th>Router</th>
+                    <th>Gateway</th>
                     <th>Vendo</th>
                     <th>Voucher</th>
                     <th>Device</th>

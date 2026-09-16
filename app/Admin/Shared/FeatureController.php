@@ -36,7 +36,7 @@ abstract class FeatureController
     private function activityPanel(string $title):string
     {
         $prefixes=match($title){
-            'Routers','Router Dashboard'=>['router.','station.','vendo.'],
+            'Routers','Router Dashboard','Gateways','Gateway Dashboard'=>['router.','station.','vendo.'],
             'Vouchers'=>['voucher.'],
             'Sessions'=>['session.','hotspot.'],
             'Devices'=>['device.','dhcp.'],
@@ -45,7 +45,7 @@ abstract class FeatureController
             default=>[],
         };
         if(!$prefixes)return '';
-        $routerId=$title==='Routers'?0:max(0,(int)($_SESSION['pixiepoint_selected_router_id']??0));
+        $routerId=in_array($title,['Routers','Gateways'],true)?0:max(0,(int)($_SESSION['pixiepoint_selected_router_id']??0));
         $logs=[];
         foreach($this->logs->recent(250) as $log){
             $action=strtolower((string)($log['action']??''));

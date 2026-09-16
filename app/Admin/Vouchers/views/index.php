@@ -7,10 +7,10 @@
 /** @var array $platforms */
 /** @var string $status */
 /** @var string $csrf */
-$stationOptions=static function(?int $selected=null) use($stations):void{?><option value="0">All stations on this router</option><?php foreach($stations as $station):?><option value="<?= e($station['id']) ?>"<?= $selected===(int)$station['id']?' selected':'' ?>><?= e($station['name']) ?></option><?php endforeach;};
+$stationOptions=static function(?int $selected=null) use($stations):void{?><option value="0">All stations on this gateway</option><?php foreach($stations as $station):?><option value="<?= e($station['id']) ?>"<?= $selected===(int)$station['id']?' selected':'' ?>><?= e($station['name']) ?></option><?php endforeach;};
 ?>
 <div class="heading">
-    <div><h1>Access vouchers</h1><p class="muted">Generate platform-neutral promos and router-ready voucher scripts.</p><div class="small text-body-secondary mt-2">Router: <span class="fw-semibold text-body"><?= e($router['name']) ?></span> <span class="code ms-1"><?= e($router['identity']) ?></span></div></div>
+    <div><h1>Access vouchers</h1><p class="muted">Generate platform-neutral promos and gateway-ready voucher scripts.</p><div class="small text-body-secondary mt-2">Gateway: <span class="fw-semibold text-body"><?= e($router['name']) ?></span> <span class="code ms-1"><?= e($router['identity']) ?></span></div></div>
     <div class="d-flex flex-wrap gap-2"><button class="btn btn-outline-primary" type="button" data-bs-toggle="modal" data-bs-target="#batchModal">Generate batch</button><button class="button" type="button" data-bs-toggle="modal" data-bs-target="#voucherModal" data-mode="create">Create voucher</button></div>
 </div>
 <?= $message ?>
@@ -24,7 +24,7 @@ $stationOptions=static function(?int $selected=null) use($stations):void{?><opti
     <?php foreach($vouchers as $voucher):?>
         <tr>
             <td><strong class="code"><?= e($voucher['code']) ?></strong><div class="small text-body-secondary"><?= e($voucher['promo_name']?:($voucher['label']?:'No promo')) ?><?= $voucher['batch_key']?' · Batch '.e($voucher['batch_key']):'' ?></div></td>
-            <td><?= e($voucher['station_name']?:'All router stations') ?></td>
+            <td><?= e($voucher['station_name']?:'All gateway stations') ?></td>
             <td><?= e($voucher['duration_minutes']) ?> min<?= $voucher['data_limit_mb']?' · '.e($voucher['data_limit_mb']).' MB':'' ?><div class="small text-body-secondary"><?= e($voucher['max_devices']) ?> device(s)</div></td>
             <td><?= e($voucher['uses'].' / '.$voucher['max_uses']) ?><div class="small text-body-secondary"><?= e($voucher['expires_at']?:'No expiry') ?></div></td>
             <td><?php if($voucher['archived_at']):?><span class="badge off">Archived</span><?php else:?><span class="badge <?= $voucher['enabled']?'':'off' ?>"><?= $voucher['enabled']?'Enabled':'Disabled' ?></span><?php endif;?></td>
@@ -51,7 +51,7 @@ $stationOptions=static function(?int $selected=null) use($stations):void{?><opti
     <div class="col-md-4"><label>Expires at</label><input name="expires_at" type="datetime-local"></div>
     <div class="col-md-6"><label>Maximum devices</label><input name="max_devices" type="number" min="1" value="1" required></div>
     <div class="col-md-6"><label>Maximum uses</label><input name="max_uses" type="number" min="1" value="1" required></div>
-</div><div class="alert alert-info mt-3 mb-0">PixiePoint owns the promo and voucher definitions. The selected adapter produces the installation script for the target router platform.</div></div><div class="modal-footer"><button class="btn btn-outline-secondary" type="button" data-bs-dismiss="modal">Cancel</button><button class="button" type="submit">Generate vouchers</button></div></form></div></div></div>
+</div><div class="alert alert-info mt-3 mb-0">PixiePoint owns the promo and voucher definitions. The selected adapter produces the installation script for the target gateway platform.</div></div><div class="modal-footer"><button class="btn btn-outline-secondary" type="button" data-bs-dismiss="modal">Cancel</button><button class="button" type="submit">Generate vouchers</button></div></form></div></div></div>
 
 <div class="modal fade" id="voucherModal" tabindex="-1"><div class="modal-dialog modal-lg modal-dialog-scrollable"><div class="modal-content"><form method="post"><div class="modal-header"><h2 class="modal-title fs-5" id="voucherModalTitle">Create voucher</h2><button class="btn-close" type="button" data-bs-dismiss="modal"></button></div><div class="modal-body"><input type="hidden" name="_csrf" value="<?= e($csrf) ?>"><input type="hidden" name="action" value="create"><input type="hidden" name="id" value="0"><div class="row g-3">
     <div class="col-md-6"><label>Code</label><input name="code" placeholder="Automatic if blank"></div><div class="col-md-6"><label>Label / promo</label><input name="label"></div>

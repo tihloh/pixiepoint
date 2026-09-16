@@ -19,7 +19,7 @@
                     <th>Account</th>
                     <th>Hotspot user</th>
                     <th>Device</th>
-                    <th>Router</th>
+                    <th>Gateway</th>
                     <th>Status</th>
                     <th>Uptime</th>
                     <th>Transfer</th>

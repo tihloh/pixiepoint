@@ -12,7 +12,7 @@ $sidebarUser = $dashboard ? (is_array($GLOBALS['pixiepoint_sidebar_user'] ?? nul
 $sidebarRouters = $dashboard ? (is_array($GLOBALS['pixiepoint_sidebar_routers'] ?? null) ? $GLOBALS['pixiepoint_sidebar_routers'] : []) : [];
 $selectedRouter = $dashboard && is_array($GLOBALS['pixiepoint_selected_router'] ?? null) ? $GLOBALS['pixiepoint_selected_router'] : null;
 $routerContext = $selectedRouter && (preg_match('#^/admin/routers/\d+(?:/|$)#', $path) || preg_match('#^/admin/(?:vouchers|sessions|devices|sales)(?:/|$)#', $path));
-$hasNetwork = ($access['routers'] ?? false) && count($sidebarRouters) > 0;
+$hasGateways = ($access['routers'] ?? false) && count($sidebarRouters) > 0;
 $sidebarName = trim((string) ($sidebarUser['name'] ?? '')) ?: 'User';
 $sidebarRole = match ((string) ($sidebarUser['platform_role'] ?? 'member')) {
     'platform_owner' => 'Platform owner',
@@ -54,14 +54,14 @@ $sidebarInitial = strtoupper(substr($sidebarName, 0, 1));
                     <a class="d-none d-lg-flex flex-column align-items-center text-decoration-none text-body fw-bold mb-4 px-2 pixie-brand" href="/dashboard"><span class="logo pixie-brand-logo">P</span><span class="mt-2"><?= $name ?></span></a>
                     <nav class="nav nav-pills flex-column gap-1">
                         <?php if ($routerContext): ?>
-                            <a class="nav-link text-body-secondary" href="/admin/routers">← Network</a>
+                            <a class="nav-link text-body-secondary" href="/admin/routers">← Gateways</a>
                             <a class="nav-link<?= $active('/admin/routers/' . (int)$selectedRouter['id']) ?>" href="/admin/routers/<?= e($selectedRouter['id']) ?>"><?= e($selectedRouter['name'] ?: $selectedRouter['identity']) ?></a>
                             <?php if ($access['vouchers'] ?? false): ?><a class="nav-link<?= $active('/admin/vouchers') ?>" href="/admin/vouchers">Vouchers</a><?php endif; ?>
                             <?php if ($access['sessions'] ?? false): ?><a class="nav-link<?= $active('/admin/sessions') ?>" href="/admin/sessions">Sessions</a><?php endif; ?>
                             <?php if ($access['devices'] ?? false): ?><a class="nav-link<?= $active('/admin/devices') ?>" href="/admin/devices">Devices</a><?php endif; ?>
                         <?php else: ?>
                             <a class="nav-link<?= $active('/dashboard') ?>" href="/dashboard">Dashboard</a>
-                            <?php if ($hasNetwork): ?><a class="nav-link<?= $active('/admin/routers') ?>" href="/admin/routers">Network</a><?php endif; ?>
+                            <?php if ($hasGateways): ?><a class="nav-link<?= $active('/admin/routers') ?>" href="/admin/routers">Gateways</a><?php endif; ?>
                         <?php endif; ?>
                         <?php if ($access['sales'] ?? false): ?><a class="nav-link<?= $active('/admin/sales') ?>" href="/admin/sales">Sales</a><?php endif; ?>
                         <?php if ($access['users'] ?? false): ?><a class="nav-link<?= $active('/admin/users') ?>" href="/admin/users">Users</a><?php endif; ?>

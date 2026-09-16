@@ -45,7 +45,7 @@ final class DashboardController
         ];
 
         if ($this->auth->can('routers.view')) {
-            $metrics['Routers'] = count($routerIds);
+            $metrics['Gateways'] = count($routerIds);
         }
 
         if ($this->auth->can('vendos.view')) {

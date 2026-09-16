@@ -36,7 +36,7 @@ $isRouterOwner = ($user['platform_role'] ?? 'member') === 'pisowifi_owner';
             data-bs-toggle="modal"
             data-bs-target="#register-router-modal"
         >
-            Own a PisoWiFi? Register your MikroTik
+            Own a PisoWiFi? Register your MikroTik gateway
         </button>
     </div>
 <?php endif; ?>
@@ -51,7 +51,7 @@ $isRouterOwner = ($user['platform_role'] ?? 'member') === 'pisowifi_owner';
             <tr>
                 <th>Access</th>
                 <th>Device</th>
-                <th>Router</th>
+                <th>Gateway</th>
                 <th>Status</th>
                 <th>Updated</th>
             </tr>
@@ -85,13 +85,13 @@ $isRouterOwner = ($user['platform_role'] ?? 'member') === 'pisowifi_owner';
         <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h2 class="modal-title fs-5">Register your MikroTik</h2>
+                    <h2 class="modal-title fs-5">Register your MikroTik gateway</h2>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
 
                 <div class="modal-body">
                     <p class="mb-3">
-                        Run this command in the RouterOS Terminal of the MikroTik you own.
+                        Run this command in the RouterOS Terminal of the MikroTik gateway you own.
                     </p>
 
                     <textarea

@@ -42,7 +42,7 @@ final class RegistrationController
         }
 
         if ($hardwareId === '' || strlen($hardwareId) > 128) {
-            $this->fail('Router hardware serial is unavailable.');
+            $this->fail('Gateway hardware serial is unavailable.');
         }
 
         $stmt = $this->db->prepare(
@@ -68,7 +68,7 @@ final class RegistrationController
 
             if ($identityCheck->fetchColumn()) {
                 $this->db->rollBack();
-                $this->fail('Router identity already registered.');
+                $this->fail('Gateway identity already registered.');
             }
 
             $hardwareCheck = $this->db->prepare(
@@ -78,7 +78,7 @@ final class RegistrationController
 
             if ($hardwareCheck->fetchColumn()) {
                 $this->db->rollBack();
-                $this->fail('This MikroTik hardware is already registered.');
+                $this->fail('This MikroTik gateway is already registered.');
             }
 
             $agentKey = bin2hex(random_bytes(24));
@@ -111,7 +111,7 @@ final class RegistrationController
                 'subject_type' => 'router',
                 'subject_id' => $routerId,
                 'actor_id' => $userId,
-                'message' => 'MikroTik router was registered from RouterOS.',
+                'message' => 'MikroTik gateway was registered from RouterOS.',
                 'metadata' => [
                     'identity' => $identity,
                     'hardware_id' => $hardwareId,
@@ -127,13 +127,13 @@ final class RegistrationController
                 $this->db->rollBack();
             }
 
-            $this->fail('Router identity or hardware is already registered.');
+            $this->fail('Gateway identity or hardware is already registered.');
         } catch (\Throwable) {
             if ($this->db->inTransaction()) {
                 $this->db->rollBack();
             }
 
-            $this->fail('Router could not be registered.');
+            $this->fail('Gateway could not be registered.');
         }
     }
 
@@ -144,7 +144,7 @@ final class RegistrationController
     {
         $installUrl = 'https://hs.portalx.win/api/router/install/' . $agentKey;
 
-        echo ':put "PixiePoint router registered";', "\n";
+        echo ':put "PixiePoint gateway registered";', "\n";
         echo '/tool fetch url="', $installUrl,
             '" mode=https dst-path="PixiePointAgent.rsc";', "\n";
         echo '/system scheduler remove [find name="pixiepoint-agent"];', "\n";

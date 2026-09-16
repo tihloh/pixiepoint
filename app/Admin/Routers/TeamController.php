@@ -22,10 +22,10 @@ final class TeamController extends FeatureController
 
         if ($routerId < 1 || !$access->canView($routerId, $userId, $platformOwner)) {
             http_response_code(404);
-            $this->page('Router team', __DIR__ . '/views/team.php', [
+            $this->page('Gateway team', __DIR__ . '/views/team.php', [
                 'router' => null,
                 'members' => [],
-                'message' => '<div class="alert">Router not found.</div>',
+                'message' => '<div class="alert">Gateway not found.</div>',
                 'canManageTeam' => false,
                 'currentRole' => null,
                 'csrf' => csrf_token(),
@@ -38,10 +38,10 @@ final class TeamController extends FeatureController
 
         if (!$router) {
             http_response_code(404);
-            $this->page('Router team', __DIR__ . '/views/team.php', [
+            $this->page('Gateway team', __DIR__ . '/views/team.php', [
                 'router' => null,
                 'members' => [],
-                'message' => '<div class="alert">Router not found.</div>',
+                'message' => '<div class="alert">Gateway not found.</div>',
                 'canManageTeam' => false,
                 'currentRole' => null,
                 'csrf' => csrf_token(),
@@ -59,7 +59,7 @@ final class TeamController extends FeatureController
             require_csrf();
 
             if (!$canManageTeam) {
-                $message = '<div class="alert">You cannot manage this router team.</div>';
+                $message = '<div class="alert">You cannot manage this gateway team.</div>';
             } else {
                 $action = (string) ($_POST['action'] ?? 'save');
 
@@ -78,7 +78,7 @@ final class TeamController extends FeatureController
                             'router.team.member.removed',
                             'router',
                             $routerId,
-                            'Router team member was removed.',
+                            'Gateway team member was removed.',
                             ['user_id' => $memberId],
                         );
                         $message = '<div class="alert ok">Team member removed.</div>';
@@ -126,7 +126,7 @@ final class TeamController extends FeatureController
                             'router.team.member.saved',
                             'router',
                             $routerId,
-                            'Router team member was added or updated.',
+                            'Gateway team member was added or updated.',
                             [
                                 'user_id' => $memberId,
                                 'role' => $role,
@@ -143,7 +143,7 @@ final class TeamController extends FeatureController
             redirect('/admin/routers/' . $routerId . '/team');
         }
 
-        $this->page('Router team', __DIR__ . '/views/team.php', [
+        $this->page('Gateway team', __DIR__ . '/views/team.php', [
             'router' => $router,
             'members' => $access->members($routerId),
             'message' => $message,
@@ -170,7 +170,7 @@ final class TeamController extends FeatureController
         }
 
         if ($access->roleFor($routerId, $memberId) === 'owner') {
-            throw new RuntimeException('Only a router owner can change another owner.');
+            throw new RuntimeException('Only a gateway owner can change another owner.');
         }
     }
 }
