@@ -25,9 +25,8 @@
       p.set('status_url', '$(link-status)');
       p.set('logout_url', '$(link-logout)');
       p.set('login_url', '$(link-login)');
-      history.replaceState(null, '', location.pathname + '?' + p.toString());
+      location.replace('https://hs.portalx.win/hotspot/compat?' + p.toString());
     })();
   </script>
-  <script src="https://hs.portalx.win/assets/hotspot-embed.js?v=2"></script>
 </body>
 </html>
