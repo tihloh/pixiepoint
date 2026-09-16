@@ -18,18 +18,11 @@ return static function (RouteManager $routes, array $c): void {
     $routes->get('/', [$c['auth'], 'home'])->name('home');
     $routes->post('/', [$c['hotspot'], 'portal'])->name('hotspot.portal');
 
-    $routes->get('/hotspot/health', static function (): never {
-        header('Content-Type: application/json; charset=utf-8');
-        header('Access-Control-Allow-Origin: *');
-        header('Cache-Control: no-store');
-        echo json_encode(['ok' => true, 'ready' => true], JSON_UNESCAPED_SLASHES);
-        exit;
-    })->name('hotspot.health');
-
     $routes->get('/hotspot', [$c['vendos.hotspot'], 'portal'])->name('hotspot');
-    $routes->redirect('/hotspot/login', '/hotspot');
-    $routes->redirect('/hotspot/compat', '/hotspot');
-    $routes->redirect('/hotspot/status', '/hotspot');
+    $routes->get('/hotspot/login', [$c['vendos.hotspot'], 'login'])->name('hotspot.login');
+    $routes->get('/hotspot/status', [$c['vendos.hotspot'], 'status'])->name('hotspot.status');
+    $routes->get('/hotspot/logout', [$c['vendos.hotspot'], 'logout'])->name('hotspot.logout');
+    $routes->redirect('/hotspot/compat', '/hotspot/login');
     $routes->get('/hotspot/device-info', [$c['device_info'], 'show'])->name('hotspot.device_info');
     $routes->post('/hotspot/device-voucher', [$c['device_info'], 'saveVoucher'])->name('hotspot.device_voucher');
     $routes->post('/hotspot/authenticate', [$c['hotspot'], 'authenticate'])->name('hotspot.authenticate');
@@ -46,14 +39,8 @@ return static function (RouteManager $routes, array $c): void {
         $c['hotspot']->disconnected();
     })->name('hotspot.disconnected');
 
-    $routes->get('/admin/portal-emulator', [$c['emulator'], 'index'])
-        ->name('admin.portal_emulator')
-        ->auth()
-        ->middleware('prefab.access');
-    $routes->get('/emulator/', [$c['emulator'], 'index'])
-        ->name('emulator.compat')
-        ->auth()
-        ->middleware('prefab.access');
+    $routes->get('/admin/portal-emulator', [$c['emulator'], 'index'])->name('admin.portal_emulator')->auth()->middleware('prefab.access');
+    $routes->get('/emulator/', [$c['emulator'], 'index'])->name('emulator.compat')->auth()->middleware('prefab.access');
 
     $routes->matchMethods(['GET', 'POST'], '/setup', [$c['auth'], 'setup'])->name('setup');
     $routes->matchMethods(['GET', 'POST'], '/register', [$c['auth'], 'register'])->name('register');
@@ -68,13 +55,9 @@ return static function (RouteManager $routes, array $c): void {
     $routes->redirect('/admin', '/dashboard');
     $routes->get('/dashboard', [$c['dashboard'], 'index'])->name('dashboard')->auth()->middleware('prefab.access');
     $routes->post('/devices/claim', [$c['dashboard'], 'claimDevice'])->name('devices.claim')->auth()->middleware('prefab.access');
-
     $routes->get('/admin/select/router', [$c['admin.selection'], 'router'])->name('admin.select.router')->auth()->middleware('prefab.access');
 
     (require dirname(__DIR__) . '/Profile/routes.php')($routes, $c);
-
     $adminRoot = dirname(__DIR__) . '/Admin';
-    foreach (['Users', 'Permissions', 'Groups', 'Routers', 'Vendos', 'VendoGateway', 'Vouchers', 'Devices', 'Sessions', 'Sales', 'Logs', 'PortalThemes'] as $feature) {
-        (require $adminRoot . '/' . $feature . '/routes.php')($routes, $c);
-    }
+    foreach (['Users', 'Permissions', 'Groups', 'Routers', 'Vendos', 'VendoGateway', 'Vouchers', 'Devices', 'Sessions', 'Sales', 'Logs', 'PortalThemes'] as $feature) (require $adminRoot . '/' . $feature . '/routes.php')($routes, $c);
 };
