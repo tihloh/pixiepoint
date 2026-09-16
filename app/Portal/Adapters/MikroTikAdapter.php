@@ -18,8 +18,11 @@ final class MikroTikAdapter implements PlatformAdapter
 
         $loginUrl=(string)($context->value('context.loginUrl')??'');
         $destination=(string)($context->value('context.originalUrl')??'');
+        $destinationEsc=(string)($context->value('context.originalUrlEsc')??'');
         $chapId=(string)($context->value('context.chapId')??'');
         $chapChallenge=(string)($context->value('context.chapChallenge')??'');
+        $trial=strtolower(trim((string)($context->value('context.trial')??'')));
+        $macEsc=(string)($context->value('context.macEsc')??'');
         $hasChap=$chapId!==''&&$chapChallenge!=='';
 
         $html=preg_replace_callback('/<form\b[^>]*\bid\s*=\s*(["\'])compat-voucher-form\1[^>]*>/i',static function(array $m)use($loginUrl,$destination,$hasChap):string{
@@ -32,6 +35,13 @@ final class MikroTikAdapter implements PlatformAdapter
             $tag=preg_replace('/\s+name\s*=\s*(?:"[^"]*"|\'[^\']*\'|[^\s>]+)/i','',$m[0])??$m[0];
             return rtrim(substr($tag,0,-1)).' name="username">';
         },$html,1)??$html;
+
+        if($trial==='yes'&&$loginUrl!==''&&$macEsc!==''){
+            $trialUrl=$loginUrl.'?dst='.rawurlencode($destinationEsc!==''?$destinationEsc:$destination).'&username=T-'.$macEsc;
+            $html=preg_replace('/<button\b[^>]*\bid\s*=\s*(["\'])pp-trial-start\1[^>]*>.*?<\/button>/is','<a id="pp-trial-start" class="btn btn-outline-success" href="'.e($trialUrl).'">Free trial</a>',$html,1)??$html;
+        }else{
+            $html=preg_replace('/<button\b[^>]*\bid\s*=\s*(["\'])pp-trial-start\1[^>]*>.*?<\/button>/is','',$html,1)??$html;
+        }
 
         $routerLogin='<div id="pp-mikrotik-login" class="mb-3">'
             .'<button class="btn btn-outline-secondary w-100" type="button" data-bs-toggle="collapse" data-bs-target="#pp-mikrotik-login-panel" aria-expanded="false" aria-controls="pp-mikrotik-login-panel">MikroTik user login</button>'
