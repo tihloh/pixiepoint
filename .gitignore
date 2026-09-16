@@ -6,3 +6,5 @@
 /node_modules/
 /public/uploads/avatars/*
 !/public/uploads/avatars/.gitkeep
+
+.ota-work/
