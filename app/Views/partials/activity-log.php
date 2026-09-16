@@ -2,9 +2,9 @@
 /** @var array $logs */
 /** @var string $scope */
 ?>
-<section class="panel" aria-label="Activity log">
+<div class="border-top mt-4 pt-4" aria-label="Activity log">
     <div class="d-flex align-items-center justify-content-between gap-3 mb-3">
-        <div><h2 class="mb-1">Activity Log</h2><div class="small text-body-secondary">Recent activity for this page.</div></div>
+        <div><h3 class="fs-5 mb-1">Activity Log</h3><div class="small text-body-secondary">Recent activity for this page.</div></div>
         <?php if($logs): ?><span class="text-body-secondary small"><?= e(count($logs)) ?> recent</span><?php endif; ?>
     </div>
     <div class="table-responsive">
@@ -16,4 +16,4 @@
             </tbody>
         </table>
     </div>
-</section>
+</div>
