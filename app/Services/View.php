@@ -124,8 +124,8 @@ final class View
             }
             return '<label class="form-label"' . $match[1] . '>';
         }, $html) ?? $html;
-        $html = str_replace('<table>', '<div class="table-responsive"><table class="table table-hover align-middle mb-0">', $html);
+        $html = preg_replace('/<table>(.*?)<\/table>/is', '<div class="table-responsive"><table class="table table-hover align-middle mb-0">$1</table></div>', $html) ?? $html;
 
-        return str_replace('</table>', '</table></div>', $html);
+        return $html;
     }
 }
