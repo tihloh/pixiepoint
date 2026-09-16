@@ -18,21 +18,19 @@ abstract class FeatureController
         $content=$this->view->renderFile($viewFile,$data);
         if($title!=='Logs'&&$this->auth->can('logs.view')){
             $activity=$this->activityPanel($title);
-            if($activity!=='')$content=$this->placeActivityBesideLastPanel($content,$activity);
+            if($activity!=='')$content=$this->placeActivityBelowLastPanel($content,$activity);
         }
         $this->view->page($title,$content,true,$this->auth->navigation());
     }
 
-    private function placeActivityBesideLastPanel(string $content,string $activity):string
+    private function placeActivityBelowLastPanel(string $content,string $activity):string
     {
         $start=strrpos($content,'<section class="panel"');
         if($start===false)return $content.$activity;
         $end=strpos($content,'</section>',$start);
         if($end===false)return $content.$activity;
         $end+=strlen('</section>');
-        $panel=substr($content,$start,$end-$start);
-        $row='<div class="row g-4 align-items-start"><div class="col-12 col-lg-7">'.$panel.'</div><div class="col-12 col-lg-5">'.$activity.'</div></div>';
-        return substr($content,0,$start).$row.substr($content,$end);
+        return substr($content,0,$end).$activity.substr($content,$end);
     }
 
     private function activityPanel(string $title):string
@@ -54,7 +52,7 @@ abstract class FeatureController
             $matches=false;foreach($prefixes as $prefix)if(str_starts_with($action,$prefix)){$matches=true;break;}
             if(!$matches)continue;
             if($routerId>0&&!$this->logBelongsToRouter($log,$routerId))continue;
-            $logs[]=$log;if(count($logs)>=12)break;
+            $logs[]=$log;if(count($logs)>=5)break;
         }
         $names=[];$stmt=$this->db->prepare('SELECT name,email FROM users WHERE id=? LIMIT 1');
         $actor=function(int|string $id)use(&$names,$stmt):?string{$key=(string)$id;if(array_key_exists($key,$names))return $names[$key];$stmt->execute([$id]);$user=$stmt->fetch();return $names[$key]=$user?(string)($user['name']?:$user['email']):null;};
