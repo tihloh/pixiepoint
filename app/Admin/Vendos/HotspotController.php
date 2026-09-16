@@ -22,6 +22,9 @@ final class HotspotController
     {
         $context=$this->hotspotContext();
         if($this->isMikroTikHandoff()){
+            if(isset($_GET['link-login-only'])||isset($_GET['disconnected'])){
+                $context['logoutUrl']='';$context['refreshUrl']='';$context['sessionTimeLeft']='';$context['bytesIn']='';$context['bytesOut']='';$context['remainBytesTotal']='';
+            }
             $_SESSION['hotspot']=$this->sessionContext($context);
             header('Location: /hotspot',true,302);
             exit;
