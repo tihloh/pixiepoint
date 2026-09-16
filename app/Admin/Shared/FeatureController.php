@@ -18,12 +18,21 @@ abstract class FeatureController
         $content=$this->view->renderFile($viewFile,$data);
         if($title!=='Logs'&&$this->auth->can('logs.view')){
             $activity=$this->activityPanel($title);
-            if($activity!==''){
-                $pos=strrpos($content,'</section>');
-                $content=$pos===false?$content.$activity:substr($content,0,$pos).$activity.substr($content,$pos);
-            }
+            if($activity!=='')$content=$this->placeActivityBesideLastPanel($content,$activity);
         }
         $this->view->page($title,$content,true,$this->auth->navigation());
+    }
+
+    private function placeActivityBesideLastPanel(string $content,string $activity):string
+    {
+        $start=strrpos($content,'<section class="panel"');
+        if($start===false)return $content.$activity;
+        $end=strpos($content,'</section>',$start);
+        if($end===false)return $content.$activity;
+        $end+=strlen('</section>');
+        $panel=substr($content,$start,$end-$start);
+        $row='<div class="row g-4 align-items-stretch"><div class="col-12 col-xl-7">'.$panel.'</div><div class="col-12 col-xl-5">'.$activity.'</div></div>';
+        return substr($content,0,$start).$row.substr($content,$end);
     }
 
     private function activityPanel(string $title):string
