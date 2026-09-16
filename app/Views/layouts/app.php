@@ -54,6 +54,7 @@ $sidebarInitial = strtoupper(substr($sidebarName, 0, 1));
                     <a class="d-none d-lg-flex flex-column align-items-center text-decoration-none text-body fw-bold mb-4 px-2 pixie-brand" href="/dashboard"><span class="logo pixie-brand-logo">P</span><span class="mt-2"><?= $name ?></span></a>
                     <nav class="nav nav-pills flex-column gap-1">
                         <?php if ($routerContext): ?>
+                            <a class="nav-link text-body-secondary" href="/admin/routers">← Network</a>
                             <a class="nav-link<?= $active('/admin/routers/' . (int)$selectedRouter['id']) ?>" href="/admin/routers/<?= e($selectedRouter['id']) ?>"><?= e($selectedRouter['name'] ?: $selectedRouter['identity']) ?></a>
                             <?php if ($access['vouchers'] ?? false): ?><a class="nav-link<?= $active('/admin/vouchers') ?>" href="/admin/vouchers">Vouchers</a><?php endif; ?>
                             <?php if ($access['sessions'] ?? false): ?><a class="nav-link<?= $active('/admin/sessions') ?>" href="/admin/sessions">Sessions</a><?php endif; ?>
@@ -61,10 +62,10 @@ $sidebarInitial = strtoupper(substr($sidebarName, 0, 1));
                         <?php else: ?>
                             <a class="nav-link<?= $active('/dashboard') ?>" href="/dashboard">Dashboard</a>
                             <?php if ($hasNetwork): ?><a class="nav-link<?= $active('/admin/routers') ?>" href="/admin/routers">Network</a><?php endif; ?>
-                            <?php if ($access['sales'] ?? false): ?><a class="nav-link<?= $active('/admin/sales') ?>" href="/admin/sales">Sales</a><?php endif; ?>
-                            <?php if ($access['users'] ?? false): ?><a class="nav-link<?= $active('/admin/users') ?>" href="/admin/users">Users</a><?php endif; ?>
-                            <?php if ($access['logs'] ?? false): ?><a class="nav-link<?= $active('/admin/logs') ?>" href="/admin/logs">Log</a><?php endif; ?>
                         <?php endif; ?>
+                        <?php if ($access['sales'] ?? false): ?><a class="nav-link<?= $active('/admin/sales') ?>" href="/admin/sales">Sales</a><?php endif; ?>
+                        <?php if ($access['users'] ?? false): ?><a class="nav-link<?= $active('/admin/users') ?>" href="/admin/users">Users</a><?php endif; ?>
+                        <?php if ($access['logs'] ?? false): ?><a class="nav-link<?= $active('/admin/logs') ?>" href="/admin/logs">Log</a><?php endif; ?>
                     </nav>
                     <div class="card border-0 rounded-3 mt-auto pixie-user-card">
                         <div class="card-body p-3">
