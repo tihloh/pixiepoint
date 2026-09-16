@@ -33,6 +33,15 @@ final class MikroTikAdapter implements PlatformAdapter
             return rtrim(substr($tag,0,-1)).' name="username">';
         },$html,1)??$html;
 
+        $routerLogin='<div id="pp-mikrotik-login" class="mb-3">'
+            .'<button class="btn btn-outline-secondary w-100" type="button" data-bs-toggle="collapse" data-bs-target="#pp-mikrotik-login-panel" aria-expanded="false" aria-controls="pp-mikrotik-login-panel">MikroTik user login</button>'
+            .'<div class="collapse mt-3" id="pp-mikrotik-login-panel"><div class="border rounded-3 p-3">'
+            .'<div class="mb-3"><label for="pp-mikrotik-username" class="form-label">Username</label><input id="pp-mikrotik-username" class="form-control" name="username" form="pp-mikrotik-login-form" autocomplete="username" required></div>'
+            .'<div class="mb-3"><label for="pp-mikrotik-password" class="form-label">Password</label><input id="pp-mikrotik-password" class="form-control" name="password" form="pp-mikrotik-login-form" type="password" autocomplete="current-password"></div>'
+            .'<form id="pp-mikrotik-login-form" name="routerLogin" method="post" action="'.e($loginUrl).'"'.($hasChap?' onsubmit="return doRouterLogin()"':'').'><input type="hidden" name="dst" value="'.e($destination).'"><input type="hidden" name="popup" value="true"><button class="btn btn-primary w-100" type="submit">Login to HotSpot</button></form>'
+            .'</div></div></div>';
+        $html=preg_match('/<div\s+id=(["\'])pp-device-info\1/i',$html)?(preg_replace('/<div\s+id=(["\'])pp-device-info\1/i',$routerLogin.'<div id=$1pp-device-info$1',$html,1)??$html):$html;
+
         if(!$hasChap)return $html;
 
         $native='<form name="sendin" action="'.e($loginUrl).'" method="post" style="display:none">'
@@ -42,7 +51,7 @@ final class MikroTikAdapter implements PlatformAdapter
             .'<input type="hidden" name="popup" value="true">'
             .'</form>'
             .'<script src="/assets/md5.js"></script>'
-            .'<script>function doLogin(){var vc=document.login.username.value;document.sendin.username.value=vc;document.sendin.password.value=hexMD5('.$this->chapLiteral($chapId).'+""+'.$this->chapLiteral($chapChallenge).');document.sendin.submit();return false;}</script>';
+            .'<script>function ppChap(username,password){document.sendin.username.value=username;document.sendin.password.value=hexMD5('.$this->chapLiteral($chapId).'+password+'.$this->chapLiteral($chapChallenge).');document.sendin.submit();return false;}function doLogin(){return ppChap(document.login.username.value,"");}function doRouterLogin(){return ppChap(document.routerLogin.username.value,document.routerLogin.password.value);}</script>';
 
         return preg_match('/<\/body\s*>/i',$html)?(preg_replace('/<\/body\s*>/i',$native.'</body>',$html,1)??$html):$html.$native;
     }
