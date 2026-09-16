@@ -1,32 +1,14 @@
 <!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <title>Opening Portal...</title>
-</head>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta http-equiv="Cache-Control" content="no-store"><title>PixiePoint</title></head>
 <body>
-  <p>Opening portal...</p>
-  <script>
-    (function () {
-      var p = new URLSearchParams();
-      p.set('router_identity', '$(identity)');
-      p.set('server_address', '$(server-address)');
-      p.set('client_ip', '$(ip)');
-      p.set('interface', '$(interface-name)');
-      p.set('mac', '$(mac)');
-      p.set('username', '$(username)');
-      p.set('session_time_left', '$(session-time-left-secs)');
-      p.set('bytes_in', '$(bytes-in)');
-      p.set('bytes_out', '$(bytes-out)');
-      p.set('remain_bytes_total', '$(remain-bytes-total)');
-      p.set('uptime', '$(uptime-secs)');
-      p.set('status_url', '$(link-status)');
-      p.set('logout_url', '$(link-logout)');
-      p.set('login_url', '$(link-login)');
-      location.replace('http://hs.portalx.win/hotspot?' + p.toString());
-    })();
-  </script>
+<div id="pp-local-fallback">Loading PixiePoint…</div>
+<script>
+(function(){
+  var p=new URLSearchParams();
+  p.set('router_identity','$(identity)');p.set('server_address','$(server-address)');p.set('client_ip','$(ip)');p.set('interface','$(interface-name)');p.set('mac','$(mac)');p.set('username','$(username)');p.set('session_time_left','$(session-time-left-secs)');p.set('bytes_in','$(bytes-in)');p.set('bytes_out','$(bytes-out)');p.set('remain_bytes_total','$(remain-bytes-total)');p.set('uptime','$(uptime-secs)');p.set('status_url','$(link-status)');p.set('logout_url','$(link-logout)');p.set('login_url','$(link-login)');
+  fetch('http://hs.portalx.win/hotspot/status?'+p.toString(),{cache:'no-store'}).then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.text();}).then(function(html){html=html.replace(/<head([^>]*)>/i,'<head$1><base href="http://hs.portalx.win/">');document.open();document.write(html);document.close();}).catch(function(){document.getElementById('pp-local-fallback').innerHTML='<p>Connected as <strong>$(username)</strong></p><p>Uptime: $(uptime)</p><form action="$(link-logout)" method="get"><button type="submit">Log out</button></form>';});
+})();
+</script>
 </body>
 </html>
