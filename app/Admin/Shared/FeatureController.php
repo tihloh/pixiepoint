@@ -16,7 +16,13 @@ abstract class FeatureController
     protected function page(string $title,string $viewFile,array $data=[]):never
     {
         $content=$this->view->renderFile($viewFile,$data);
-        if($title!=='Logs'&&$this->auth->can('logs.view'))$content.=$this->activityPanel($title);
+        if($title!=='Logs'&&$this->auth->can('logs.view')){
+            $activity=$this->activityPanel($title);
+            if($activity!==''){
+                $pos=strpos($content,'</section>');
+                $content=$pos===false?$content.$activity:substr($content,0,$pos).$activity.substr($content,$pos);
+            }
+        }
         $this->view->page($title,$content,true,$this->auth->navigation());
     }
 
