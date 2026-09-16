@@ -2,7 +2,7 @@
 /** @var array $logs */
 /** @var string $scope */
 ?>
-<section class="panel h-100" aria-label="Activity log">
+<section class="card card-body mt-4" aria-label="Activity log">
     <div class="d-flex align-items-center justify-content-between gap-3 mb-3">
         <div><h2 class="mb-1">Activity Log</h2><div class="small text-body-secondary">Recent activity for this page.</div></div>
         <?php if($logs): ?><span class="text-body-secondary small text-nowrap"><?= e(count($logs)) ?> recent</span><?php endif; ?>
