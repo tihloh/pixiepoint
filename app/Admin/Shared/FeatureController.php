@@ -19,7 +19,7 @@ abstract class FeatureController
         if($title!=='Logs'&&$this->auth->can('logs.view')){
             $activity=$this->activityPanel($title);
             if($activity!==''){
-                $pos=strpos($content,'</section>');
+                $pos=strrpos($content,'</section>');
                 $content=$pos===false?$content.$activity:substr($content,0,$pos).$activity.substr($content,$pos);
             }
         }
