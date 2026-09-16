@@ -16,4 +16,5 @@
             </tbody>
         </table>
     </div>
+    <div class="d-flex justify-content-end mt-3"><a class="btn btn-sm btn-outline-secondary" href="/admin/logs">View all activity</a></div>
 </section>
