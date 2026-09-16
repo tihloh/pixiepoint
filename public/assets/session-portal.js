@@ -55,15 +55,16 @@
     disconnectForm.method='get';
   }
   if(endSessionButton){
-    endSessionButton.onclick=function(){
-      if(!session.logoutUrl){location.href='http://hs.portalx.win/hotspot?disconnected=1';return;}
+    endSessionButton.onclick=function(event){
+      event.preventDefault();
+      if(!session.logoutUrl){return;}
       const form=document.createElement('form');
       form.method='get';form.action=session.logoutUrl;
       const erase=document.createElement('input');erase.type='hidden';erase.name='erase-cookie';erase.value='on';form.appendChild(erase);
       document.body.appendChild(form);form.submit();
     };
   }
-  if(loginLink)loginLink.href='http://hs.portalx.win/hotspot';
+  if(loginLink)loginLink.href=session.loginUrl||new URL('/login',location.href).href;
   if(extendButton)extendButton.hidden=!(vendo&&session.username);
 
   let timeLeft=number(session.sessionTimeLeft),pollTimer=null,extendCoinTotal=0,finalizingExtension=false;

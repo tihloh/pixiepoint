@@ -58,26 +58,12 @@
     function (event) {
       const form = event.target;
       if (!form || form.id !== 'compat-voucher-form') return;
-      if (form.dataset.ppVoucherSaved === '1') {
-        delete form.dataset.ppVoucherSaved;
-        return;
-      }
-
       const input = document.getElementById('compat-voucher');
       const voucher = input ? input.value : '';
       if (!String(voucher || '').trim()) return;
 
-      event.preventDefault();
-      event.stopImmediatePropagation();
-      saveVoucher(voucher)
-        .catch(function () {
-          return false;
-        })
-        .then(function () {
-          form.dataset.ppVoucherSaved = '1';
-          if (typeof form.requestSubmit === 'function') form.requestSubmit();
-          else form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
-        });
+      // Remembering a voucher must never delay or block native router login.
+      saveVoucher(voucher).catch(function () { return false; });
     },
     true,
   );
