@@ -31,7 +31,7 @@ abstract class FeatureController
         if($end===false)return $content.$activity;
         $end+=strlen('</section>');
         $panel=substr($content,$start,$end-$start);
-        $row='<div class="row g-4 align-items-stretch"><div class="col-12 col-xl-7">'.$panel.'</div><div class="col-12 col-xl-5">'.$activity.'</div></div>';
+        $row='<div class="row g-4 align-items-start"><div class="col-12 col-lg-7">'.$panel.'</div><div class="col-12 col-lg-5">'.$activity.'</div></div>';
         return substr($content,0,$start).$row.substr($content,$end);
     }
 
