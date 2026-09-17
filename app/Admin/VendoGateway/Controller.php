@@ -54,7 +54,7 @@ final class Controller extends FeatureController
             $deviceId=trim((string)($_POST['device_id']??''));if($deviceId==='')throw new \RuntimeException('Device is required.');$binding=$this->bridge->binding($deviceId);if(!$binding||(int)($binding['router_id']??0)!==$routerId)throw new \RuntimeException('Vendo is not bound to the selected router.');
             if($action==='rename'){$name=trim((string)($_POST['vendo_name']??''));$this->bridge->rename($deviceId,$name);$_SESSION['admin_flash']='<div class="alert ok">Vendo renamed.</div>';return['ok'=>true,'message'=>'Vendo renamed.','action'=>$action,'device_id'=>$deviceId,'vendo_name'=>$name?:'Vendo'];}
             if($action==='save_config'){
-                $coin=(int)($_POST['coin_pin']??0);$relay=(int)($_POST['relay_pin']??0);$settle=(int)($_POST['coin_settle_ms']??350);$platform=$this->devicePlatform($deviceId);$coinPins=$platform==='esp32'?[4,13,14,16,17,18,19,21,22,23,25,26,27,32,33]:[4,5,12,13,14];$outputPins=$platform==='esp32'?[4,13,14,16,17,18,19,21,22,23,25,26,27,32,33]:[4,5,12,13,14,16];
+                $coin=(int)($_POST['coin_pin']??0);$relay=(int)($_POST['relay_pin']??0);$settle=(int)($_POST['coin_settle_ms']??350);$platform=$this->devicePlatform($deviceId);if($platform===null)throw new \RuntimeException('Device firmware target is unknown. Wait for the device to report its platform before changing GPIO configuration.');$coinPins=$platform==='esp32'?[4,13,14,16,17,18,19,21,22,23,25,26,27,32,33]:[4,5,12,13,14];$outputPins=$platform==='esp32'?[4,13,14,16,17,18,19,21,22,23,25,26,27,32,33]:[4,5,12,13,14,16];
                 if(!in_array($coin,$coinPins,true))throw new \RuntimeException('Selected coin GPIO is not supported by '.$platform.'.');if(!in_array($relay,$outputPins,true))throw new \RuntimeException('Selected relay GPIO is not supported by '.$platform.'.');if($coin===$relay)throw new \RuntimeException('Coin and relay GPIOs must be different.');if($settle<50||$settle>2000)throw new \RuntimeException('Coin settle time must be between 50 and 2000 ms.');
                 $resolved=$this->gateway->configs->resolve($deviceId);$config=$resolved['config']??[];$config['hardware']['pins']['coin']=$coin;$config['hardware']['pins']['relay']=$relay;unset($config['hardware']['pins']['status_led']);$config['coin']['settle_ms']=$settle;$this->gateway->configs->setDeviceConfig($deviceId,$config);$this->gateway->commands->queue($deviceId,'config.refresh');$this->audit('vendo_gateway.device.config','vendo_gateway_device',$deviceId,'Vendo hardware configuration updated.',['router_id'=>$routerId,'station_id'=>$binding['station_id']??null,'platform'=>$platform]);$_SESSION['admin_flash']='<div class="alert alert-success">Vendo hardware configuration saved and queued for sync.</div>';return['ok'=>true,'message'=>'Hardware configuration saved and queued for sync.','action'=>$action,'device_id'=>$deviceId];
             }
@@ -67,9 +67,11 @@ final class Controller extends FeatureController
         }catch(\Throwable $e){$_SESSION['admin_flash']='<div class="alert">'.e($e->getMessage()).'</div>';return['ok'=>false,'message'=>$e->getMessage(),'action'=>$action];}
     }
 
-    private function devicePlatform(string $deviceId): string
+    private function devicePlatform(string $deviceId): ?string
     {
-        $q=$this->db->prepare('SELECT reported_state_json FROM vg_devices WHERE device_id=? LIMIT 1');$q->execute([$deviceId]);$raw=$q->fetchColumn();$reported=json_decode((string)$raw,true);$platform=strtolower((string)($reported['hardware']['platform']??''));return $platform==='esp32'?'esp32':'esp8266';
+        $capabilities=$this->gateway?->devices->capabilities($deviceId)??[];$platform=strtolower((string)($capabilities['platform']??''));
+        if(!in_array($platform,['esp32','esp8266'],true)){$q=$this->db->prepare('SELECT reported_state_json FROM vg_devices WHERE device_id=? LIMIT 1');$q->execute([$deviceId]);$reported=json_decode((string)$q->fetchColumn(),true);$platform=strtolower((string)($reported['hardware']['platform']??''));}
+        return in_array($platform,['esp32','esp8266'],true)?$platform:null;
     }
 
     private function wantsJson(): bool{return strtolower((string)($_SERVER['HTTP_X_REQUESTED_WITH']??''))==='xmlhttprequest'||str_contains(strtolower((string)($_SERVER['HTTP_ACCEPT']??'')),'application/json');}

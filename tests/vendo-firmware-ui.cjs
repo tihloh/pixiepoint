@@ -3,16 +3,20 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 const view = fs.readFileSync(path.join(__dirname, '../app/Admin/VendoGateway/views/index.php'), 'utf8');
+const controller = fs.readFileSync(path.join(__dirname, '../app/Admin/VendoGateway/Controller.php'), 'utf8');
+assert.match(view, /Hardware configuration is unavailable until this device reports/);
+assert.match(controller, /Device firmware target is unknown/);
 const script = [...view.matchAll(/<script>([\s\S]*?)<\/script>/g)].at(-1)[1];
 
 function element() {
   return {textContent: '', innerHTML: '', disabled: false, dataset: {}, scrollIntoView() {}};
 }
 async function check(status) {
-  const message = element(), update = element(), latest = element(), state = element(), error = element(), summary = element();
+  const message = element(), update = element(), latest = element(), state = element(), error = element(), summary = element(), target = element(), checked = element();
   update.disabled = true;
   const controls = {'[data-firmware-update]': update, '[data-firmware-latest]': latest,
-    '[data-firmware-state]': state, '[data-firmware-error]': error};
+    '[data-firmware-state]': state, '[data-firmware-error]': error,
+    '[data-firmware-target]': target, '[data-firmware-checked]': checked};
   let onSubmit, requests = 0;
   const form = {
     querySelector(selector) { return selector === '[name=device_id]' ? {value: 'DEV-test'} : null; },
@@ -48,10 +52,12 @@ async function check(status) {
   assert.equal(update.disabled, status.update_available !== true);
   assert.equal(error.textContent, status.error || '');
   if (status.update_available === true) assert.equal(update.textContent, 'Update to v1.2.2');
+  assert.equal(target.textContent, status.target ? 'Target: ' + status.target.toUpperCase() : 'Target unknown');
+  assert.equal(checked.textContent, status.checked_at ? ' · Checked ' + status.checked_at : '');
   return {state, summary};
 }
 (async () => {
-  await check({current_version:'1.0.0',latest_version:'1.2.2',update_available:true});
+  await check({current_version:'1.0.0',latest_version:'1.2.2',update_available:true,target:'esp32',checked_at:'2026-09-17T03:00:00Z'});
   const current = await check({current_version:'1.2.2',latest_version:'1.2.2',update_available:false});
   assert.equal(current.state.textContent, 'Up to date');
   const unknown = await check({current_version:'1.0.0',latest_version:null,update_available:null,error:'Release metadata unavailable'});
