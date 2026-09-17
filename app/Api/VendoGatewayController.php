@@ -30,7 +30,7 @@ final class VendoGatewayController
 
     public function __construct(private PDO $db,private array $config)
     {
-        (new Migrator($this->db))->migrate();$this->bridge=new VendoGatewayBridge($this->db);
+        (new Migrator($this->db))->migrate();$this->cleanupExpiredPairings();$this->bridge=new VendoGatewayBridge($this->db);
         $key=trim((string)($this->config['vendo_gateway_master_key']??''));if(strlen($key)>=32){$this->gateway=GatewayFactory::pdo($this->db,$key);$this->deviceAuth=new DeviceAuth(GatewayFactory::authenticator($this->db,$key));$this->bridge->register($this->gateway);}
     }
 
@@ -40,14 +40,22 @@ final class VendoGatewayController
     {
         $gateway=$this->gateway();
         $this->run(function() use($gateway): array{
-            $result=(new PairingEndpoint($gateway->pairings))->enroll($this->body());$context=is_array($result['context']??null)?$result['context']:[];$deviceId=(string)($result['device_id']??'');$stationId=max(0,(int)($context['station_id']??$context['vendo_id']??0));$routerId=max(0,(int)($context['router_id']??0));$name=trim((string)($context['vendo_name']??'Vendo'))?:'Vendo';
+            $result=(new PairingEndpoint($gateway->pairings))->enroll($this->body());$context=is_array($result['context']??null)?$result['context']:[];$deviceId=(string)($result['device_id']??'');$enrollmentId=(string)($result['enrollment_id']??'');$stationId=max(0,(int)($context['station_id']??$context['vendo_id']??0));$routerId=max(0,(int)($context['router_id']??0));$name=trim((string)($context['vendo_name']??'Vendo'))?:'Vendo';
             if($routerId<1&&$stationId>0)$routerId=$this->bridge->routerIdForStation($stationId);
-            if($deviceId!==''&&$routerId>0)$this->bridge->registerVendo($deviceId,$routerId,$name,$stationId>0?$stationId:null);
+            if($deviceId!==''&&$routerId>0){$this->bridge->registerVendo($deviceId,$routerId,$name,$stationId>0?$stationId:null);if($enrollmentId!=='')$this->db->prepare('DELETE FROM vg_pairings WHERE pairing_id=?')->execute([$enrollmentId]);}
             unset($result['context']);return$result;
         });
     }
 
-    public function pairingAck(string $id): never{$gateway=$this->gateway();$this->run(function() use($gateway,$id): array{$payload=$this->body();$code=trim((string)($payload['setup_code']??''));return(new PairingEndpoint($gateway->pairings))->acknowledge($id,$code);});}
+    public function pairingAck(string $id): never
+    {
+        $gateway=$this->gateway();
+        $this->run(function() use($gateway,$id): array{
+            $payload=$this->body();$code=trim((string)($payload['setup_code']??''));$stmt=$this->db->prepare('SELECT 1 FROM vg_pairings WHERE pairing_id=? LIMIT 1');$stmt->execute([$id]);
+            if(!$stmt->fetchColumn())return['status'=>'registered','credentials_delivered'=>true];
+            $result=(new PairingEndpoint($gateway->pairings))->acknowledge($id,$code);$this->db->prepare('DELETE FROM vg_pairings WHERE pairing_id=?')->execute([$id]);return$result;
+        });
+    }
     public function heartbeat(): never{$gateway=$this->gateway();$raw=$this->raw();$this->run(fn()=>(new HeartbeatEndpoint(GatewayFactory::authenticator($this->db,$this->masterKey()),$gateway->heartbeats))->handle($this->headers(),$raw,'POST','/vendo/v1/heartbeat',$_SERVER['REMOTE_ADDR']??null));}
     public function sync(): never{$gateway=$this->gateway();$raw=$this->raw();$this->run(fn()=>(new SyncEndpoint($this->deviceAuth(),$gateway->configs,$gateway->commands,$gateway->states,$gateway->firmware))->handle($this->headers(),$raw,'POST','/vendo/v1/sync'));}
     public function events(): never{$gateway=$this->gateway();$raw=$this->raw();$this->run(fn()=>(new EventEndpoint($this->deviceAuth(),$gateway->events))->handle($this->headers(),$raw,'POST','/vendo/v1/events'));}
@@ -57,6 +65,7 @@ final class VendoGatewayController
     public function state(): never{$gateway=$this->gateway();$raw=$this->raw();$this->run(fn()=>(new StateEndpoint($this->deviceAuth(),$gateway->states))->report($this->headers(),$raw,'POST','/vendo/v1/state'));}
     public function firmware(): never{$gateway=$this->gateway();$raw=$this->raw();$this->run(fn()=>(new FirmwareEndpoint($this->deviceAuth(),$gateway->firmware))->check($this->headers(),$raw,'POST','/vendo/v1/firmware/check'));}
 
+    private function cleanupExpiredPairings(): void{$this->db->exec("DELETE FROM vg_pairings WHERE status='pending' AND expires_at<=UTC_TIMESTAMP()");}
     private function gateway(): Gateway{if(!$this->gateway)$this->json(['ok'=>false,'error'=>'vendo_gateway_not_configured'],503);return$this->gateway;}
     private function deviceAuth(): DeviceAuth{if(!$this->deviceAuth)$this->json(['ok'=>false,'error'=>'vendo_gateway_not_configured'],503);return$this->deviceAuth;}
     private function masterKey(): string{return(string)($this->config['vendo_gateway_master_key']??'');}

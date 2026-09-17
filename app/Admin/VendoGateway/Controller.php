@@ -28,6 +28,8 @@ final class Controller extends FeatureController
     public function index(): never
     {
         $user=$this->auth->requireAccount();$userId=(int)$user['id'];$platformOwner=$this->auth->isPlatformOwner();$access=new RouterAccess($this->db);$routerId=max(0,(int)($_SESSION['pixiepoint_selected_router_id']??0));if($routerId<1)redirect('/admin/routers');if(!$access->canView($routerId,$userId,$platformOwner)){unset($_SESSION['pixiepoint_selected_router_id']);redirect('/admin/routers');}
+        $this->cleanupExpiredPairings();
+        if(!$this->isPost()&&(string)($_GET['pairing_status']??'')==='1'){$pairings=$this->pendingPairings($routerId);$this->json(['ok'=>true,'pairings'=>array_map(static fn(array $row):array=>['id'=>(string)$row['pairing_id'],'expires_at'=>(int)$row['expires_at_epoch']],$pairings),'server_time'=>time()]);}
         if($this->isPost()){$result=$this->handlePost($access,$userId,$platformOwner,$routerId);if($this->wantsJson())$this->json($result,$result['ok']?200:422);$return=trim((string)($_POST['return_to']??''));if($return==='/admin/routers'||preg_match('~^/admin/routers/\d+(?:#stations)?$~',$return))redirect($return);$device=trim((string)($_POST['device_id']??''));redirect('/admin/vendo-gateway'.($device!==''&&($result['action']??'')!=='delete'?'?device='.rawurlencode($device):''));}
         $stmt=$this->db->prepare('SELECT id,name FROM vendos WHERE router_id=? AND enabled=1 ORDER BY name');$stmt->execute([$routerId]);$stations=$stmt->fetchAll();$rows=[];$selectedDevice=trim((string)($_GET['device']??''));
         foreach($this->bridge->bindings($routerId) as $binding){
@@ -36,7 +38,7 @@ final class Controller extends FeatureController
             $q=$this->db->prepare('SELECT reported_state_json,last_ip FROM vg_devices WHERE device_id=? LIMIT 1');$q->execute([$deviceId]);$raw=$q->fetch();if($raw){$reported=json_decode((string)($raw['reported_state_json']??''),true)?:[];$reported['ip']=$raw['last_ip']??null;}if(!$config&&$reported)$config=['hardware'=>$reported['hardware']??[],'coin'=>$reported['coin']??[]];
             $rows[]=['binding'=>$binding,'device'=>$device,'config'=>$config,'reported'=>$reported,'firmware'=>$firmwareStatus,'selected'=>$selectedDevice!==''&&hash_equals($selectedDevice,$deviceId)];
         }
-        $flash=(string)($_SESSION['admin_flash']??'');unset($_SESSION['admin_flash']);$this->page('Vendos',__DIR__.'/views/index.php',['flash'=>$flash,'routerId'=>$routerId,'stations'=>$stations,'rows'=>$rows,'selectedDevice'=>$selectedDevice,'gatewayConfigured'=>(bool)$this->gateway,'canManage'=>$access->canManage($routerId,$userId,$platformOwner)]);
+        $pairings=$this->pendingPairings($routerId);$flash=(string)($_SESSION['admin_flash']??'');unset($_SESSION['admin_flash']);$this->page('Vendos',__DIR__.'/views/index.php',['flash'=>$flash,'routerId'=>$routerId,'stations'=>$stations,'rows'=>$rows,'pairings'=>$pairings,'selectedDevice'=>$selectedDevice,'gatewayConfigured'=>(bool)$this->gateway,'canManage'=>$access->canManage($routerId,$userId,$platformOwner)]);
     }
 
     private function handlePost(RouterAccess $access,int $userId,bool $platformOwner,int $routerId): array
@@ -48,7 +50,7 @@ final class Controller extends FeatureController
                 $vendoName=trim((string)($_POST['vendo_name']??''))?:'Vendo';if(strlen($vendoName)>160)throw new \RuntimeException('Vendo name is too long.');
                 $result=$this->gateway->pairings->prepare((string)$userId,['router_id'=>$routerId,'vendo_name'=>$vendoName]);$code=(string)($result['setup_code']??'');if($code==='')throw new \RuntimeException('Setup code was not generated.');
                 $this->audit('vendo_gateway.setup_code.created','vendo_gateway_enrollment',(string)($result['enrollment_id']??''),'Vendo setup code generated.',['router_id'=>$routerId,'vendo_name'=>$vendoName]);
-                $message=$vendoName.' setup code: '.$code;$_SESSION['admin_flash']='<div class="alert alert-success"><strong>'.e($vendoName).' setup code: <span class="font-monospace fs-5">'.e($code).'</span></strong><br><small>Valid for about 10 minutes and usable once. Enter it during ESP setup. The new Vendo will be added as unlinked and can then be assigned to a station.</small></div>';return['ok'=>true,'message'=>$message,'action'=>$action,'setup_code'=>$code];
+                $_SESSION['admin_flash']='<div class="alert alert-success">Setup code created. Waiting for the ESP to enroll.</div>';return['ok'=>true,'message'=>'Setup code created. Waiting for the ESP to enroll.','action'=>$action,'setup_code'=>$code,'enrollment_id'=>(string)($result['enrollment_id']??''),'expires_in'=>(int)($result['expires_in']??600),'reload'=>true];
             }
             if($action==='link_station'){
                 $stationId=max(0,(int)($_POST['station_id']??0));if($stationId<1||$this->bridge->routerIdForStation($stationId)!==$routerId)throw new \RuntimeException('Station not found on this gateway.');$deviceId=trim((string)($_POST['device_id']??''));
@@ -71,6 +73,18 @@ final class Controller extends FeatureController
             if($action==='activate'){$this->gateway->devices->activate($deviceId);$message='Vendo activated.';}elseif($action==='suspend'){$this->gateway->devices->suspend($deviceId);$message='Vendo suspended.';}elseif($action==='coin_enable'){$this->gateway->commands->queue($deviceId,'coin.enable');$message='Coin input enable queued.';}elseif($action==='coin_disable'){$this->gateway->commands->queue($deviceId,'coin.disable');$message='Coin input disable queued.';}elseif($action==='restart'){$this->gateway->commands->queue($deviceId,'system.restart');$message='Restart queued.';}elseif($action==='firmware_check'){$firmwareStatus=$this->gateway->firmware->requestCheck($deviceId);$message='Release check completed by Vendo Gateway.';}elseif($action==='firmware_update'){$this->gateway->firmware->requestUpdate($deviceId);$message='Firmware update queued. The ESP will install it when safe.';}else throw new \RuntimeException('Unknown action.');
             $this->audit('vendo_gateway.device.'.$action,'vendo_gateway_device',$deviceId,'Vendo device action executed.',['router_id'=>$routerId,'station_id'=>$binding['station_id']??null]);return['ok'=>true,'message'=>$message,'action'=>$action,'device_id'=>$deviceId,'firmware'=>$firmwareStatus??null];
         }catch(\Throwable $e){return['ok'=>false,'message'=>$e->getMessage(),'action'=>$action];}
+    }
+
+    private function cleanupExpiredPairings(): void
+    {
+        $this->db->exec("DELETE FROM vg_pairings WHERE status='pending' AND expires_at<=UTC_TIMESTAMP()");
+    }
+
+    private function pendingPairings(int $routerId): array
+    {
+        $rows=$this->db->query("SELECT pairing_id,pairing_code,claimed_context_json,expires_at,created_at FROM vg_pairings WHERE status='pending' AND expires_at>UTC_TIMESTAMP() ORDER BY created_at DESC")->fetchAll();$out=[];
+        foreach($rows as $row){$context=json_decode((string)($row['claimed_context_json']??''),true)?:[];if((int)($context['router_id']??0)!==$routerId)continue;$row['vendo_name']=trim((string)($context['vendo_name']??''))?:'Vendo';$row['expires_at_epoch']=strtotime((string)$row['expires_at'].' UTC')?:time();$out[]=$row;}
+        return$out;
     }
 
     private function devicePlatform(string $deviceId): ?string
