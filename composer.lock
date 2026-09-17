@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "e6efd9e77b7387e5adc996d8bc2a427a",
+    "content-hash": "2831717a644db1f963c00d62669a1916",
     "packages": [
         {
             "name": "tihloh/prefab-auth",
@@ -415,16 +415,16 @@
         },
         {
             "name": "tihloh/vendo-gateway",
-            "version": "v1.2.4",
+            "version": "v1.3.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/tihloh/vendo-gateway.git",
-                "reference": "a4942c9f0cc855a4e6dcc33782c4e40d4dccd9f3"
+                "reference": "18bda8c5487f4deb1dc93037f1558bc3a2d27fcb"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tihloh/vendo-gateway/zipball/a4942c9f0cc855a4e6dcc33782c4e40d4dccd9f3",
-                "reference": "a4942c9f0cc855a4e6dcc33782c4e40d4dccd9f3",
+                "url": "https://api.github.com/repos/tihloh/vendo-gateway/zipball/18bda8c5487f4deb1dc93037f1558bc3a2d27fcb",
+                "reference": "18bda8c5487f4deb1dc93037f1558bc3a2d27fcb",
                 "shasum": ""
             },
             "require": {
@@ -464,18 +464,18 @@
                 "issues": "https://github.com/tihloh/vendo-gateway/issues",
                 "source": "https://github.com/tihloh/vendo-gateway"
             },
-            "time": "2026-09-16T12:07:26+00:00"
+            "time": "2026-09-17T02:49:41+00:00"
         }
     ],
     "packages-dev": [],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {},
+    "stability-flags": [],
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {
         "php": ">=8.3"
     },
-    "platform-dev": {},
+    "platform-dev": [],
     "plugin-api-version": "2.6.0"
 }
