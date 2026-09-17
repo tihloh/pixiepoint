@@ -28,7 +28,7 @@ final class Controller extends FeatureController
     public function index(): never
     {
         $user=$this->auth->requireAccount();$userId=(int)$user['id'];$platformOwner=$this->auth->isPlatformOwner();$access=new RouterAccess($this->db);$routerId=max(0,(int)($_SESSION['pixiepoint_selected_router_id']??0));if($routerId<1)redirect('/admin/routers');if(!$access->canView($routerId,$userId,$platformOwner)){unset($_SESSION['pixiepoint_selected_router_id']);redirect('/admin/routers');}
-        $this->cleanupExpiredPairings();
+        $this->cleanupPairings();
         if(!$this->isPost()&&(string)($_GET['pairing_status']??'')==='1'){$pairings=$this->pendingPairings($routerId);$this->json(['ok'=>true,'pairings'=>array_map(static fn(array $row):array=>['id'=>(string)$row['pairing_id'],'expires_at'=>(int)$row['expires_at_epoch']],$pairings),'server_time'=>time()]);}
         if($this->isPost()){$result=$this->handlePost($access,$userId,$platformOwner,$routerId);if($this->wantsJson())$this->json($result,$result['ok']?200:422);$return=trim((string)($_POST['return_to']??''));if($return==='/admin/routers'||preg_match('~^/admin/routers/\d+(?:#stations)?$~',$return))redirect($return);$device=trim((string)($_POST['device_id']??''));redirect('/admin/vendo-gateway'.($device!==''&&($result['action']??'')!=='delete'?'?device='.rawurlencode($device):''));}
         $stmt=$this->db->prepare('SELECT id,name FROM vendos WHERE router_id=? AND enabled=1 ORDER BY name');$stmt->execute([$routerId]);$stations=$stmt->fetchAll();$rows=[];$selectedDevice=trim((string)($_GET['device']??''));
@@ -75,13 +75,16 @@ final class Controller extends FeatureController
         }catch(\Throwable $e){return['ok'=>false,'message'=>$e->getMessage(),'action'=>$action];}
     }
 
-    private function cleanupExpiredPairings(): void
+    private function cleanupPairings(): void
     {
-        $this->db->exec("DELETE FROM vg_pairings WHERE status='pending' AND expires_at<=UTC_TIMESTAMP()");
+        if(!$this->gateway)return;if(method_exists($this->gateway->pairings,'cleanupExpired')){$this->gateway->pairings->cleanupExpired();return;}$this->db->exec("DELETE FROM vg_pairings WHERE status='pending' AND expires_at<=UTC_TIMESTAMP()");
     }
 
     private function pendingPairings(int $routerId): array
     {
+        if($this->gateway&&method_exists($this->gateway->pairings,'pending')){
+            $out=[];foreach($this->gateway->pairings->pending(['router_id'=>$routerId]) as $row){$context=is_array($row['context']??null)?$row['context']:[];$out[]=['pairing_id'=>(string)($row['enrollment_id']??''),'pairing_code'=>(string)($row['setup_code']??''),'vendo_name'=>trim((string)($context['vendo_name']??''))?:'Vendo','expires_at_epoch'=>(int)($row['expires_at']??time())];}return$out;
+        }
         $rows=$this->db->query("SELECT pairing_id,pairing_code,claimed_context_json,expires_at,created_at FROM vg_pairings WHERE status='pending' AND expires_at>UTC_TIMESTAMP() ORDER BY created_at DESC")->fetchAll();$out=[];
         foreach($rows as $row){$context=json_decode((string)($row['claimed_context_json']??''),true)?:[];if((int)($context['router_id']??0)!==$routerId)continue;$row['vendo_name']=trim((string)($context['vendo_name']??''))?:'Vendo';$row['expires_at_epoch']=strtotime((string)$row['expires_at'].' UTC')?:time();$out[]=$row;}
         return$out;
