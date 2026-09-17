@@ -27,13 +27,13 @@ release discovery is independent of those device settings.
 
 ## Stable dependency
 
-PixiePoint requires vendo-gateway ^1.3 and composer.lock pins v1.3.0. Install
+PixiePoint requires vendo-gateway ^1.3 and composer.lock pins v1.3.1. Install
 dependencies with composer install.
 
 Gateway review: https://github.com/tihloh/vendo-gateway/pull/5
 Firmware review: https://github.com/tihloh/vendogate-firmware/pull/2
 
-Gateway v1.3.0 and firmware v1.2.3 are published. Deploy the gateway update
+Gateway v1.3.1 and firmware v1.2.3 are published. Deploy the gateway update
 before directing devices to install firmware v1.2.3.
 
 ## Validation

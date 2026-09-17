@@ -70,7 +70,8 @@ final class Controller extends FeatureController
     private function devicePlatform(string $deviceId): ?string
     {
         $capabilities=$this->gateway?->devices->capabilities($deviceId)??[];$platform=strtolower((string)($capabilities['platform']??''));
-        if(!in_array($platform,['esp32','esp8266'],true)){$q=$this->db->prepare('SELECT reported_state_json FROM vg_devices WHERE device_id=? LIMIT 1');$q->execute([$deviceId]);$reported=json_decode((string)$q->fetchColumn(),true);$platform=strtolower((string)($reported['hardware']['platform']??''));}
+        if(!in_array($platform,['esp32','esp8266'],true)){$q=$this->db->prepare('SELECT reported_state_json FROM vg_devices WHERE device_id=? LIMIT 1');$q->execute([$deviceId]);$reported=json_decode((string)$q->fetchColumn(),true);$platform=strtolower((string)($reported['hardware']['platform']??$reported['platform']??''));}
+        if(!in_array($platform,['esp32','esp8266'],true)){$status=$this->gateway?->firmware->deviceStatus($deviceId)??[];$platform=strtolower((string)($status['target']??''));}
         return in_array($platform,['esp32','esp8266'],true)?$platform:null;
     }
 
