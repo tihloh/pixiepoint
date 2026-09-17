@@ -48,5 +48,3 @@ before directing devices to install firmware v1.2.3.
 
 The Windows PHP CLI used for package tests is 8.2. The full PixiePoint application
 requires PHP 8.3+ and was not booted under that local CLI.
-
-
