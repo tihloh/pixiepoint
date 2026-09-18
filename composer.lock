@@ -419,12 +419,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/tihloh/vendo-gateway.git",
-                "reference": "53835629b21913059bc49cd6606f8af6b5b3bfad"
+                "reference": "c1fc7ebb88edff9394b23a7af6cacd1b29db21b7"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tihloh/vendo-gateway/zipball/53835629b21913059bc49cd6606f8af6b5b3bfad",
-                "reference": "53835629b21913059bc49cd6606f8af6b5b3bfad",
+                "url": "https://api.github.com/repos/tihloh/vendo-gateway/zipball/c1fc7ebb88edff9394b23a7af6cacd1b29db21b7",
+                "reference": "c1fc7ebb88edff9394b23a7af6cacd1b29db21b7",
                 "shasum": ""
             },
             "require": {
