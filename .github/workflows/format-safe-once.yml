@@ -1,0 +1,540 @@
+name: Safe source formatting
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .format-safe-once
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Save exact originals
+        run: |
+          mkdir -p /tmp/pixiepoint-before
+          rsync -a --exclude=.git --exclude=node_modules ./ /tmp/pixiepoint-before/
+
+      - name: Install frontend formatter and verifier
+        run: npm install --no-save --no-package-lock js-beautify@1.15.4 acorn@8.15.0
+
+      - name: Create PHP whitespace-only formatter
+        run: |
+          cat > /tmp/format_php.php <<'PHP'
+          <?php
+
+          declare(strict_types=1);
+
+          function splitTokens(string $code): array
+          {
+              $tokens = [];
+              $gaps = [''];
+              $gapLiteral = [false];
+              $quote = null;
+              $heredoc = false;
+
+              foreach (token_get_all($code) as $token) {
+                  if (is_array($token)) {
+                      [$id, $text] = $token;
+
+                      if ($id === T_WHITESPACE) {
+                          $index = array_key_last($gaps);
+                          $gaps[$index] .= $text;
+                          $gapLiteral[$index] = $gapLiteral[$index] || $quote !== null || $heredoc;
+                          continue;
+                      }
+
+                      if ($id === T_OPEN_TAG || $id === T_OPEN_TAG_WITH_ECHO) {
+                          if (preg_match('/^(.*?)(\s*)$/s', $text, $match)) {
+                              $text = $match[1];
+                              $trailing = $match[2];
+                          } else {
+                              $trailing = '';
+                          }
+
+                          $tokens[] = [
+                              'id' => $id,
+                              'text' => $text,
+                              'literal' => false,
+                          ];
+                          $gaps[] = $trailing;
+                          $gapLiteral[] = false;
+                          continue;
+                      }
+
+                      $literal = $quote !== null || $heredoc;
+
+                      if ($id === T_START_HEREDOC) {
+                          $literal = true;
+                          $heredoc = true;
+                      } elseif ($id === T_END_HEREDOC) {
+                          $literal = true;
+                          $heredoc = false;
+                      }
+
+                      $tokens[] = [
+                          'id' => $id,
+                          'text' => $text,
+                          'literal' => $literal,
+                      ];
+                      $gaps[] = '';
+                      $gapLiteral[] = $quote !== null || $heredoc;
+                      continue;
+                  }
+
+                  $text = $token;
+                  $literal = $quote !== null || $heredoc;
+
+                  if (!$heredoc && ($text === '"' || $text === '`')) {
+                      if ($quote === null) {
+                          $quote = $text;
+                          $literal = true;
+                      } elseif ($quote === $text) {
+                          $literal = true;
+                          $quote = null;
+                      }
+                  }
+
+                  $tokens[] = [
+                      'id' => null,
+                      'text' => $text,
+                      'literal' => $literal,
+                  ];
+                  $gaps[] = '';
+                  $gapLiteral[] = $quote !== null || $heredoc;
+              }
+
+              return [$tokens, $gaps, $gapLiteral];
+          }
+
+          function isPunctuation(array $token, string $value): bool
+          {
+              return $token['id'] === null && $token['text'] === $value && !$token['literal'];
+          }
+
+          function isContinuation(array $token): bool
+          {
+              return in_array($token['id'], [T_ELSE, T_ELSEIF, T_CATCH, T_FINALLY], true)
+                  || $token['id'] === T_WHILE;
+          }
+
+          function isLineComment(array $token): bool
+          {
+              if ($token['id'] !== T_COMMENT) {
+                  return false;
+              }
+
+              $text = ltrim($token['text']);
+              return str_starts_with($text, '//') || str_starts_with($text, '#');
+          }
+
+          function indentFor(array $tokens, array $braceBefore, array $parenBefore, int $index): string
+          {
+              $brace = $braceBefore[$index] ?? 0;
+              $paren = $parenBefore[$index] ?? 0;
+
+              if (isset($tokens[$index]) && isPunctuation($tokens[$index], '}')) {
+                  $brace = max(0, $brace - 1);
+              }
+
+              if (
+                  isset($tokens[$index])
+                  && $tokens[$index]['id'] === null
+                  && in_array($tokens[$index]['text'], [')', ']'], true)
+              ) {
+                  $paren = max(0, $paren - 1);
+              }
+
+              return str_repeat('    ', max(0, $brace + ($paren > 0 ? 1 : 0)));
+          }
+
+          function newlineGap(string $originalGap, string $indent): string
+          {
+              $normalized = str_replace("\r\n", "\n", $originalGap);
+              $count = substr_count($normalized, "\n");
+
+              return ($count >= 2 ? "\n\n" : "\n") . $indent;
+          }
+
+          function formatPhpFile(string $path): void
+          {
+              $code = file_get_contents($path);
+              [$tokens, $gaps, $gapLiteral] = splitTokens($code);
+
+              if (!$tokens) {
+                  return;
+              }
+
+              $braceBefore = [];
+              $parenBefore = [];
+              $brace = 0;
+              $paren = 0;
+
+              foreach ($tokens as $i => $token) {
+                  $braceBefore[$i] = $brace;
+                  $parenBefore[$i] = $paren;
+
+                  if ($token['literal'] || $token['id'] !== null) {
+                      continue;
+                  }
+
+                  if ($token['text'] === '{') {
+                      $brace++;
+                  } elseif ($token['text'] === '}') {
+                      $brace = max(0, $brace - 1);
+                  } elseif ($token['text'] === '(') {
+                      $paren++;
+                  } elseif ($token['text'] === ')') {
+                      $paren = max(0, $paren - 1);
+                  }
+              }
+
+              $out = $gaps[0] ?? '';
+
+              foreach ($tokens as $i => $token) {
+                  $out .= $token['text'];
+
+                  if (!isset($tokens[$i + 1])) {
+                      $out .= $gaps[$i + 1] ?? '';
+                      continue;
+                  }
+
+                  $next = $tokens[$i + 1];
+                  $originalGap = $gaps[$i + 1] ?? '';
+                  $protectedGap = ($gapLiteral[$i + 1] ?? false) || $token['literal'] || $next['literal'];
+
+                  if ($protectedGap) {
+                      $out .= $originalGap;
+                      continue;
+                  }
+
+                  if (
+                      $token['id'] === T_INLINE_HTML
+                      || $next['id'] === T_INLINE_HTML
+                      || $token['id'] === T_CLOSE_TAG
+                      || $next['id'] === T_CLOSE_TAG
+                  ) {
+                      $out .= $originalGap;
+                      continue;
+                  }
+
+                  $nextIndent = indentFor($tokens, $braceBefore, $parenBefore, $i + 1);
+
+                  if ($token['id'] === T_OPEN_TAG) {
+                      $out .= newlineGap($originalGap, $nextIndent);
+                      continue;
+                  }
+
+                  if ($token['id'] === T_OPEN_TAG_WITH_ECHO) {
+                      $out .= $originalGap;
+                      continue;
+                  }
+
+                  if (isPunctuation($token, '{')) {
+                      $out .= newlineGap($originalGap, $nextIndent);
+                      continue;
+                  }
+
+                  if (isPunctuation($next, '}')) {
+                      $out .= newlineGap($originalGap, $nextIndent);
+                      continue;
+                  }
+
+                  if (isPunctuation($token, '}')) {
+                      if (isContinuation($next)) {
+                          $out .= newlineGap($originalGap, $nextIndent);
+                      } elseif (
+                          $next['id'] === null
+                          && in_array($next['text'], [';', ',', ')', ']'], true)
+                      ) {
+                          $out .= $originalGap;
+                      } else {
+                          $out .= newlineGap($originalGap, $nextIndent);
+                      }
+                      continue;
+                  }
+
+                  if (isPunctuation($token, ';') && ($parenBefore[$i] ?? 0) === 0) {
+                      $out .= newlineGap($originalGap, $nextIndent);
+                      continue;
+                  }
+
+                  if (isLineComment($token)) {
+                      $out .= newlineGap($originalGap, $nextIndent);
+                      continue;
+                  }
+
+                  if (str_contains($originalGap, "\n") || str_contains($originalGap, "\r")) {
+                      $out .= newlineGap($originalGap, $nextIndent);
+                      continue;
+                  }
+
+                  $out .= $originalGap;
+              }
+
+              file_put_contents($path, $out);
+          }
+
+          foreach (array_slice($argv, 1) as $path) {
+              formatPhpFile($path);
+          }
+          PHP
+
+      - name: Format every PHP file using whitespace only
+        shell: bash
+        run: |
+          mapfile -d '' php_files < <(
+            find app bin config public src tests -type f -name '*.php' -print0
+            printf '%s\0' config.example.php router.php
+          )
+
+          php /tmp/format_php.php "${php_files[@]}"
+
+      - name: Format JavaScript and CSS
+        shell: bash
+        run: |
+          shopt -s globstar nullglob
+
+          js_files=(app/Portal/Themes/**/*.js mt_hotspot/**/*.js public/**/*.js tests/**/*.cjs)
+          css_files=(app/Portal/Themes/**/*.css mt_hotspot/**/*.css public/**/*.css)
+
+          if [ "${#js_files[@]}" -gt 0 ]; then
+            npx js-beautify --replace --indent-size 2 "${js_files[@]}"
+          fi
+
+          if [ "${#css_files[@]}" -gt 0 ]; then
+            npx css-beautify --replace --indent-size 2 "${css_files[@]}"
+          fi
+
+      - name: Verify PHP tokens are exactly unchanged
+        shell: bash
+        run: |
+          cat > /tmp/verify_php.php <<'PHP'
+          <?php
+
+          declare(strict_types=1);
+
+          function signature(string $path): array
+          {
+              $out = [];
+
+              foreach (token_get_all(file_get_contents($path)) as $token) {
+                  if (is_array($token)) {
+                      [$id, $text] = $token;
+
+                      if ($id === T_WHITESPACE) {
+                          continue;
+                      }
+
+                      if ($id === T_OPEN_TAG || $id === T_OPEN_TAG_WITH_ECHO) {
+                          $text = preg_replace('/\s+$/u', '', $text) ?? $text;
+                      }
+
+                      $out[] = [$id, $text];
+                  } else {
+                      $out[] = [null, $token];
+                  }
+              }
+
+              return $out;
+          }
+
+          $changed = 0;
+
+          foreach (array_slice($argv, 1) as $file) {
+              $before = '/tmp/pixiepoint-before/' . $file;
+
+              if (signature($before) !== signature($file)) {
+                  fwrite(STDERR, "PHP token content changed: {$file}\n");
+                  $changed++;
+              }
+          }
+
+          if ($changed > 0) {
+              exit(1);
+          }
+
+          echo "PHP verification passed: only T_WHITESPACE changed.\n";
+          PHP
+
+          mapfile -d '' php_files < <(
+            find app bin config public src tests -type f -name '*.php' -print0
+            printf '%s\0' config.example.php router.php
+          )
+
+          php /tmp/verify_php.php "${php_files[@]}"
+
+      - name: Verify JavaScript token text is unchanged
+        run: |
+          cat > /tmp/verify-js.cjs <<'JS'
+          const fs = require('fs');
+          const acorn = require('acorn');
+
+          function signature(code) {
+            const comments = [];
+            const tokenizer = acorn.tokenizer(code, {
+              ecmaVersion: 'latest',
+              sourceType: 'module',
+              allowHashBang: true,
+              allowAwaitOutsideFunction: true,
+              allowReturnOutsideFunction: true,
+              onComment: comments,
+            });
+
+            const parts = [];
+
+            while (true) {
+              const token = tokenizer.getToken();
+              if (token.type.label === 'eof') break;
+              parts.push({
+                start: token.start,
+                kind: 'token',
+                raw: code.slice(token.start, token.end),
+              });
+            }
+
+            for (const comment of comments) {
+              parts.push({
+                start: comment.start,
+                kind: 'comment',
+                raw: code.slice(comment.start, comment.end),
+              });
+            }
+
+            parts.sort((a, b) => a.start - b.start || a.kind.localeCompare(b.kind));
+            return parts.map(({ kind, raw }) => [kind, raw]);
+          }
+
+          let failed = false;
+
+          for (const file of process.argv.slice(2)) {
+            const before = fs.readFileSync('/tmp/pixiepoint-before/' + file, 'utf8');
+            const after = fs.readFileSync(file, 'utf8');
+
+            if (JSON.stringify(signature(before)) !== JSON.stringify(signature(after))) {
+              console.error('JavaScript token content changed: ' + file);
+              failed = true;
+            }
+          }
+
+          if (failed) process.exit(1);
+          console.log('JavaScript verification passed: tokens and comments are unchanged.');
+          JS
+
+          mapfile -d '' js_files < <(find app/Portal/Themes mt_hotspot public tests -type f \( -name '*.js' -o -name '*.cjs' \) -print0)
+          node /tmp/verify-js.cjs "${js_files[@]}"
+
+      - name: Verify CSS strings, comments, and non-whitespace characters are unchanged
+        run: |
+          cat > /tmp/verify-css.cjs <<'JS'
+          const fs = require('fs');
+
+          function signature(code) {
+            const out = [];
+            let i = 0;
+
+            while (i < code.length) {
+              const ch = code[i];
+
+              if (/\s/.test(ch)) {
+                i++;
+                continue;
+              }
+
+              if (ch === '/' && code[i + 1] === '*') {
+                const start = i;
+                i += 2;
+                while (i < code.length && !(code[i] === '*' && code[i + 1] === '/')) i++;
+                i = Math.min(code.length, i + 2);
+                out.push(['comment', code.slice(start, i)]);
+                continue;
+              }
+
+              if (ch === '"' || ch === "'") {
+                const quote = ch;
+                const start = i++;
+                while (i < code.length) {
+                  if (code[i] === '\\') {
+                    i += 2;
+                    continue;
+                  }
+                  if (code[i] === quote) {
+                    i++;
+                    break;
+                  }
+                  i++;
+                }
+                out.push(['string', code.slice(start, i)]);
+                continue;
+              }
+
+              out.push(['char', ch]);
+              i++;
+            }
+
+            return out;
+          }
+
+          let failed = false;
+
+          for (const file of process.argv.slice(2)) {
+            const before = fs.readFileSync('/tmp/pixiepoint-before/' + file, 'utf8');
+            const after = fs.readFileSync(file, 'utf8');
+
+            if (JSON.stringify(signature(before)) !== JSON.stringify(signature(after))) {
+              console.error('CSS content changed beyond whitespace: ' + file);
+              failed = true;
+            }
+          }
+
+          if (failed) process.exit(1);
+          console.log('CSS verification passed: only structural whitespace changed.');
+          JS
+
+          mapfile -d '' css_files < <(find app/Portal/Themes mt_hotspot public -type f -name '*.css' -print0)
+          node /tmp/verify-css.cjs "${css_files[@]}"
+
+      - name: Validate PHP and JavaScript syntax
+        shell: bash
+        run: |
+          find app bin config public src tests -type f -name '*.php' -print0 | xargs -0 -n1 php -l
+          php -l config.example.php
+          php -l router.php
+
+          while IFS= read -r -d '' file; do
+            node --check "$file"
+          done < <(find app/Portal/Themes mt_hotspot public tests -type f \( -name '*.js' -o -name '*.cjs' \) -print0)
+
+      - name: Commit formatting
+        run: |
+          rm -rf node_modules
+          rm -f .format-safe-once .github/workflows/format-safe-once.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+
+          git commit -m "Format source layout without changing code"
+          git push origin HEAD:main
