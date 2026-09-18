@@ -1,4 +1,5 @@
 <?php
+
 /** @var int $uptime */
 /** @var int $bytesIn */
 /** @var int $bytesOut */

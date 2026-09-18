@@ -1,4 +1,5 @@
 <?php
+
 /** @var string $action */
 /** @var string $destination */
 /** @var string $username */

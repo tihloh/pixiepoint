@@ -7,10 +7,12 @@
 <?= $message ?>
 <section class="panel"><h2>User groups</h2><div class="table-responsive"><table class="table table-hover align-middle"><thead><tr><th>Name</th><th>Description</th><th>Users</th><th class="text-end">Action</th></tr></thead><tbody>
 <?php
-if (!$groups): ?><tr><td colspan="4" class="empty">No groups found.</td></tr><?php
+if (!$groups) :
+    ?><tr><td colspan="4" class="empty">No groups found.</td></tr><?php
 endif; ?>
 <?php
-foreach ($groups as $group): ?><tr><td><strong><?= e($group->name) ?></strong></td><td><?= e($group->description ?? '—') ?></td><td><span class="badge off"><?= e($group->usersCount) ?></span></td><td class="text-end text-nowrap"><a class="btn btn-sm btn-outline-secondary" href="/admin/groups/<?= e($group->id) ?>/edit">Edit</a> <form method="post" class="d-inline" onsubmit="return confirm('Delete this group?')"><input type="hidden" name="_csrf" value="<?= e($csrf) ?>"><input type="hidden" name="action" value="delete"><input type="hidden" name="id" value="<?= e($group->id) ?>"><button class="btn btn-sm btn-outline-danger" type="submit">Delete</button></form></td></tr><?php
+foreach ($groups as $group) :
+    ?><tr><td><strong><?= e($group->name) ?></strong></td><td><?= e($group->description ?? '—') ?></td><td><span class="badge off"><?= e($group->usersCount) ?></span></td><td class="text-end text-nowrap"><a class="btn btn-sm btn-outline-secondary" href="/admin/groups/<?= e($group->id) ?>/edit">Edit</a> <form method="post" class="d-inline" onsubmit="return confirm('Delete this group?')"><input type="hidden" name="_csrf" value="<?= e($csrf) ?>"><input type="hidden" name="action" value="delete"><input type="hidden" name="id" value="<?= e($group->id) ?>"><button class="btn btn-sm btn-outline-danger" type="submit">Delete</button></form></td></tr><?php
 endforeach; ?>
 </tbody></table></div></section>
 <div class="modal fade" id="groupModal" tabindex="-1" aria-hidden="true"><div class="modal-dialog"><div class="modal-content"><form method="post"><div class="modal-header"><h2 class="modal-title fs-5 mb-0">Add group</h2><button class="btn-close" type="button" data-bs-dismiss="modal" aria-label="Close"></button></div><div class="modal-body"><input type="hidden" name="_csrf" value="<?= e($csrf) ?>"><input type="hidden" name="action" value="create"><div class="mb-3"><label class="form-label" for="group-name">Group name</label><input class="form-control" id="group-name" name="name" required></div><div><label class="form-label" for="group-description">Description</label><input class="form-control" id="group-description" name="description"></div></div><div class="modal-footer"><button class="btn btn-outline-secondary" type="button" data-bs-dismiss="modal">Cancel</button><button class="btn btn-primary" type="submit">Add group</button></div></form></div></div></div>

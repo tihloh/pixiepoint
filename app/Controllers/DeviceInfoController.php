@@ -95,16 +95,15 @@ final class DeviceInfoController
                 'ip' => $ip !== '' ? $ip : (string) ($device['last_ip'] ?? ''),
                 'first_seen_at' => (string) ($device['first_seen_at'] ?? ''),
                 'last_seen_at' => (string) ($device['last_seen_at'] ?? ''),
-            ],
+                ],
                 'stats' => [
                 'purchases' => (int) ($stats['purchases'] ?? 0),
                 'spent' => (int) ($stats['spent'] ?? 0),
                 'purchased_seconds' => (int) ($stats['purchased_seconds'] ?? 0),
-            ],
+                ],
                 'history' => $history,
             ]);
-        }
-        catch (Throwable) {
+        } catch (Throwable) {
             $this->json(['ok' => false, 'error' => 'device.lookup_failed'], 500);
         }
     }
@@ -149,8 +148,7 @@ final class DeviceInfoController
                 'saved_voucher' => $voucher,
                 'device' => ['uuid' => (string) ($device['uuid'] ?? $uuid)],
             ]);
-        }
-        catch (Throwable) {
+        } catch (Throwable) {
             $this->json(['ok' => false, 'error' => 'voucher.save_failed'], 500);
         }
     }

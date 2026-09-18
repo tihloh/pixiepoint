@@ -1,4 +1,5 @@
 <?php
+
 /** @var string $body */
 ?>
 <section class="card portal-card border-0 shadow-lg">

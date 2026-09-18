@@ -59,8 +59,7 @@ final class AuthController
 
             if ($result->fails()) {
                 $error = $this->errors($result->errors());
-            }
-            else {
+            } else {
                 $data = $result->validated();
 
                 try {
@@ -73,8 +72,7 @@ final class AuthController
                         'points' => 0,
                     ], $this->requestContext());
                     redirect('/');
-                }
-                catch (Throwable) {
+                } catch (Throwable) {
                     $error = '<div class="alert">The platform owner account could not be created.</div>';
                 }
             }
@@ -106,8 +104,7 @@ final class AuthController
 
             if ($result->fails()) {
                 $error = $this->errors($result->errors());
-            }
-            else {
+            } else {
                 $data = $result->validated();
 
                 try {
@@ -132,8 +129,7 @@ final class AuthController
                     }
 
                     redirect('/');
-                }
-                catch (Throwable) {
+                } catch (Throwable) {
                     $error = '<div class="alert">An account with that email already exists. Try logging in instead.</div>';
                 }
             }
@@ -211,8 +207,7 @@ final class AuthController
             );
             $this->google->establishSession($userId);
             redirect('/dashboard');
-        }
-        catch (Throwable $e) {
+        } catch (Throwable $e) {
             $_SESSION['login_error'] = '<div class="alert">' . e($e->getMessage()) . '</div>';
             redirect('/');
         }

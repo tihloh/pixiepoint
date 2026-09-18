@@ -27,7 +27,7 @@ final class App
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
             PDO::ATTR_EMULATE_PREPARES => false,
-        ],
+            ],
         );
 
         $this->migrate();
@@ -81,7 +81,8 @@ SQL);
         $this->db->exec('UPDATE router_login_events SET points_awarded=0 WHERE user_id IS NULL AND points_awarded>0');
         $this->db->exec("UPDATE devices d SET last_voucher=(SELECT r.username FROM router_login_events r WHERE r.device_id=d.id AND r.username<>'' ORDER BY r.id DESC LIMIT 1) WHERE (d.last_voucher IS NULL OR d.last_voucher='') AND EXISTS (SELECT 1 FROM router_login_events r2 WHERE r2.device_id=d.id AND r2.username<>'')");
 
-        foreach ([
+        foreach (
+            [
             'CREATE UNIQUE INDEX idx_users_google_sub ON users (google_sub)',
             'CREATE UNIQUE INDEX idx_users_account_api_key ON users (account_api_key)',
             'CREATE UNIQUE INDEX idx_routers_hardware_id ON routers (hardware_id)',
@@ -91,18 +92,17 @@ SQL);
             'CREATE INDEX idx_vendos_server_ip ON vendos (server_ip)',
             'CREATE INDEX idx_vendos_portal_theme ON vendos (portal_theme_id)',
             'CREATE INDEX idx_vouchers_router ON vouchers (router_id)',
-        ] as $sql) {
+            ] as $sql
+        ) {
             try {
                 $this->db->exec($sql);
-            }
-            catch (PDOException) {
+            } catch (PDOException) {
             }
         }
 
         try {
             $this->db->exec('ALTER TABLE vouchers ADD CONSTRAINT fk_vouchers_router FOREIGN KEY (router_id) REFERENCES routers(id) ON DELETE SET NULL');
-        }
-        catch (PDOException) {
+        } catch (PDOException) {
         }
 
         $this->db->exec(<<<'SQL'
@@ -123,25 +123,27 @@ CREATE TABLE IF NOT EXISTS voucher_batches (
     FOREIGN KEY(created_by) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 SQL);
-        foreach([
+        foreach (
+            [
             'CREATE INDEX idx_vouchers_station ON vouchers (station_id)',
             'CREATE INDEX idx_vouchers_batch ON vouchers (batch_id)',
             'CREATE INDEX idx_vouchers_archive ON vouchers (router_id,archived_at)',
-        ] as $sql){
-            try{
+            ] as $sql
+        ) {
+            try {
                 $this->db->exec($sql);
-            }
-            catch(PDOException){
+            } catch (PDOException) {
             }
         }
-        foreach([
+        foreach (
+            [
             'ALTER TABLE vouchers ADD CONSTRAINT fk_vouchers_station FOREIGN KEY (station_id) REFERENCES vendos(id) ON DELETE SET NULL',
             'ALTER TABLE vouchers ADD CONSTRAINT fk_vouchers_batch FOREIGN KEY (batch_id) REFERENCES voucher_batches(id) ON DELETE SET NULL',
-        ] as $sql){
-            try{
+            ] as $sql
+        ) {
+            try {
                 $this->db->exec($sql);
-            }
-            catch(PDOException){
+            } catch (PDOException) {
             }
         }
 

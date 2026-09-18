@@ -11,8 +11,7 @@ try {
     (new Tihloh\VendoGateway\Database\Migrator($app->db))->migrate();
     fwrite(STDOUT, "PixiePoint and Vendo Gateway database migrations completed.\n");
     exit(0);
-}
-catch (Throwable $exception) {
+} catch (Throwable $exception) {
     fwrite(STDERR, "Migration failed: {$exception->getMessage()}\n");
     exit(1);
 }

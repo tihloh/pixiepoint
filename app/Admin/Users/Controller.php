@@ -53,8 +53,7 @@ final class Controller extends FeatureController
                 ], $this->context());
 
                 $_SESSION['admin_flash'] = '<div class="alert ok">User added.</div>';
-            }
-            catch (\Throwable $e) {
+            } catch (\Throwable $e) {
                 $_SESSION['admin_flash'] = '<div class="alert">' . e($e->getMessage()) . '</div>';
             }
 
@@ -96,8 +95,7 @@ final class Controller extends FeatureController
                 if ($action === 'avatar') {
                     $avatarUrl = $this->avatars->store($userId, (string) ($_POST['avatar_data'] ?? ''));
                     $this->users->update($userId, ['avatar_url' => $avatarUrl], $this->context());
-                }
-                else {
+                } else {
                     $current = $target->toArray();
                     $name = trim((string) ($_POST['name'] ?? ''));
                     $email = strtolower(trim((string) ($_POST['email'] ?? '')));
@@ -129,8 +127,7 @@ final class Controller extends FeatureController
                 }
 
                 $_SESSION['admin_flash'] = '<div class="alert ok">User updated.</div>';
-            }
-            catch (\Throwable $e) {
+            } catch (\Throwable $e) {
                 $_SESSION['admin_flash'] = '<div class="alert">' . e($e->getMessage()) . '</div>';
             }
 

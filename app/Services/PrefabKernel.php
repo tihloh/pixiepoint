@@ -23,14 +23,18 @@ final class PrefabKernel
             'modules' => [
             'permissions' => ['definitions' => $root . '/config/permissions.php', 'table' => 'prefab_subject_permissions'],
             'logs' => ['table' => 'prefab_logs'],
-        ],
+            ],
         ]);
 
         $logs = new LogManager(['database' => $db]);
         $logs->prefabConfigure();
 
         $map = new UserMap(
-            table: 'users', id: 'id', name: 'name', email: 'email', active: 'active',
+            table: 'users',
+            id: 'id',
+            name: 'name',
+            email: 'email',
+            active: 'active',
             attributes: [
             'password_hash' => 'password_hash',
             'platform_role' => 'platform_role',
@@ -38,8 +42,10 @@ final class PrefabKernel
             'account_api_key' => 'account_api_key',
             'google_sub' => 'google_sub',
             'avatar_url' => 'avatar_url',
-        ],
-            allowCreate: true, allowUpdate: true, allowDelete: false,
+            ],
+            allowCreate: true,
+            allowUpdate: true,
+            allowDelete: false,
         );
 
         $users = new UserManager(['database' => $db, 'map' => $map, 'factory' => new AppUserFactory()]);

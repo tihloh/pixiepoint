@@ -121,8 +121,7 @@ final class PointWallet
             if ($insert->rowCount() > 0) {
                 $this->db->prepare('UPDATE point_wallets SET balance=balance+?,updated_at=? WHERE id=?')->execute([$points, now(), $user['id']]);
                 $this->db->prepare('UPDATE users SET points=points+? WHERE id=?')->execute([$points, $userId]);
-            }
-            else {
+            } else {
                 $points = 0;
             }
         }

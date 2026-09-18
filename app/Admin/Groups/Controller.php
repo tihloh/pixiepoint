@@ -45,8 +45,7 @@ final class Controller extends FeatureController
                         trim((string) ($_POST['description'] ?? '')) ?: null,
                     );
                     $_SESSION['admin_flash'] = '<div class="alert ok">Group added.</div>';
-                }
-                elseif ($action === 'delete') {
+                } elseif ($action === 'delete') {
                     $groupId = max(0, (int) ($_POST['id'] ?? 0));
                     if (!$groups->find($groupId)) {
                         throw new RuntimeException('Group not found.');
@@ -55,8 +54,7 @@ final class Controller extends FeatureController
                     $groups->delete($groupId);
                     $_SESSION['admin_flash'] = '<div class="alert ok">Group deleted.</div>';
                 }
-            }
-            catch (\Throwable $e) {
+            } catch (\Throwable $e) {
                 $_SESSION['admin_flash'] = '<div class="alert">' . e($e->getMessage()) . '</div>';
             }
 
@@ -104,18 +102,15 @@ final class Controller extends FeatureController
 
                     if ($value === 'allow') {
                         $this->permissions->set('group', $groupId, $permission, true, $this->context());
-                    }
-                    elseif ($value === 'deny') {
+                    } elseif ($value === 'deny') {
                         $this->permissions->set('group', $groupId, $permission, false, $this->context());
-                    }
-                    else {
+                    } else {
                         $this->permissions->clear('group', $groupId, $permission, $this->context());
                     }
                 }
 
                 $_SESSION['admin_flash'] = '<div class="alert ok">Group saved.</div>';
-            }
-            catch (\Throwable $e) {
+            } catch (\Throwable $e) {
                 $_SESSION['admin_flash'] = '<div class="alert">' . e($e->getMessage()) . '</div>';
             }
 

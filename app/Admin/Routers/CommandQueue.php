@@ -79,8 +79,7 @@ final class CommandQueue
             'id' => (int) $row['id'],
             'command' => (string) $row['command'],
             ];
-        }
-        catch (Throwable $e) {
+        } catch (Throwable $e) {
             if ($this->db->inTransaction()) {
                 $this->db->rollBack();
             }

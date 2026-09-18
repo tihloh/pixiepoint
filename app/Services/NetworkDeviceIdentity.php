@@ -25,8 +25,7 @@ final class NetworkDeviceIdentity
             $stmt = $this->db->prepare('INSERT INTO devices(uuid,mac,last_ip,last_seen_at) VALUES(?,?,?,?)');
             $stmt->execute([$uuid, $mac, $ip !== '' ? $ip : null, now()]);
             $device = $this->find((int) $this->db->lastInsertId());
-        }
-        else {
+        } else {
             $this->db->prepare('UPDATE devices SET last_ip=?,last_seen_at=? WHERE id=?')->execute([$ip !== '' ? $ip : null, now(), (int) $device['id']]);
         }
 

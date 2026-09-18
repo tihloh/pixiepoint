@@ -37,11 +37,9 @@ final class DeviceIdentity
             // identity from the other record. A signed-in user can resolve the
             // ambiguity explicitly from the dashboard.
             $device = $cookieDevice;
-        }
-        elseif ($cookieDevice) {
+        } elseif ($cookieDevice) {
             $device = $cookieDevice;
-        }
-        elseif ($macDevice) {
+        } elseif ($macDevice) {
             $device = $macDevice;
         }
 
@@ -51,8 +49,7 @@ final class DeviceIdentity
             // device or a randomized identity of an existing one.
             $owner = $userId !== null && !$this->hasUserDevices($userId) ? $userId : null;
             $device = $this->createDevice($mac, $owner, $ip, $userAgent);
-        }
-        else {
+        } else {
             $device = $this->canonicalDevice($device);
             $this->touchDevice((int) $device['id'], $ip, $userAgent);
         }
@@ -143,8 +140,7 @@ final class DeviceIdentity
             $this->db->prepare('UPDATE devices SET last_seen_at=? WHERE id=?')->execute([now(), (int) $target['id']]);
             $this->db->commit();
             $_SESSION['current_device_id'] = (int) $target['id'];
-        }
-        catch (\Throwable $e) {
+        } catch (\Throwable $e) {
             $this->db->rollBack();
 
             throw $e;

@@ -60,8 +60,7 @@ final class TeamController extends FeatureController
 
             if (!$canManageTeam) {
                 $message = '<div class="alert">You cannot manage this gateway team.</div>';
-            }
-            else {
+            } else {
                 $action = (string) ($_POST['action'] ?? 'save');
 
                 try {
@@ -83,8 +82,7 @@ final class TeamController extends FeatureController
                             ['user_id' => $memberId],
                         );
                         $message = '<div class="alert ok">Team member removed.</div>';
-                    }
-                    else {
+                    } else {
                         $result = Input::fromRequest()->process([
                             'email' => 'trim|required|email|max:254',
                             'role' => 'trim|required|string|max:32',
@@ -132,12 +130,11 @@ final class TeamController extends FeatureController
                             [
                             'user_id' => $memberId,
                             'role' => $role,
-                        ],
+                            ],
                         );
                         $message = '<div class="alert ok">Team member saved.</div>';
                     }
-                }
-                catch (Throwable $e) {
+                } catch (Throwable $e) {
                     $message = '<div class="alert">' . e($e->getMessage()) . '</div>';
                 }
             }

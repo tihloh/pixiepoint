@@ -1,4 +1,5 @@
 <?php
+
 /** @var string $error */
 /** @var string $csrf */
 ?>
