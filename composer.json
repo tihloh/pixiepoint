@@ -10,7 +10,7 @@
     "tihloh/prefab-input": "^0.5.2",
     "tihloh/prefab-permissions": "^0.5.2",
     "tihloh/prefab-logs": "^0.5.2",
-    "tihloh/vendo-gateway": "dev-review/codex-refactor-20260918 as 1.3.2"
+    "tihloh/vendo-gateway": "dev-main as 1.3.2"
   },
   "autoload": {
     "psr-4": {
