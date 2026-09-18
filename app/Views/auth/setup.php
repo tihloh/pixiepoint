@@ -28,13 +28,7 @@
 
     <div class="field">
         <label for="setup-password">Password</label>
-        <input
-            id="setup-password"
-            name="password"
-            type="password"
-            minlength="12"
-            required
-        >
+        <input id="setup-password" name="password" type="password" minlength="12" required>
         <small class="text-body-secondary">
             Use at least 12 characters because this account has full platform access.
         </small>

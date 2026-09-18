@@ -12,50 +12,28 @@
 <?= $error ?>
 
 <?php if ($googleEnabled): ?>
-    <?php
-require dirname(__DIR__) . '/partials/google-button.php'; ?>
 <?php
-endif; ?>
+require dirname(__DIR__) . '/partials/google-button.php'; ?>
+<?php endif; ?>
 
 <form method="post" class="auth-form">
     <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
 
     <div class="field">
         <label for="register-name">Name</label>
-        <input
-            id="register-name"
-            name="name"
-            autocomplete="name"
-            placeholder="Your name"
-            required
-        >
+        <input id="register-name" name="name" autocomplete="name" placeholder="Your name" required>
         <small class="text-body-secondary">The name shown on your PixiePoint account.</small>
     </div>
 
     <div class="field">
         <label for="register-email">Email address</label>
-        <input
-            id="register-email"
-            name="email"
-            type="email"
-            autocomplete="email"
-            placeholder="you@example.com"
-            required
-        >
+        <input id="register-email" name="email" type="email" autocomplete="email" placeholder="you@example.com" required>
         <small class="text-body-secondary">Used to sign in and identify your account.</small>
     </div>
 
     <div class="field">
         <label for="register-password">Password</label>
-        <input
-            id="register-password"
-            name="password"
-            type="password"
-            minlength="8"
-            autocomplete="new-password"
-            placeholder="At least 8 characters"
-            required
-        >
+        <input id="register-password" name="password" type="password" minlength="8" autocomplete="new-password" placeholder="At least 8 characters" required>
         <small class="text-body-secondary">
             Choose at least 8 characters to protect your account.
         </small>

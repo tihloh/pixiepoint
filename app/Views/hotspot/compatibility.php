@@ -26,21 +26,11 @@ $businessName = (string) ($vendos[0]['businessName'] ?? 'PixiePoint');
                 <div class="field" id="compat-topup-slot">
                     <label for="compat-vendo">Coin slot</label>
                     <select id="compat-vendo">
-                        <?php
-foreach ($vendos as $index => $vendo): ?>
-                            <option
-                                value="<?= e($vendo['id']) ?>"
-                                data-base-url="<?= e($vendo['baseUrl']) ?>"
-                                data-business-name="<?= e($vendo['businessName']) ?>"
-                                data-password-mode="<?= e($vendo['passwordMode']) ?>"
-                                data-charging="<?= $vendo['chargingEnabled'] ? '1' : '0' ?>"
-                                data-eload="<?= $vendo['eloadEnabled'] ? '1' : '0' ?>"
-                                <?= $index === 0 ? 'selected' : '' ?>
-                            >
-                                <?= e($vendo['businessName']) ?>
-                            </option>
-                        <?php
-endforeach; ?>
+                        <?php foreach ($vendos as $index => $vendo): ?>
+                        <option value="<?= e($vendo['id']) ?>" data-base-url="<?= e($vendo['baseUrl']) ?>" data-business-name="<?= e($vendo['businessName']) ?>" data-password-mode="<?= e($vendo['passwordMode']) ?>" data-charging="<?= $vendo['chargingEnabled'] ? '1' : '0' ?>" data-eload="<?= $vendo['eloadEnabled'] ? '1' : '0' ?>" <?= $index === 0 ? 'selected' : '' ?>>
+                            <?= e($vendo['businessName']) ?>
+                        </option>
+                        <?php endforeach; ?>
                     </select>
 
                     <small id="compat-health" class="compat-status">
@@ -54,13 +44,7 @@ endforeach; ?>
                     <div class="field">
                         <label for="compat-voucher">Voucher</label>
                         <div class="input-group">
-                            <input
-                                id="compat-voucher"
-                                class="form-control"
-                                autocomplete="one-time-code"
-                                autocapitalize="characters"
-                                required
-                            >
+                            <input id="compat-voucher" class="form-control" autocomplete="one-time-code" autocapitalize="characters" required>
                             <button class="button" id="compat-connect" type="submit">
                                 Connect
                             </button>
@@ -127,31 +111,29 @@ endforeach; ?>
                     <div id="compat-eload-products">Loading products…</div>
                 </div>
 
-                <?php
-if ($debug): ?>
-                    <details class="compat-debug" open>
-                        <summary>Temporary hotspot debug</summary>
-                        <div class="compat-debug-grid">
-                            <div>
-                                <strong>Local → host</strong>
-                                <pre><?= e(json_encode($debug['raw'] ?? [], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)) ?></pre>
-                            </div>
-                            <div>
-                                <strong>Host processed</strong>
-                                <pre><?= e(json_encode($debug['processed'] ?? [], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)) ?></pre>
-                            </div>
-                            <div>
-                                <strong>Validation</strong>
-                                <pre><?= e(json_encode($debug['validationErrors'] ?? [], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)) ?></pre>
-                            </div>
-                            <div>
-                                <strong>Vendo matching</strong>
-                                <pre><?= e(json_encode($debug['matching'] ?? [], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)) ?></pre>
-                            </div>
+                <?php if ($debug): ?>
+                <details class="compat-debug" open>
+                    <summary>Temporary hotspot debug</summary>
+                    <div class="compat-debug-grid">
+                        <div>
+                            <strong>Local → host</strong>
+                            <pre><?= e(json_encode($debug['raw'] ?? [], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)) ?></pre>
                         </div>
-                    </details>
-                <?php
-endif; ?>
+                        <div>
+                            <strong>Host processed</strong>
+                            <pre><?= e(json_encode($debug['processed'] ?? [], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)) ?></pre>
+                        </div>
+                        <div>
+                            <strong>Validation</strong>
+                            <pre><?= e(json_encode($debug['validationErrors'] ?? [], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)) ?></pre>
+                        </div>
+                        <div>
+                            <strong>Vendo matching</strong>
+                            <pre><?= e(json_encode($debug['matching'] ?? [], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)) ?></pre>
+                        </div>
+                    </div>
+                </details>
+                <?php endif; ?>
 
                 <noscript>
                     <div class="alert">

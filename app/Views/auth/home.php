@@ -28,41 +28,24 @@
 
                 <?= $error ?>
 
-                <?php
-if ($googleEnabled): ?>
-                    <div class="mb-3">
-                        <?php
+                <?php if ($googleEnabled): ?>
+                <div class="mb-3">
+                    <?php
 require dirname(__DIR__) . '/partials/google-button.php'; ?>
-                    </div>
-                <?php
-endif; ?>
+                </div>
+                <?php endif; ?>
 
                 <form method="post" action="/login" class="auth-form">
                     <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
 
                     <div class="field">
                         <label for="login-email">Email address</label>
-                        <input
-                            id="login-email"
-                            name="email"
-                            type="email"
-                            autocomplete="username"
-                            placeholder="you@example.com"
-                            required
-                            autofocus
-                        >
+                        <input id="login-email" name="email" type="email" autocomplete="username" placeholder="you@example.com" required autofocus>
                     </div>
 
                     <div class="field">
                         <label for="login-password">Password</label>
-                        <input
-                            id="login-password"
-                            name="password"
-                            type="password"
-                            autocomplete="current-password"
-                            placeholder="Enter your password"
-                            required
-                        >
+                        <input id="login-password" name="password" type="password" autocomplete="current-password" placeholder="Enter your password" required>
                     </div>
 
                     <button class="button full" type="submit">Sign in</button>

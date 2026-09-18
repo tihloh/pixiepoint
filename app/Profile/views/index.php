@@ -15,35 +15,18 @@
                 <?= $message ?>
 
                 <div class="d-flex align-items-center gap-3 mb-4">
-                    <?php
-if (!empty($user['avatar_url'])): ?>
-                        <img
-                            src="<?= e($user['avatar_url']) ?>"
-                            alt=""
-                            class="rounded-circle object-fit-cover border"
-                            width="88"
-                            height="88"
-                        >
-                    <?php
-else: ?>
-                        <div
-                            class="rounded-circle border d-flex align-items-center justify-content-center fs-3 fw-bold"
-                            style="width:88px;height:88px"
-                        >
-                            <?= e(strtoupper(substr((string) $user['name'], 0, 1))) ?>
-                        </div>
-                    <?php
-endif; ?>
+                    <?php if (!empty($user['avatar_url'])): ?>
+                    <img src="<?= e($user['avatar_url']) ?>" alt="" class="rounded-circle object-fit-cover border" width="88" height="88">
+                    <?php else: ?>
+                    <div class="rounded-circle border d-flex align-items-center justify-content-center fs-3 fw-bold" style="width:88px;height:88px">
+                        <?= e(strtoupper(substr((string) $user['name'], 0, 1))) ?>
+                    </div>
+                    <?php endif; ?>
 
                     <div>
                         <h2 class="h5 mb-1"><?= e($user['name']) ?></h2>
                         <div class="text-body-secondary small mb-2"><?= e($user['email']) ?></div>
-                        <button
-                            class="btn btn-sm btn-outline-secondary"
-                            type="button"
-                            data-bs-toggle="modal"
-                            data-bs-target="#avatarModal"
-                        >
+                        <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="modal" data-bs-target="#avatarModal">
                             Change photo
                         </button>
                     </div>
@@ -55,25 +38,12 @@ endif; ?>
 
                     <div class="mb-3">
                         <label class="form-label" for="profile-name">Name</label>
-                        <input
-                            class="form-control"
-                            id="profile-name"
-                            name="name"
-                            value="<?= e($user['name']) ?>"
-                            required
-                        >
+                        <input class="form-control" id="profile-name" name="name" value="<?= e($user['name']) ?>" required>
                     </div>
 
                     <div class="mb-4">
                         <label class="form-label" for="profile-email">Email</label>
-                        <input
-                            class="form-control"
-                            id="profile-email"
-                            name="email"
-                            type="email"
-                            value="<?= e($user['email']) ?>"
-                            required
-                        >
+                        <input class="form-control" id="profile-email" name="email" type="email" value="<?= e($user['email']) ?>" required>
                     </div>
 
                     <div class="d-flex justify-content-end pt-3 border-top">
@@ -103,16 +73,8 @@ endif; ?>
                         <button class="btn btn-outline-secondary" id="avatarChoose" type="button">Choose photo</button>
                     </div>
 
-                    <div
-                        class="mx-auto overflow-hidden rounded-circle border"
-                        style="width:280px;height:280px;touch-action:none;background:#07111f"
-                    >
-                        <canvas
-                            id="avatarCanvas"
-                            width="512"
-                            height="512"
-                            style="width:280px;height:280px;cursor:grab"
-                        ></canvas>
+                    <div class="mx-auto overflow-hidden rounded-circle border" style="width:280px;height:280px;touch-action:none;background:#07111f">
+                        <canvas id="avatarCanvas" width="512" height="512" style="width:280px;height:280px;cursor:grab"></canvas>
                     </div>
 
                     <label class="form-label mt-3" for="avatarZoom">Zoom</label>
@@ -128,87 +90,87 @@ endif; ?>
 </div>
 
 <script>
-(() => {
-    const file = document.getElementById('avatarFile');
-    const choose = document.getElementById('avatarChoose');
-    const canvas = document.getElementById('avatarCanvas');
-    const ctx = canvas.getContext('2d');
-    const zoom = document.getElementById('avatarZoom');
-    const form = document.getElementById('avatarForm');
-    const image = new Image();
-    let scale = 1;
-    let x = 0;
-    let y = 0;
-    let dragging = false;
-    let pointerX = 0;
-    let pointerY = 0;
+    (() => {
+        const file = document.getElementById('avatarFile');
+        const choose = document.getElementById('avatarChoose');
+        const canvas = document.getElementById('avatarCanvas');
+        const ctx = canvas.getContext('2d');
+        const zoom = document.getElementById('avatarZoom');
+        const form = document.getElementById('avatarForm');
+        const image = new Image();
+        let scale = 1;
+        let x = 0;
+        let y = 0;
+        let dragging = false;
+        let pointerX = 0;
+        let pointerY = 0;
 
-    choose.addEventListener('click', () => file.click());
+        choose.addEventListener('click', () => file.click());
 
-    function draw() {
-        ctx.clearRect(0, 0, 512, 512);
-        if (!image.width) return;
-        const base = Math.max(512 / image.width, 512 / image.height);
-        const renderedScale = base * scale;
-        const width = image.width * renderedScale;
-        const height = image.height * renderedScale;
-        x = Math.min(0, Math.max(512 - width, x));
-        y = Math.min(0, Math.max(512 - height, y));
-        ctx.drawImage(image, x, y, width, height);
-    }
-
-    file.addEventListener('change', () => {
-        const selected = file.files[0];
-        if (!selected) return;
-        choose.textContent = 'Choose another photo';
-        const reader = new FileReader();
-        reader.onload = () => {
-            image.onload = () => {
-                scale = 1;
-                zoom.value = 1;
-                const base = Math.max(512 / image.width, 512 / image.height);
-                x = (512 - image.width * base) / 2;
-                y = (512 - image.height * base) / 2;
-                draw();
-            };
-            image.src = reader.result;
-        };
-        reader.readAsDataURL(selected);
-    });
-
-    zoom.addEventListener('input', () => {
-        const old = scale;
-        scale = Number(zoom.value);
-        const ratio = scale / old;
-        x = 256 - (256 - x) * ratio;
-        y = 256 - (256 - y) * ratio;
-        draw();
-    });
-
-    canvas.addEventListener('pointerdown', event => {
-        dragging = true;
-        pointerX = event.clientX;
-        pointerY = event.clientY;
-        canvas.setPointerCapture(event.pointerId);
-    });
-
-    canvas.addEventListener('pointermove', event => {
-        if (!dragging) return;
-        x += (event.clientX - pointerX) * (512 / 280);
-        y += (event.clientY - pointerY) * (512 / 280);
-        pointerX = event.clientX;
-        pointerY = event.clientY;
-        draw();
-    });
-
-    canvas.addEventListener('pointerup', () => dragging = false);
-
-    form.addEventListener('submit', event => {
-        if (!image.width) {
-            event.preventDefault();
-            return;
+        function draw() {
+            ctx.clearRect(0, 0, 512, 512);
+            if (!image.width) return;
+            const base = Math.max(512 / image.width, 512 / image.height);
+            const renderedScale = base * scale;
+            const width = image.width * renderedScale;
+            const height = image.height * renderedScale;
+            x = Math.min(0, Math.max(512 - width, x));
+            y = Math.min(0, Math.max(512 - height, y));
+            ctx.drawImage(image, x, y, width, height);
         }
-        document.getElementById('avatarData').value = canvas.toDataURL('image/webp', 0.86);
-    });
-})();
+
+        file.addEventListener('change', () => {
+            const selected = file.files[0];
+            if (!selected) return;
+            choose.textContent = 'Choose another photo';
+            const reader = new FileReader();
+            reader.onload = () => {
+                image.onload = () => {
+                    scale = 1;
+                    zoom.value = 1;
+                    const base = Math.max(512 / image.width, 512 / image.height);
+                    x = (512 - image.width * base) / 2;
+                    y = (512 - image.height * base) / 2;
+                    draw();
+                };
+                image.src = reader.result;
+            };
+            reader.readAsDataURL(selected);
+        });
+
+        zoom.addEventListener('input', () => {
+            const old = scale;
+            scale = Number(zoom.value);
+            const ratio = scale / old;
+            x = 256 - (256 - x) * ratio;
+            y = 256 - (256 - y) * ratio;
+            draw();
+        });
+
+        canvas.addEventListener('pointerdown', event => {
+            dragging = true;
+            pointerX = event.clientX;
+            pointerY = event.clientY;
+            canvas.setPointerCapture(event.pointerId);
+        });
+
+        canvas.addEventListener('pointermove', event => {
+            if (!dragging) return;
+            x += (event.clientX - pointerX) * (512 / 280);
+            y += (event.clientY - pointerY) * (512 / 280);
+            pointerX = event.clientX;
+            pointerY = event.clientY;
+            draw();
+        });
+
+        canvas.addEventListener('pointerup', () => dragging = false);
+
+        form.addEventListener('submit', event => {
+            if (!image.width) {
+                event.preventDefault();
+                return;
+            }
+            document.getElementById('avatarData').value = canvas.toDataURL('image/webp', 0.86);
+        });
+    })();
 </script>

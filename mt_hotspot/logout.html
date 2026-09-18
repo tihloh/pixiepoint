@@ -1,49 +1,73 @@
 <!doctype html>
 <html lang="en">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta http-equiv="Cache-Control" content="no-store"><title>PixiePoint</title></head>
-<body>
-<p id="pp-load-status" role="status">Loading PixiePoint...</p>
-<button id="pp-load-retry" type="button" hidden>Retry loading portal</button>
-<script>
-(function(){
-  var p=new URLSearchParams();
-  p.set('router_identity','$(identity)');p.set('server_address','$(server-address)');p.set('client_ip','$(ip)');p.set('interface','$(interface-name)');p.set('mac','$(mac)');p.set('username','$(username)');p.set('login_url','$(link-login)');p.set('disconnected','1');
 
-  var status=document.getElementById('pp-load-status');
-  var retry=document.getElementById('pp-load-retry');
-  var stage='request';
-  var origin='http://hs.portalx.win';
-  function loadPortal(){
-    stage='request';retry.hidden=true;status.textContent='Loading PixiePoint...';
-    fetch(origin+'/hotspot/logout?'+p.toString(),{cache:'no-store',credentials:'omit',redirect:'error'})
-      .then(function(response){
-        if(!response.ok)throw new Error('HTTP '+response.status);
-        stage='response';
-        return response.text();
-      })
-      .then(function(html){
-        if(!/<[^>]+\bid=["']pixiepoint-root["']/i.test(html)){
-          throw new Error('The response did not contain a PixiePoint portal.');
-        }
-        stage='render';
-        html=html.replace(/<head([^>]*)>/i,function(match){
-          return match+'<base href="'+origin+'/">';
-        });
-        document.open();document.write(html);document.close();
-      })
-      .catch(function(error){
-        console.error('PixiePoint portal '+stage+' failed:',error);
-        status.textContent=stage==='request'
-          ? (error.message.indexOf('HTTP ')===0
-              ? 'PixiePoint returned '+error.message+'. Retry loading the portal.'
-              : 'This browser could not fetch the PixiePoint portal.')
-          : 'The PixiePoint portal could not be loaded ('+stage+'). Retry or contact the hotspot operator.';
-        retry.hidden=false;
-      });
-  }
-  retry.addEventListener('click',loadPortal);
-  loadPortal();
-})();
-</script>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta http-equiv="Cache-Control" content="no-store">
+  <title>PixiePoint</title>
+</head>
+
+<body>
+  <p id="pp-load-status" role="status">Loading PixiePoint...</p>
+  <button id="pp-load-retry" type="button" hidden>Retry loading portal</button>
+  <script>
+    (function() {
+      var p = new URLSearchParams();
+      p.set('router_identity', '$(identity)');
+      p.set('server_address', '$(server-address)');
+      p.set('client_ip', '$(ip)');
+      p.set('interface', '$(interface-name)');
+      p.set('mac', '$(mac)');
+      p.set('username', '$(username)');
+      p.set('login_url', '$(link-login)');
+      p.set('disconnected', '1');
+
+      var status = document.getElementById('pp-load-status');
+      var retry = document.getElementById('pp-load-retry');
+      var stage = 'request';
+      var origin = 'http://hs.portalx.win';
+
+      function loadPortal() {
+        stage = 'request';
+        retry.hidden = true;
+        status.textContent = 'Loading PixiePoint...';
+        fetch(origin + '/hotspot/logout?' + p.toString(), {
+            cache: 'no-store',
+            credentials: 'omit',
+            redirect: 'error'
+          })
+          .then(function(response) {
+            if (!response.ok) throw new Error('HTTP ' + response.status);
+            stage = 'response';
+            return response.text();
+          })
+          .then(function(html) {
+            if (!/<[^>]+\bid=["']pixiepoint-root["']/i.test(html)) {
+              throw new Error('The response did not contain a PixiePoint portal.');
+            }
+            stage = 'render';
+            html = html.replace(/<head([^>]*)>/i, function(match) {
+              return match + '<base href="' + origin + '/">';
+            });
+            document.open();
+            document.write(html);
+            document.close();
+          })
+          .catch(function(error) {
+            console.error('PixiePoint portal ' + stage + ' failed:', error);
+            status.textContent = stage === 'request' ?
+              (error.message.indexOf('HTTP ') === 0 ?
+                'PixiePoint returned ' + error.message + '. Retry loading the portal.' :
+                'This browser could not fetch the PixiePoint portal.') :
+              'The PixiePoint portal could not be loaded (' + stage + '). Retry or contact the hotspot operator.';
+            retry.hidden = false;
+          });
+      }
+      retry.addEventListener('click', loadPortal);
+      loadPortal();
+    })();
+  </script>
 </body>
+
 </html>

@@ -21,30 +21,25 @@
                 </tr>
             </thead>
             <tbody>
-                <?php
-foreach ($users as $user): ?>
-                    <tr>
-                        <td>
-                            <strong><?= e($user['name']) ?></strong>
-                            <div class="small text-body-secondary"><?= e($user['email']) ?></div>
-                        </td>
-                        <td><?= e(str_replace('_', ' ', (string) $user['platform_role'])) ?></td>
-                        <td>
-                            <span class="badge <?= $user['active'] ? '' : 'off' ?>">
-                                <?= $user['active'] ? 'Active' : 'Disabled' ?>
-                            </span>
-                        </td>
-                        <td class="text-end">
-                            <a
-                                class="btn btn-sm btn-outline-secondary"
-                                href="/admin/permissions/<?= e($user['id']) ?>"
-                            >
-                                Manage
-                            </a>
-                        </td>
-                    </tr>
-                <?php
-endforeach; ?>
+                <?php foreach ($users as $user): ?>
+                <tr>
+                    <td>
+                        <strong><?= e($user['name']) ?></strong>
+                        <div class="small text-body-secondary"><?= e($user['email']) ?></div>
+                    </td>
+                    <td><?= e(str_replace('_', ' ', (string) $user['platform_role'])) ?></td>
+                    <td>
+                        <span class="badge <?= $user['active'] ? '' : 'off' ?>">
+                            <?= $user['active'] ? 'Active' : 'Disabled' ?>
+                        </span>
+                    </td>
+                    <td class="text-end">
+                        <a class="btn btn-sm btn-outline-secondary" href="/admin/permissions/<?= e($user['id']) ?>">
+                            Manage
+                        </a>
+                    </td>
+                </tr>
+                <?php endforeach; ?>
             </tbody>
         </table>
     </div>
