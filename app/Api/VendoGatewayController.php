@@ -70,7 +70,7 @@ final class VendoGatewayController
     public function heartbeat(): never{
         $gateway=$this->gateway();
         $raw=$this->raw();
-        $this->run(fn()=>(new HeartbeatEndpoint(GatewayFactory::authenticator($this->db,$this->masterKey()),$gateway->heartbeats))->handle($this->headers(),$raw,'POST','/vendo/v1/heartbeat',$_SERVER['REMOTE_ADDR']??null));
+        $this->run(fn()=>(new HeartbeatEndpoint($this->deviceAuth(),$gateway->heartbeats))->handle($this->headers(),$raw,'POST','/vendo/v1/heartbeat',$_SERVER['REMOTE_ADDR']??null));
     }
     public function sync(): never{
         $gateway=$this->gateway();
@@ -124,9 +124,6 @@ final class VendoGatewayController
     private function deviceAuth(): DeviceAuth{
         if(!$this->deviceAuth)$this->json(['ok'=>false,'error'=>'vendo_gateway_not_configured'],503);
         return$this->deviceAuth;
-    }
-    private function masterKey(): string{
-        return(string)($this->config['vendo_gateway_master_key']??'');
     }
     private function raw(): string{
         return(string)(file_get_contents('php://input')?:'');
