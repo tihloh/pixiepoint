@@ -51,15 +51,27 @@ $sidebarInitial=strtoupper(substr($sidebarName,0,1));
 <body>
     <?php if($dashboard):?>
     <nav class="navbar border-bottom d-lg-none sticky-top">
-        <div class="container-fluid px-3"><a class="navbar-brand fw-bold d-flex align-items-center gap-2" href="/dashboard"><span class="logo">P</span><span><?= $name ?></span></a><button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#pixiepoint-sidebar" aria-controls="pixiepoint-sidebar" aria-label="Open navigation"><span class="navbar-toggler-icon"></span></button></div>
+        <div class="container-fluid px-3">
+            <a class="navbar-brand fw-bold d-flex align-items-center gap-2" href="/dashboard">
+                <span class="logo">P</span>
+                <span><?= $name ?></span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#pixiepoint-sidebar" aria-controls="pixiepoint-sidebar" aria-label="Open navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+        </div>
     </nav>
     <div class="d-lg-flex min-vh-100">
         <aside class="offcanvas-lg offcanvas-start border-end pixie-sidebar" tabindex="-1" id="pixiepoint-sidebar" aria-labelledby="pixiepoint-sidebar-label">
             <div class="offcanvas-header border-bottom d-lg-none">
-                <h5 class="offcanvas-title" id="pixiepoint-sidebar-label"><?= $name ?></h5><button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#pixiepoint-sidebar" aria-label="Close"></button>
+                <h5 class="offcanvas-title" id="pixiepoint-sidebar-label"><?= $name ?></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#pixiepoint-sidebar" aria-label="Close"></button>
             </div>
             <div class="offcanvas-body d-flex flex-column p-3">
-                <a class="d-none d-lg-flex flex-column align-items-center text-decoration-none text-body fw-bold mb-4 px-2 pixie-brand" href="/dashboard"><span class="logo pixie-brand-logo">P</span><span class="mt-2"><?= $name ?></span></a>
+                <a class="d-none d-lg-flex flex-column align-items-center text-decoration-none text-body fw-bold mb-4 px-2 pixie-brand" href="/dashboard">
+                    <span class="logo pixie-brand-logo">P</span>
+                    <span class="mt-2"><?= $name ?></span>
+                </a>
                 <nav class="nav nav-pills flex-column gap-1">
                     <?php if($routerContext):?>
                     <a class="nav-link text-body-secondary" href="/admin/routers">← Gateways</a>
@@ -78,12 +90,18 @@ $sidebarInitial=strtoupper(substr($sidebarName,0,1));
                 </nav>
                 <div class="card border-0 rounded-3 mt-auto pixie-user-card">
                     <div class="card-body p-3">
-                        <div class="d-flex align-items-center gap-3"><?php if($sidebarAvatar!==''):?><img src="<?= e($sidebarAvatar) ?>" alt="" class="pixie-user-avatar"><?php else:?><span class="pixie-user-avatar pixie-user-avatar-fallback" aria-hidden="true"><?= e($sidebarInitial) ?></span><?php endif;?><div class="min-w-0 flex-grow-1">
+                        <div class="d-flex align-items-center gap-3"><?php if($sidebarAvatar!==''):?>
+                            <img src="<?= e($sidebarAvatar) ?>" alt="" class="pixie-user-avatar"><?php else:?><span class="pixie-user-avatar pixie-user-avatar-fallback" aria-hidden="true"><?= e($sidebarInitial) ?></span><?php endif;?><div class="min-w-0 flex-grow-1">
                                 <div class="fw-semibold text-truncate"><?= e($sidebarName) ?></div>
-                                <div class="text-body-secondary small text-truncate"><?= e($sidebarRole) ?></div><?php if($sidebarPoints!==null):?><div class="small mt-1"><span aria-hidden="true">★</span> <?= e(number_format($sidebarPoints)) ?> points</div><?php endif;?>
+                                <div class="text-body-secondary small text-truncate"><?= e($sidebarRole) ?></div><?php if($sidebarPoints!==null):?><div class="small mt-1">
+                                    <span aria-hidden="true">★</span> <?= e(number_format($sidebarPoints)) ?> points
+                                </div><?php endif;?>
                             </div>
                         </div>
-                        <div class="d-flex gap-2 mt-3"><a class="btn btn-outline-light btn-sm flex-fill<?= $active('/profile') ?>" href="/profile">Profile</a><a class="btn btn-outline-danger btn-sm flex-fill" href="/logout">Log out</a></div>
+                        <div class="d-flex gap-2 mt-3">
+                            <a class="btn btn-outline-light btn-sm flex-fill<?= $active('/profile') ?>" href="/profile">Profile</a>
+                            <a class="btn btn-outline-danger btn-sm flex-fill" href="/logout">Log out</a>
+                        </div>
                     </div>
                 </div>
             </div>

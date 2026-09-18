@@ -7,4 +7,6 @@
     </svg>
     <span>Continue with Google</span>
 </a>
-<div class="auth-divider"><span>or</span></div>
+<div class="auth-divider">
+    <span>or</span>
+</div>

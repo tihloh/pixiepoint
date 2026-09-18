@@ -8,7 +8,10 @@
         <h1>Groups</h1>
         <p class="muted">Organize users into manageable permission groups.</p>
     </div>
-    <div class="d-flex gap-2 flex-wrap"><a class="btn btn-sm btn-outline-secondary" href="/admin/users">Users</a><button class="btn btn-sm btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#groupModal">Add group</button></div>
+    <div class="d-flex gap-2 flex-wrap">
+        <a class="btn btn-sm btn-outline-secondary" href="/admin/users">Users</a>
+        <button class="btn btn-sm btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#groupModal">Add group</button>
+    </div>
 </div>
 <?= $message ?>
 <section class="panel">
@@ -30,11 +33,21 @@
                 </tr><?php endif; ?>
                 <?php foreach ($groups as $group) :
     ?><tr>
-                    <td><strong><?= e($group->name) ?></strong></td>
+                    <td>
+                        <strong><?= e($group->name) ?></strong>
+                    </td>
                     <td><?= e($group->description ?? '—') ?></td>
-                    <td><span class="badge off"><?= e($group->usersCount) ?></span></td>
-                    <td class="text-end text-nowrap"><a class="btn btn-sm btn-outline-secondary" href="/admin/groups/<?= e($group->id) ?>/edit">Edit</a>
-                        <form method="post" class="d-inline" onsubmit="return confirm('Delete this group?')"><input type="hidden" name="_csrf" value="<?= e($csrf) ?>"><input type="hidden" name="action" value="delete"><input type="hidden" name="id" value="<?= e($group->id) ?>"><button class="btn btn-sm btn-outline-danger" type="submit">Delete</button></form>
+                    <td>
+                        <span class="badge off"><?= e($group->usersCount) ?></span>
+                    </td>
+                    <td class="text-end text-nowrap">
+                        <a class="btn btn-sm btn-outline-secondary" href="/admin/groups/<?= e($group->id) ?>/edit">Edit</a>
+                        <form method="post" class="d-inline" onsubmit="return confirm('Delete this group?')">
+                            <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
+                            <input type="hidden" name="action" value="delete">
+                            <input type="hidden" name="id" value="<?= e($group->id) ?>">
+                            <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
+                        </form>
                     </td>
                 </tr><?php endforeach; ?>
             </tbody>
@@ -46,13 +59,25 @@
         <div class="modal-content">
             <form method="post">
                 <div class="modal-header">
-                    <h2 class="modal-title fs-5 mb-0">Add group</h2><button class="btn-close" type="button" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <h2 class="modal-title fs-5 mb-0">Add group</h2>
+                    <button class="btn-close" type="button" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body"><input type="hidden" name="_csrf" value="<?= e($csrf) ?>"><input type="hidden" name="action" value="create">
-                    <div class="mb-3"><label class="form-label" for="group-name">Group name</label><input class="form-control" id="group-name" name="name" required></div>
-                    <div><label class="form-label" for="group-description">Description</label><input class="form-control" id="group-description" name="description"></div>
+                <div class="modal-body">
+                    <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
+                    <input type="hidden" name="action" value="create">
+                    <div class="mb-3">
+                        <label class="form-label" for="group-name">Group name</label>
+                        <input class="form-control" id="group-name" name="name" required>
+                    </div>
+                    <div>
+                        <label class="form-label" for="group-description">Description</label>
+                        <input class="form-control" id="group-description" name="description">
+                    </div>
                 </div>
-                <div class="modal-footer"><button class="btn btn-outline-secondary" type="button" data-bs-dismiss="modal">Cancel</button><button class="btn btn-primary" type="submit">Add group</button></div>
+                <div class="modal-footer">
+                    <button class="btn btn-outline-secondary" type="button" data-bs-dismiss="modal">Cancel</button>
+                    <button class="btn btn-primary" type="submit">Add group</button>
+                </div>
             </form>
         </div>
     </div>

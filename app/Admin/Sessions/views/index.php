@@ -38,7 +38,9 @@
                     <td><?= e($session['username'] ?: '—') ?></td>
                     <td class="code text-nowrap"><?= e($session['mac'] ?: '—') ?></td>
                     <td><?= e($session['router_name'] ?: '—') ?></td>
-                    <td><span class="badge <?= $session['status'] === 'active' ? '' : 'off' ?>"><?= e($session['status']) ?></span></td>
+                    <td>
+                        <span class="badge <?= $session['status'] === 'active' ? '' : 'off' ?>"><?= e($session['status']) ?></span>
+                    </td>
                     <td class="text-nowrap"><?= e(duration_nice((int) $session['uptime_seconds'])) ?></td>
                     <td class="text-nowrap"><?= e(bytes_nice((int) $session['bytes_in'] + (int) $session['bytes_out'])) ?></td>
                 </tr>

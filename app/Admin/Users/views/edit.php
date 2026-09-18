@@ -87,15 +87,27 @@ $isPlatformOwner = ($user['platform_role'] ?? '') === 'platform_owner';
         <div class="modal-content">
             <form method="post" id="avatarForm">
                 <div class="modal-header">
-                    <h2 class="modal-title fs-5">Profile Picture</h2><button class="btn-close" type="button" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <h2 class="modal-title fs-5">Profile Picture</h2>
+                    <button class="btn-close" type="button" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <input type="hidden" name="_csrf" value="<?= e($csrf) ?>"><input type="hidden" name="action" value="avatar"><input type="hidden" name="avatar_data" id="avatarData"><input class="d-none" id="avatarFile" type="file" accept="image/jpeg,image/png,image/webp">
-                    <div class="text-center mb-3"><button class="btn btn-outline-secondary" id="avatarChoose" type="button">Choose photo</button></div>
-                    <div class="mx-auto overflow-hidden rounded-circle border" style="width:280px;height:280px;touch-action:none;background:#07111f"><canvas id="avatarCanvas" width="512" height="512" style="width:280px;height:280px;cursor:grab"></canvas></div>
-                    <label class="form-label mt-3" for="avatarZoom">Zoom</label><input class="form-range" id="avatarZoom" type="range" min="1" max="3" step="0.01" value="1">
+                    <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
+                    <input type="hidden" name="action" value="avatar">
+                    <input type="hidden" name="avatar_data" id="avatarData">
+                    <input class="d-none" id="avatarFile" type="file" accept="image/jpeg,image/png,image/webp">
+                    <div class="text-center mb-3">
+                        <button class="btn btn-outline-secondary" id="avatarChoose" type="button">Choose photo</button>
+                    </div>
+                    <div class="mx-auto overflow-hidden rounded-circle border" style="width:280px;height:280px;touch-action:none;background:#07111f">
+                        <canvas id="avatarCanvas" width="512" height="512" style="width:280px;height:280px;cursor:grab"></canvas>
+                    </div>
+                    <label class="form-label mt-3" for="avatarZoom">Zoom</label>
+                    <input class="form-range" id="avatarZoom" type="range" min="1" max="3" step="0.01" value="1">
                 </div>
-                <div class="modal-footer"><button class="btn btn-outline-secondary" type="button" data-bs-dismiss="modal">Cancel</button><button class="button" type="submit">Upload photo</button></div>
+                <div class="modal-footer">
+                    <button class="btn btn-outline-secondary" type="button" data-bs-dismiss="modal">Cancel</button>
+                    <button class="button" type="submit">Upload photo</button>
+                </div>
             </form>
         </div>
     </div>

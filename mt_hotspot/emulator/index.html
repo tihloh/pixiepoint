@@ -325,25 +325,45 @@
 
 <body>
   <header class="shell-header">
-    <div class="brand"><strong>MikroTik Hotspot Emulator</strong><span>Runs the real <code>mt_hotspot/</code> page inside the emulator.</span></div>
-    <div class="header-actions"><span id="account-name"></span><a href="/dashboard">Dashboard</a></div>
+    <div class="brand">
+      <strong>MikroTik Hotspot Emulator</strong>
+      <span>Runs the real <code>mt_hotspot/</code> page inside the emulator.</span>
+    </div>
+    <div class="header-actions">
+      <span id="account-name"></span>
+      <a href="/dashboard">Dashboard</a>
+    </div>
   </header>
   <main class="workspace">
     <section class="portal-area">
-      <div class="portal-toolbar"><span id="load-status" role="status">Ready</span><button type="button" id="reload-page">Reload</button></div>
+      <div class="portal-toolbar">
+        <span id="load-status" role="status">Ready</span>
+        <button type="button" id="reload-page">Reload</button>
+      </div>
       <iframe id="portal" title="MikroTik hotspot portal"></iframe>
     </section>
     <aside class="side-panel" id="side-panel">
       <div class="panel-header">
-        <div><strong>Emulator</strong><small>RouterOS environment</small></div><button type="button" class="icon-button" id="collapse-panel" aria-label="Collapse emulator panel">›</button>
+        <div>
+          <strong>Emulator</strong>
+          <small>RouterOS environment</small>
+        </div>
+        <button type="button" class="icon-button" id="collapse-panel" aria-label="Collapse emulator panel">›</button>
       </div>
       <div class="controls">
-        <label>Platform<select id="platform-select"></select></label>
-        <label>Router<select id="router-select"></select></label>
-        <label>Vendo<select id="vendo-select"></select></label>
-        <label>Page<select id="page-select"></select></label>
+        <label>Platform<select id="platform-select"></select>
+        </label>
+        <label>Router<select id="router-select"></select>
+        </label>
+        <label>Vendo<select id="vendo-select"></select>
+        </label>
+        <label>Page<select id="page-select"></select>
+        </label>
         <div class="section-title">Session</div>
-        <div class="session-buttons"><button type="button" data-page="login.html">Unauthenticated</button><button type="button" data-page="status.html">Authenticated</button></div>
+        <div class="session-buttons">
+          <button type="button" data-page="login.html">Unauthenticated</button>
+          <button type="button" data-page="status.html">Authenticated</button>
+        </div>
         <details class="variables" open>
           <summary>RouterOS variables</summary>
           <dl id="variables"></dl>

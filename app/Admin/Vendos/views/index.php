@@ -31,7 +31,8 @@ $featureLabels=['coin_slot'=>'Coin slot','voucher_login'=>'Voucher login','membe
         <div>
             <h2 class="mb-1">Configured stations</h2>
             <p class="muted mb-0">Router defaults are configured in Router Settings. Each station can inherit or override them.</p>
-        </div><a class="btn btn-outline-primary" href="/admin/portal-emulator">Test portal</a>
+        </div>
+        <a class="btn btn-outline-primary" href="/admin/portal-emulator">Test portal</a>
     </div>
     <div class="table-responsive">
         <table class="table align-middle">
@@ -50,7 +51,8 @@ $featureLabels=['coin_slot'=>'Coin slot','voucher_login'=>'Voucher login','membe
                 <?php foreach($vendos as $v):$settings=$v['feature_settings']??[];
 $resolved=$v['resolved_features']??[];
 $hasVendo=(bool)($v['has_vendo']??trim((string)($v['base_url']??''))!=='');?><tr>
-                    <td><strong><?= e($v['name']) ?></strong>
+                    <td>
+                        <strong><?= e($v['name']) ?></strong>
                         <div class="small text-body-secondary"><?= e($v['router_identity']) ?></div>
                     </td>
                     <td><?= $hasVendo?'<span class="badge text-bg-primary">Connected</span>':'<span class="badge text-bg-secondary">None</span>' ?></td>
@@ -65,12 +67,21 @@ if(!$on)continue;
 $shown++;?><span class="badge text-bg-success"><?= e($label) ?></span><?php endforeach;?><?php if($shown===0):?><span class="text-body-secondary small">None</span><?php endif;?></div>
                     </td>
                     <td><?= $v['enabled']?'Enabled':'Disabled' ?></td><?php if($canManageVendos):?><td>
-                        <form method="post" class="m-0"><input type="hidden" name="_csrf" value="<?= e($csrf) ?>"><input type="hidden" name="action" value="toggle_debug"><input type="hidden" name="id" value="<?= e($v['id']) ?>"><input type="hidden" name="debug_enabled" value="0">
-                            <div class="form-check form-switch debug-switch"><input class="form-check-input" type="checkbox" name="debug_enabled" value="1" <?= !empty($v['debug_enabled'])?'checked':'' ?> onchange="this.form.submit()" aria-label="Toggle debug portal for <?= e($v['name']) ?>"></div>
+                        <form method="post" class="m-0">
+                            <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
+                            <input type="hidden" name="action" value="toggle_debug">
+                            <input type="hidden" name="id" value="<?= e($v['id']) ?>">
+                            <input type="hidden" name="debug_enabled" value="0">
+                            <div class="form-check form-switch debug-switch">
+                                <input class="form-check-input" type="checkbox" name="debug_enabled" value="1" <?= !empty($v['debug_enabled'])?'checked':'' ?> onchange="this.form.submit()" aria-label="Toggle debug portal for <?= e($v['name']) ?>">
+                            </div>
                         </form>
                     </td>
                     <td class="text-end">
-                        <div class="d-flex gap-1 justify-content-end"><button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#featuresModal" data-id="<?= e($v['id']) ?>" data-name="<?= e($v['name']) ?>" data-features='<?= e(json_encode($settings)) ?>'>Features</button><button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#stationModal" data-mode="edit" data-id="<?= e($v['id']) ?>" data-name="<?= e($v['name']) ?>" data-router="<?= e($v['router_id']) ?>" data-theme="<?= e($v['portal_theme_id']??0) ?>" data-url="<?= e(preg_replace('~^https?://~i','',(string)$v['base_url'])) ?>" data-server-ip="<?= e($v['server_ip']??'') ?>" data-subnet="<?= e($v['client_subnet']??'') ?>" data-interface="<?= e($v['interface_name']??'') ?>" data-password-mode="<?= e($v['password_mode']) ?>" data-charging="<?= $v['charging_enabled']?'1':'0' ?>" data-eload="<?= $v['eload_enabled']?'1':'0' ?>" data-enabled="<?= $v['enabled']?'1':'0' ?>">Edit</button></div>
+                        <div class="d-flex gap-1 justify-content-end">
+                            <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#featuresModal" data-id="<?= e($v['id']) ?>" data-name="<?= e($v['name']) ?>" data-features='<?= e(json_encode($settings)) ?>'>Features</button>
+                            <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#stationModal" data-mode="edit" data-id="<?= e($v['id']) ?>" data-name="<?= e($v['name']) ?>" data-router="<?= e($v['router_id']) ?>" data-theme="<?= e($v['portal_theme_id']??0) ?>" data-url="<?= e(preg_replace('~^https?://~i','',(string)$v['base_url'])) ?>" data-server-ip="<?= e($v['server_ip']??'') ?>" data-subnet="<?= e($v['client_subnet']??'') ?>" data-interface="<?= e($v['interface_name']??'') ?>" data-password-mode="<?= e($v['password_mode']) ?>" data-charging="<?= $v['charging_enabled']?'1':'0' ?>" data-eload="<?= $v['eload_enabled']?'1':'0' ?>" data-enabled="<?= $v['enabled']?'1':'0' ?>">Edit</button>
+                        </div>
                     </td><?php endif;?>
                 </tr><?php endforeach;?>
                 <?php if(!$vendos):?><tr>
@@ -89,20 +100,39 @@ $shown++;?><span class="badge text-bg-success"><?= e($label) ?></span><?php endf
                     <div>
                         <h2 class="modal-title fs-5">Portal features</h2>
                         <div class="small text-body-secondary" id="feature-station-name"></div>
-                    </div><button class="btn-close" type="button" data-bs-dismiss="modal"></button>
+                    </div>
+                    <button class="btn-close" type="button" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body"><input type="hidden" name="_csrf" value="<?= e($csrf) ?>"><input type="hidden" name="action" value="save_station_features"><input type="hidden" name="id" value="0">
+                <div class="modal-body">
+                    <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
+                    <input type="hidden" name="action" value="save_station_features">
+                    <input type="hidden" name="id" value="0">
                     <p class="small text-body-secondary">Each feature can inherit the router default or be overridden for this station.</p>
-                    <div class="row g-3"><?php foreach($featureLabels as $key=>$label):?><div class="col-md-6"><label><?= e($label) ?></label><select name="<?= e($key) ?>" data-feature="<?= e($key) ?>">
+                    <div class="row g-3"><?php foreach($featureLabels as $key=>$label):?><div class="col-md-6">
+                            <label><?= e($label) ?></label>
+                            <select name="<?= e($key) ?>" data-feature="<?= e($key) ?>">
                                 <option value="inherit">Inherit router</option>
                                 <option value="on">Enabled</option>
                                 <option value="off">Disabled</option>
-                            </select></div><?php endforeach;?><div class="col-md-4"><label>Trial minutes</label><input type="number" name="trial_minutes" min="1" max="1440" value="10"></div>
-                        <div class="col-md-4"><label>Convert points</label><input type="number" name="convert_points" min="1" value="10"></div>
-                        <div class="col-md-4"><label>Convert to minutes</label><input type="number" name="convert_minutes" min="1" value="5"></div>
+                            </select>
+                        </div><?php endforeach;?><div class="col-md-4">
+                            <label>Trial minutes</label>
+                            <input type="number" name="trial_minutes" min="1" max="1440" value="10">
+                        </div>
+                        <div class="col-md-4">
+                            <label>Convert points</label>
+                            <input type="number" name="convert_points" min="1" value="10">
+                        </div>
+                        <div class="col-md-4">
+                            <label>Convert to minutes</label>
+                            <input type="number" name="convert_minutes" min="1" value="5">
+                        </div>
                     </div>
                 </div>
-                <div class="modal-footer"><button class="btn btn-outline-secondary" type="button" data-bs-dismiss="modal">Cancel</button><button class="button" type="submit">Save overrides</button></div>
+                <div class="modal-footer">
+                    <button class="btn btn-outline-secondary" type="button" data-bs-dismiss="modal">Cancel</button>
+                    <button class="button" type="submit">Save overrides</button>
+                </div>
             </form>
         </div>
     </div>
@@ -113,37 +143,78 @@ $shown++;?><span class="badge text-bg-success"><?= e($label) ?></span><?php endf
         <div class="modal-content">
             <form method="post">
                 <div class="modal-header">
-                    <h2 class="modal-title fs-5" id="stationModalTitle">Add hotspot station</h2><button class="btn-close" type="button" data-bs-dismiss="modal"></button>
+                    <h2 class="modal-title fs-5" id="stationModalTitle">Add hotspot station</h2>
+                    <button class="btn-close" type="button" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body"><input type="hidden" name="_csrf" value="<?= e($csrf) ?>"><input type="hidden" name="action" value="create"><input type="hidden" name="id" value="0">
+                <div class="modal-body">
+                    <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
+                    <input type="hidden" name="action" value="create">
+                    <input type="hidden" name="id" value="0">
                     <div class="row g-3">
-                        <div class="col-md-6"><label>Name / Wi-Fi name</label><input name="name" required maxlength="160"></div>
-                        <div class="col-md-6"><label>Router</label><select name="router_id" required><?php foreach($routers as $r):?><option value="<?= e($r['id']) ?>"><?= e($r['name']) ?> · <?= e($r['identity']) ?></option><?php endforeach;?></select></div>
-                        <div class="col-md-6"><label>Portal theme</label><select name="portal_theme_id">
+                        <div class="col-md-6">
+                            <label>Name / Wi-Fi name</label>
+                            <input name="name" required maxlength="160">
+                        </div>
+                        <div class="col-md-6">
+                            <label>Router</label>
+                            <select name="router_id" required><?php foreach($routers as $r):?><option value="<?= e($r['id']) ?>"><?= e($r['name']) ?> · <?= e($r['identity']) ?></option><?php endforeach;?></select>
+                        </div>
+                        <div class="col-md-6">
+                            <label>Portal theme</label>
+                            <select name="portal_theme_id">
                                 <option value="0">Inherit router theme</option><?php foreach($themes as $theme):?><option value="<?= e($theme['id']) ?>"><?= e($theme['name']) ?></option><?php endforeach;?>
-                            </select></div>
-                        <div class="col-md-6"><label>Server IP</label><input name="server_ip" required placeholder="10.0.3.1"></div>
-                        <div class="col-md-6"><label>Client subnet</label><input name="client_subnet" placeholder="10.0.3.0/24"></div>
-                        <div class="col-md-6"><label>Interface</label><input name="interface_name" placeholder="bridge-HS"></div>
-                        <div class="col-md-6"><label>Password mode</label><select name="password_mode">
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label>Server IP</label>
+                            <input name="server_ip" required placeholder="10.0.3.1">
+                        </div>
+                        <div class="col-md-6">
+                            <label>Client subnet</label>
+                            <input name="client_subnet" placeholder="10.0.3.0/24">
+                        </div>
+                        <div class="col-md-6">
+                            <label>Interface</label>
+                            <input name="interface_name" placeholder="bridge-HS">
+                        </div>
+                        <div class="col-md-6">
+                            <label>Password mode</label>
+                            <select name="password_mode">
                                 <option value="blank">Blank password</option>
                                 <option value="voucher">Voucher as password</option>
-                            </select></div>
+                            </select>
+                        </div>
                         <div class="col-12">
                             <div class="border rounded p-3">
-                                <div class="fw-semibold mb-2">Optional Vendo hardware</div><label>Controller address</label><input name="base_url" placeholder="Leave blank for no Vendo controller"><small class="text-body-secondary d-block">Required only when using the coin-slot feature.</small>
+                                <div class="fw-semibold mb-2">Optional Vendo hardware</div>
+                                <label>Controller address</label>
+                                <input name="base_url" placeholder="Leave blank for no Vendo controller">
+                                <small class="text-body-secondary d-block">Required only when using the coin-slot feature.</small>
                                 <div class="d-flex flex-wrap gap-4 mt-3 station-switches">
-                                    <div class="form-check form-switch"><input class="form-check-input" type="checkbox" name="charging_enabled" value="1" id="station-charging"><label class="form-check-label" for="station-charging">Phone charging</label></div>
-                                    <div class="form-check form-switch"><input class="form-check-input" type="checkbox" name="eload_enabled" value="1" id="station-eload"><label class="form-check-label" for="station-eload">E-load</label></div>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" name="charging_enabled" value="1" id="station-charging">
+                                        <label class="form-check-label" for="station-charging">Phone charging</label>
+                                    </div>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" name="eload_enabled" value="1" id="station-eload">
+                                        <label class="form-check-label" for="station-eload">E-load</label>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                         <div class="col-12 station-switches">
-                            <div class="form-check form-switch"><input class="form-check-input" type="checkbox" name="enabled" value="1" id="station-enabled" checked><label class="form-check-label" for="station-enabled">Enabled</label></div>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" name="enabled" value="1" id="station-enabled" checked>
+                                <label class="form-check-label" for="station-enabled">Enabled</label>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer"><a class="btn btn-outline-info me-auto" href="/admin/portal-emulator">Open emulator</a><button class="btn btn-outline-secondary" type="button" data-bs-dismiss="modal">Cancel</button><button class="button" type="submit" id="station-submit">Add station</button></div>
+                <div class="modal-footer">
+                    <a class="btn btn-outline-info me-auto" href="/admin/portal-emulator">Open emulator</a>
+                    <button class="btn btn-outline-secondary" type="button" data-bs-dismiss="modal">Cancel</button>
+                    <button class="button" type="submit" id="station-submit">Add station</button>
+                </div>
             </form>
         </div>
     </div>

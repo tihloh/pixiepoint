@@ -38,14 +38,20 @@
     ?><tr>
                     <td>
                         <div class="d-flex align-items-center gap-2"><?php if (!empty($user['avatar_url'])) :
-    ?><img src="<?= e($user['avatar_url']) ?>" alt="" width="36" height="36" class="rounded-circle object-fit-cover border flex-shrink-0"><?php else :
-    ?><div class="rounded-circle border d-flex align-items-center justify-content-center fw-bold flex-shrink-0" style="width:36px;height:36px"><?= e(strtoupper(substr((string) $user['name'], 0, 1))) ?></div><?php endif; ?><div><strong><?= e($user['name']) ?></strong>
+    ?>
+                            <img src="<?= e($user['avatar_url']) ?>" alt="" width="36" height="36" class="rounded-circle object-fit-cover border flex-shrink-0"><?php else :
+    ?><div class="rounded-circle border d-flex align-items-center justify-content-center fw-bold flex-shrink-0" style="width:36px;height:36px"><?= e(strtoupper(substr((string) $user['name'], 0, 1))) ?></div><?php endif; ?><div>
+                                <strong><?= e($user['name']) ?></strong>
                                 <div class="small text-body-secondary"><?= e($user['email']) ?></div>
                             </div>
                         </div>
                     </td>
-                    <td><span class="badge off"><?= e(ucwords(str_replace('_', ' ', (string) ($user['platform_role'] ?? 'member')))) ?></span></td>
-                    <td><span class="badge <?= !empty($user['active']) ? '' : 'off' ?>"><?= !empty($user['active']) ? 'Active' : 'Disabled' ?></span></td>
+                    <td>
+                        <span class="badge off"><?= e(ucwords(str_replace('_', ' ', (string) ($user['platform_role'] ?? 'member')))) ?></span>
+                    </td>
+                    <td>
+                        <span class="badge <?= !empty($user['active']) ? '' : 'off' ?>"><?= !empty($user['active']) ? 'Active' : 'Disabled' ?></span>
+                    </td>
                     <td><?= e($user['created_at'] ?? '') ?></td>
                     <td class="text-end text-nowrap"><?php if ($canManage) :
     ?><a class="btn btn-sm btn-outline-secondary" href="/admin/users/<?= e($user['id']) ?>/edit">Edit</a><?php endif; ?> <?php if ($canManagePermissions) :
@@ -61,13 +67,24 @@
         <div class="modal-content">
             <form method="post">
                 <div class="modal-header">
-                    <h2 class="modal-title fs-5 mb-0">Add user</h2><button class="btn-close" type="button" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <h2 class="modal-title fs-5 mb-0">Add user</h2>
+                    <button class="btn-close" type="button" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body"><input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
-                    <div class="mb-3"><label class="form-label" for="new-user-name">Name</label><input class="form-control" id="new-user-name" name="name" required></div>
-                    <div><label class="form-label" for="new-user-email">Email</label><input class="form-control" id="new-user-email" name="email" type="email" required></div>
+                <div class="modal-body">
+                    <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
+                    <div class="mb-3">
+                        <label class="form-label" for="new-user-name">Name</label>
+                        <input class="form-control" id="new-user-name" name="name" required>
+                    </div>
+                    <div>
+                        <label class="form-label" for="new-user-email">Email</label>
+                        <input class="form-control" id="new-user-email" name="email" type="email" required>
+                    </div>
                 </div>
-                <div class="modal-footer"><button class="btn btn-outline-secondary" type="button" data-bs-dismiss="modal">Cancel</button><button class="btn btn-primary" type="submit">Add user</button></div>
+                <div class="modal-footer">
+                    <button class="btn btn-outline-secondary" type="button" data-bs-dismiss="modal">Cancel</button>
+                    <button class="btn btn-primary" type="submit">Add user</button>
+                </div>
             </form>
         </div>
     </div>
