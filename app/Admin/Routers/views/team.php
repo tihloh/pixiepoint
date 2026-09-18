@@ -18,8 +18,7 @@ $roleLabels = [
 <div class="heading">
     <div>
         <h1>Gateway team</h1>
-        <?php
-if ($router): ?>
+        <?php if ($router): ?>
             <p class="muted">
                 <?= e($router['name']) ?>
                 <span class="code"><?= e($router['identity']) ?></span>
@@ -29,8 +28,7 @@ endif; ?>
     </div>
 
     <div class="actions">
-        <?php
-if ($canManageTeam && $router): ?>
+        <?php if ($canManageTeam && $router): ?>
             <button class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#add-team-member-modal">
                 Add team member
             </button>
@@ -42,10 +40,8 @@ endif; ?>
 
 <?= $message ?>
 
-<?php
-if ($router): ?>
-    <?php
-if ($canManageTeam): ?>
+<?php if ($router): ?>
+    <?php if ($canManageTeam): ?>
         <div class="modal fade" id="add-team-member-modal" tabindex="-1" aria-labelledby="add-team-member-modal-label" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content">
@@ -75,8 +71,7 @@ if ($canManageTeam): ?>
                             <div>
                                 <label class="form-label" for="team-role">Role</label>
                                 <select class="form-select" id="team-role" name="role" required>
-                                    <?php
-if (($isPlatformOwner ?? false) || $currentRole === 'owner'): ?>
+                                    <?php if (($isPlatformOwner ?? false) || $currentRole === 'owner'): ?>
                                         <option value="owner">Owner</option>
                                     <?php
 endif; ?>
@@ -112,16 +107,14 @@ endif; ?>
                         <th>Member</th>
                         <th>Role</th>
                         <th>Added</th>
-                        <?php
-if ($canManageTeam): ?>
+                        <?php if ($canManageTeam): ?>
                             <th class="text-end">Action</th>
                         <?php
 endif; ?>
                     </tr>
                 </thead>
                 <tbody>
-                    <?php
-if (!$members): ?>
+                    <?php if (!$members): ?>
                         <tr>
                             <td colspan="<?= $canManageTeam ? 4 : 3 ?>" class="empty">
                                 No team members assigned.
@@ -130,8 +123,7 @@ if (!$members): ?>
                     <?php
 endif; ?>
 
-                    <?php
-foreach ($members as $member): ?>
+                    <?php foreach ($members as $member): ?>
                         <?php
 $memberRole = (string) $member['role'];
 $canChangeMember = $canManageTeam
@@ -144,8 +136,7 @@ $canChangeMember = $canManageTeam
                         <tr>
                             <td>
                                 <strong><?= e($member['name'] ?: $member['email']) ?></strong>
-                                <?php
-if (!empty($member['name'])): ?>
+                                <?php if (!empty($member['name'])): ?>
                                     <div class="small text-body-secondary">
                                         <?= e($member['email']) ?>
                                     </div>
@@ -155,11 +146,9 @@ endif; ?>
                             <td><?= e($roleLabels[$memberRole] ?? ucfirst($memberRole)) ?></td>
                             <td><?= e($member['created_at']) ?></td>
 
-                            <?php
-if ($canManageTeam): ?>
+                            <?php if ($canManageTeam): ?>
                                 <td class="text-end">
-                                    <?php
-if ($canChangeMember): ?>
+                                    <?php if ($canChangeMember): ?>
                                         <form method="post" class="d-inline">
                                             <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
                                             <input type="hidden" name="action" value="remove">

@@ -7,8 +7,7 @@
 /** @var array $platforms */
 /** @var string $status */
 /** @var string $csrf */
-$stationOptions=static function(?int $selected=null) use($stations):void{?><option value="0">All stations on this gateway</option><?php
-    foreach($stations as $station):?><option value="<?= e($station['id']) ?>"<?= $selected===(int)$station['id']?' selected':'' ?>><?= e($station['name']) ?></option><?php
+$stationOptions=static function(?int $selected=null) use($stations):void{?><option value="0">All stations on this gateway</option><?php foreach($stations as $station):?><option value="<?= e($station['id']) ?>"<?= $selected===(int)$station['id']?' selected':'' ?>><?= e($station['name']) ?></option><?php
     endforeach;
 };
 ?>
@@ -23,23 +22,19 @@ $stationOptions=static function(?int $selected=null) use($stations):void{?><opti
         <div class="btn-group btn-group-sm"><a class="btn btn-outline-secondary<?= $status==='active'?' active':'' ?>" href="/admin/vouchers?status=active">Active</a><a class="btn btn-outline-secondary<?= $status==='archived'?' active':'' ?>" href="/admin/vouchers?status=archived">Archived</a><a class="btn btn-outline-secondary<?= $status==='all'?' active':'' ?>" href="/admin/vouchers?status=all">All</a></div>
     </div>
     <div class="table-responsive"><table class="table align-middle"><thead><tr><th>Code / Promo</th><th>Assignment</th><th>Allowance</th><th>Usage</th><th>Status</th><th class="text-end">Actions</th></tr></thead><tbody>
-    <?php
-if(!$vouchers):?><tr><td colspan="6" class="empty">No vouchers in this view.</td></tr><?php
+    <?php if(!$vouchers):?><tr><td colspan="6" class="empty">No vouchers in this view.</td></tr><?php
 endif;?>
-    <?php
-foreach($vouchers as $voucher):?>
+    <?php foreach($vouchers as $voucher):?>
         <tr>
             <td><strong class="code"><?= e($voucher['code']) ?></strong><div class="small text-body-secondary"><?= e($voucher['promo_name']?:($voucher['label']?:'No promo')) ?><?= $voucher['batch_key']?' · Batch '.e($voucher['batch_key']):'' ?></div></td>
             <td><?= e($voucher['station_name']?:'All gateway stations') ?></td>
             <td><?= e($voucher['duration_minutes']) ?> min<?= $voucher['data_limit_mb']?' · '.e($voucher['data_limit_mb']).' MB':'' ?><div class="small text-body-secondary"><?= e($voucher['max_devices']) ?> device(s)</div></td>
             <td><?= e($voucher['uses'].' / '.$voucher['max_uses']) ?><div class="small text-body-secondary"><?= e($voucher['expires_at']?:'No expiry') ?></div></td>
-            <td><?php
-if($voucher['archived_at']):?><span class="badge off">Archived</span><?php
+            <td><?php if($voucher['archived_at']):?><span class="badge off">Archived</span><?php
 else:?><span class="badge <?= $voucher['enabled']?'':'off' ?>"><?= $voucher['enabled']?'Enabled':'Disabled' ?></span><?php
 endif;?></td>
             <td class="text-end">
-                <?php
-if(!$voucher['archived_at']):?><button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="modal" data-bs-target="#voucherModal" data-mode="edit" data-voucher="<?= e(json_encode($voucher,JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE)) ?>">Edit</button><?php
+                <?php if(!$voucher['archived_at']):?><button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="modal" data-bs-target="#voucherModal" data-mode="edit" data-voucher="<?= e(json_encode($voucher,JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE)) ?>">Edit</button><?php
 endif;?>
                 <form method="post" class="d-inline" onsubmit="return confirm('Unused vouchers are permanently deleted. Used vouchers are archived. Continue?')"><input type="hidden" name="_csrf" value="<?= e($csrf) ?>"><input type="hidden" name="action" value="delete"><input type="hidden" name="id" value="<?= e($voucher['id']) ?>"><button class="btn btn-sm btn-outline-danger" type="submit"><?= ((int)$voucher['uses']>0||$voucher['archived_at'])?'Archive':'Delete' ?></button></form>
             </td>
@@ -48,9 +43,7 @@ endif;?>
 endforeach;?>
     </tbody></table></div>
 </section>
-<?php
-if($batches):?><section class="panel"><h2>Recent generated batches</h2><div class="table-responsive"><table class="table align-middle mb-0"><thead><tr><th>Batch</th><th>Promo</th><th>Platform</th><th>Quantity</th><th>Generated</th><th></th></tr></thead><tbody><?php
-foreach($batches as $batch):?><tr><td class="code"><?= e($batch['batch_key']) ?></td><td><?= e($batch['promo_name']?:'No promo') ?></td><td><?= e($platforms[$batch['platform']]??$batch['platform']) ?></td><td><?= e($batch['voucher_count']) ?></td><td><?= e($batch['created_at']) ?></td><td class="text-end"><a class="btn btn-sm btn-outline-primary" href="/admin/vouchers/export?batch=<?= rawurlencode($batch['batch_key']) ?>">Download script</a></td></tr><?php
+<?php if($batches):?><section class="panel"><h2>Recent generated batches</h2><div class="table-responsive"><table class="table align-middle mb-0"><thead><tr><th>Batch</th><th>Promo</th><th>Platform</th><th>Quantity</th><th>Generated</th><th></th></tr></thead><tbody><?php foreach($batches as $batch):?><tr><td class="code"><?= e($batch['batch_key']) ?></td><td><?= e($batch['promo_name']?:'No promo') ?></td><td><?= e($platforms[$batch['platform']]??$batch['platform']) ?></td><td><?= e($batch['voucher_count']) ?></td><td><?= e($batch['created_at']) ?></td><td class="text-end"><a class="btn btn-sm btn-outline-primary" href="/admin/vouchers/export?batch=<?= rawurlencode($batch['batch_key']) ?>">Download script</a></td></tr><?php
 endforeach;?></tbody></table></div></section><?php
 endif;?>
 
@@ -61,8 +54,7 @@ endif;?>
     <div class="col-md-6"><label>Code prefix</label><input name="prefix" maxlength="24" placeholder="Optional, e.g. WEEKEND-"><small class="text-body-secondary">Non-alphanumeric characters are removed.</small></div>
     <div class="col-md-6"><label>Hotspot Station</label><select name="station_id"><?php
 $stationOptions();?></select></div>
-    <div class="col-md-6"><label>Output platform</label><select name="platform"><?php
-foreach($platforms as $key=>$label):?><option value="<?= e($key) ?>"><?= e($label) ?></option><?php
+    <div class="col-md-6"><label>Output platform</label><select name="platform"><?php foreach($platforms as $key=>$label):?><option value="<?= e($key) ?>"><?= e($label) ?></option><?php
 endforeach;?></select></div>
     <div class="col-md-6"><label>RouterOS user profile</label><input name="platform_profile" placeholder="Optional existing profile"></div>
     <div class="col-md-4"><label>Duration (minutes)</label><input name="duration_minutes" type="number" min="1" value="60" required></div>

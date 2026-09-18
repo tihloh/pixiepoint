@@ -8,10 +8,8 @@
 <div class="mb-4"><label class="form-label" for="group-description">Description</label><input class="form-control" id="group-description" name="description" value="<?=e($group->description ?? '')?>"></div>
 <h2 class="h6 mb-3">Permissions</h2>
 <div class="card border shadow-none overflow-hidden"><div class="table-responsive"><table class="table align-middle mb-0"><thead><tr><th>Permission</th><th style="width:180px">Setting</th></tr></thead><tbody>
-<?php
-foreach ($definitions as $permission => $definition) :
-    $value = array_key_exists($permission, $overrides) ? ($overrides[$permission] ? 'allow' : 'deny') : 'inherit';?><tr><td><strong><?=e($definition['name'] ?? $permission)?></strong><?php
-if (!empty($definition['description'])) :
+<?php foreach ($definitions as $permission => $definition) :
+    $value = array_key_exists($permission, $overrides) ? ($overrides[$permission] ? 'allow' : 'deny') : 'inherit';?><tr><td><strong><?=e($definition['name'] ?? $permission)?></strong><?php if (!empty($definition['description'])) :
     ?><div class="small text-body-secondary"><?=e($definition['description'])?></div><?php
 endif;?></td><td><select class="form-select form-select-sm" name="permissions[<?=e($permission)?>]"><option value="inherit" <?=$value === 'inherit' ? 'selected' : ''?>>Inherit</option><option value="allow" <?=$value === 'allow' ? 'selected' : ''?>>Allow</option><option value="deny" <?=$value === 'deny' ? 'selected' : ''?>>Deny</option></select></td></tr><?php
 endforeach;?>

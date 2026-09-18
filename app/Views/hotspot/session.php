@@ -34,8 +34,7 @@
     <button class="button full" type="submit">Disconnect</button>
 </form>
 
-<?php
-if ($authenticated): ?>
+<?php if ($authenticated): ?>
     <a class="button full" href="/dashboard">My PixiePoint account</a>
 <?php
 else: ?>

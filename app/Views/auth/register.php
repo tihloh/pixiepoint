@@ -11,8 +11,7 @@
 
 <?= $error ?>
 
-<?php
-if ($googleEnabled): ?>
+<?php if ($googleEnabled): ?>
     <?php
 require dirname(__DIR__) . '/partials/google-button.php'; ?>
 <?php

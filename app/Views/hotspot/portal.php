@@ -8,8 +8,7 @@
 <h1>Connect to Wi-Fi</h1>
 <p class="muted">Enter your access code to start this device’s MikroTik Hotspot session.</p>
 
-<?php
-if (!$routerAvailable): ?>
+<?php if (!$routerAvailable): ?>
     <div class="alert">
         This hotspot router is not registered or is disabled. Ask the operator to add identity
         <span class="code"><?= e($context['router_identity']) ?></span>.
@@ -28,8 +27,7 @@ endif; ?>
     </div>
 </div>
 
-<?php
-if ($routerAvailable): ?>
+<?php if ($routerAvailable): ?>
     <form method="post" action="/hotspot/authenticate">
         <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
 
@@ -50,8 +48,7 @@ if ($routerAvailable): ?>
 <?php
 endif; ?>
 
-<?php
-if ($authenticated): ?>
+<?php if ($authenticated): ?>
     <p class="muted">
         This session can be linked to your PixiePoint account for history, points and support.
     </p>

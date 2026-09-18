@@ -16,8 +16,7 @@ if (!$current) {
     return;
 } ?>
 
-<?php
-if ($current['user_id'] !== null && (int) $current['user_id'] !== $userId): ?>
+<?php if ($current['user_id'] !== null && (int) $current['user_id'] !== $userId): ?>
     <section class="panel">
         <h2>Device identity conflict</h2>
         <div class="alert">This device is already linked to another account.</div>
@@ -38,8 +37,7 @@ if ($current['user_id'] !== null && (int) $current['user_id'] === $userId) {
     <h2>Confirm this device</h2>
     <p class="muted">Choose a saved device or save this one as new.</p>
 
-    <?php
-if ($guestPoints > 0): ?>
+    <?php if ($guestPoints > 0): ?>
         <div class="notice">
             <strong><?= e($guestPoints) ?> guest points</strong>
             will be added to your account when confirmed.
@@ -48,10 +46,8 @@ if ($guestPoints > 0): ?>
 endif; ?>
 
     <div class="actions">
-        <?php
-foreach ($known as $device): ?>
-            <?php
-if ((int) $device['id'] === (int) $current['id']) {
+        <?php foreach ($known as $device): ?>
+            <?php if ((int) $device['id'] === (int) $current['id']) {
     continue;
 }
 $label = $device['mac'] ?: 'Device ' . substr((string) $device['uuid'], 0, 8);

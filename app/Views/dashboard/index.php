@@ -19,8 +19,7 @@ $isRouterOwner = ($user['platform_role'] ?? 'member') === 'pisowifi_owner';
 </div>
 
 <section class="grid" aria-label="Account summary">
-    <?php
-foreach ($metrics as $label => $value): ?>
+    <?php foreach ($metrics as $label => $value): ?>
         <div class="metric">
             <small><?= e($label) ?></small>
             <strong><?= e($value) ?></strong>
@@ -29,8 +28,7 @@ foreach ($metrics as $label => $value): ?>
 endforeach; ?>
 </section>
 
-<?php
-if (!$isRouterOwner): ?>
+<?php if (!$isRouterOwner): ?>
     <div class="text-end mb-3">
         <button
             class="btn btn-link btn-sm text-body-secondary"
@@ -61,15 +59,13 @@ endif; ?>
             </tr>
         </thead>
         <tbody>
-            <?php
-if (!$sessions): ?>
+            <?php if (!$sessions): ?>
                 <tr>
                     <td colspan="5" class="empty">No recent sessions.</td>
                 </tr>
             <?php
 else: ?>
-                <?php
-foreach ($sessions as $session): ?>
+                <?php foreach ($sessions as $session): ?>
                     <tr>
                         <td><?= e($session['username'] ?: '—') ?></td>
                         <td class="code"><?= e($session['mac'] ?: '—') ?></td>
@@ -89,8 +85,7 @@ endif; ?>
     </table>
 </section>
 
-<?php
-if (!$isRouterOwner): ?>
+<?php if (!$isRouterOwner): ?>
     <div class="modal fade" id="register-router-modal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content">
