@@ -75,7 +75,7 @@ final class VendoGatewayController
     public function sync(): never{
         $gateway=$this->gateway();
         $raw=$this->raw();
-        $this->run(fn()=>(new SyncEndpoint($this->deviceAuth(),$gateway->configs,$gateway->commands,$gateway->states,$gateway->firmware))->handle($this->headers(),$raw,'POST','/vendo/v1/sync'));
+        $this->run(fn()=>(new SyncEndpoint($this->deviceAuth(),$gateway->configs,$gateway->commands,$gateway->states,$gateway->firmware,$gateway->events,$gateway->heartbeats))->handle($this->headers(),$raw,'POST','/vendo/v1/sync',$_SERVER['REMOTE_ADDR']??null));
     }
     public function events(): never{
         $gateway=$this->gateway();
@@ -159,7 +159,8 @@ final class VendoGatewayController
         catch(\RuntimeException $e){
             $this->json(['ok'=>false,'error'=>'request_rejected','message'=>$e->getMessage()],400);
         }
-        catch(\Throwable){
+        catch(\Throwable $e){
+            error_log('[VendoGateway] '.$e::class.': '.$e->getMessage().' in '.$e->getFile().':'.$e->getLine());
             $this->json(['ok'=>false,'error'=>'vendo_gateway_error'],500);
         }
     }
