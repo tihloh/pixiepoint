@@ -50,7 +50,7 @@ final class TeamController extends FeatureController
 
         $currentRole = $access->roleFor($routerId, $userId);
         $canManageTeam = $access->canManageTeam($routerId, $userId, $platformOwner)
-            && $this->auth->can('routers.manage');
+        && $this->auth->can('routers.manage');
 
         $message = (string) ($_SESSION['admin_flash'] ?? '');
         unset($_SESSION['admin_flash']);
@@ -60,7 +60,8 @@ final class TeamController extends FeatureController
 
             if (!$canManageTeam) {
                 $message = '<div class="alert">You cannot manage this gateway team.</div>';
-            } else {
+            }
+            else {
                 $action = (string) ($_POST['action'] ?? 'save');
 
                 try {
@@ -82,7 +83,8 @@ final class TeamController extends FeatureController
                             ['user_id' => $memberId],
                         );
                         $message = '<div class="alert ok">Team member removed.</div>';
-                    } else {
+                    }
+                    else {
                         $result = Input::fromRequest()->process([
                             'email' => 'trim|required|email|max:254',
                             'role' => 'trim|required|string|max:32',
@@ -95,8 +97,8 @@ final class TeamController extends FeatureController
                         $data = $result->validated();
                         $role = (string) $data['role'];
                         $allowedRoles = $platformOwner || $currentRole === 'owner'
-                            ? ['owner', 'manager', 'operator', 'viewer']
-                            : ['manager', 'operator', 'viewer'];
+                        ? ['owner', 'manager', 'operator', 'viewer']
+                        : ['manager', 'operator', 'viewer'];
 
                         if (!in_array($role, $allowedRoles, true)) {
                             throw new RuntimeException('You cannot assign that role.');
@@ -128,13 +130,14 @@ final class TeamController extends FeatureController
                             $routerId,
                             'Gateway team member was added or updated.',
                             [
-                                'user_id' => $memberId,
-                                'role' => $role,
-                            ],
+                            'user_id' => $memberId,
+                            'role' => $role,
+                        ],
                         );
                         $message = '<div class="alert ok">Team member saved.</div>';
                     }
-                } catch (Throwable $e) {
+                }
+                catch (Throwable $e) {
                     $message = '<div class="alert">' . e($e->getMessage()) . '</div>';
                 }
             }

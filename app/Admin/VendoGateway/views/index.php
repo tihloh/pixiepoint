@@ -1,22 +1,41 @@
-<?php declare(strict_types=1);
+<?php
+declare(strict_types=1);
 /** @var array $stations */
 /** @var array $rows */
 /** @var array $pairings */
 /** @var bool $canManage */
 $gpioProfiles=[
-    'esp8266'=>['coin'=>[4=>'GPIO4 (D2)',5=>'GPIO5 (D1)',12=>'GPIO12 (D6)',13=>'GPIO13 (D7)',14=>'GPIO14 (D5)'],'output'=>[4=>'GPIO4 (D2)',5=>'GPIO5 (D1)',12=>'GPIO12 (D6)',13=>'GPIO13 (D7)',14=>'GPIO14 (D5)',16=>'GPIO16 (D0)'],'defaults'=>['coin'=>5,'relay'=>12]],
-    'esp32'=>['coin'=>[4=>'GPIO4',13=>'GPIO13',14=>'GPIO14',16=>'GPIO16',17=>'GPIO17',18=>'GPIO18',19=>'GPIO19',21=>'GPIO21',22=>'GPIO22',23=>'GPIO23',25=>'GPIO25',26=>'GPIO26',27=>'GPIO27',32=>'GPIO32',33=>'GPIO33'],'output'=>[4=>'GPIO4',13=>'GPIO13',14=>'GPIO14',16=>'GPIO16',17=>'GPIO17',18=>'GPIO18',19=>'GPIO19',21=>'GPIO21',22=>'GPIO22',23=>'GPIO23',25=>'GPIO25',26=>'GPIO26',27=>'GPIO27',32=>'GPIO32',33=>'GPIO33'],'defaults'=>['coin'=>27,'relay'=>26]],
+'esp8266'=>['coin'=>[4=>'GPIO4 (D2)',5=>'GPIO5 (D1)',12=>'GPIO12 (D6)',13=>'GPIO13 (D7)',14=>'GPIO14 (D5)'],'output'=>[4=>'GPIO4 (D2)',5=>'GPIO5 (D1)',12=>'GPIO12 (D6)',13=>'GPIO13 (D7)',14=>'GPIO14 (D5)',16=>'GPIO16 (D0)'],'defaults'=>['coin'=>5,'relay'=>12]],
+'esp32'=>['coin'=>[4=>'GPIO4',13=>'GPIO13',14=>'GPIO14',16=>'GPIO16',17=>'GPIO17',18=>'GPIO18',19=>'GPIO19',21=>'GPIO21',22=>'GPIO22',23=>'GPIO23',25=>'GPIO25',26=>'GPIO26',27=>'GPIO27',32=>'GPIO32',33=>'GPIO33'],'output'=>[4=>'GPIO4',13=>'GPIO13',14=>'GPIO14',16=>'GPIO16',17=>'GPIO17',18=>'GPIO18',19=>'GPIO19',21=>'GPIO21',22=>'GPIO22',23=>'GPIO23',25=>'GPIO25',26=>'GPIO26',27=>'GPIO27',32=>'GPIO32',33=>'GPIO33'],'defaults'=>['coin'=>27,'relay'=>26]],
 ];
-$pinSelect=static function(string $name,int $selected,array $options,string $class=''):string{$html='<select name="'.e($name).'" class="form-select '.e($class).'" required>';foreach($options as $gpio=>$label)$html.='<option value="'.(int)$gpio.'"'.($gpio===$selected?' selected':'').'>'.e($label).'</option>';return$html.'</select>';};
-$total=count($rows);$pending=count($pairings);$online=$active=$updates=$unlinked=0;foreach($rows as $r){$d=$r['device']??null;$f=$r['firmware']??null;if($d&&$d->lastSeenAt&&$d->lastSeenAt->getTimestamp()>=time()-180)$online++;if(($d?->state??null)==='active')$active++;if(($f['update_available']??null)===true)$updates++;if(empty($r['binding']['station_id']))$unlinked++;}
+$pinSelect=static function(string $name,int $selected,array $options,string $class=''):string{
+    $html='<select name="'.e($name).'" class="form-select '.e($class).'" required>';
+    foreach($options as $gpio=>$label)$html.='<option value="'.(int)$gpio.'"'.($gpio===$selected?' selected':'').'>'.e($label).'</option>';
+    return$html.'</select>';
+};
+$total=count($rows);
+$pending=count($pairings);
+$online=$active=$updates=$unlinked=0;
+foreach($rows as $r){
+    $d=$r['device']??null;
+    $f=$r['firmware']??null;
+    if($d&&$d->lastSeenAt&&$d->lastSeenAt->getTimestamp()>=time()-180)$online++;
+    if(($d?->state??null)==='active')$active++;
+    if(($f['update_available']??null)===true)$updates++;
+    if(empty($r['binding']['station_id']))$unlinked++;
+}
 ?>
 <div class="container-fluid py-2">
     <div id="vendo-ajax-message"><?= $flash??'' ?></div>
     <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
         <div><h1 class="h3 mb-1">Vendos</h1><p class="text-body-secondary mb-0">Enroll, assign, configure, and maintain Vendo devices on this gateway.</p></div>
-        <div class="d-flex gap-2"><a class="btn btn-outline-secondary" href="/admin/routers/<?= (int)$routerId ?>#stations">Gateway</a><?php if($canManage):?><button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addVendoModal">Add Vendo</button><?php endif;?></div>
+        <div class="d-flex gap-2"><a class="btn btn-outline-secondary" href="/admin/routers/<?= (int)$routerId ?>#stations">Gateway</a><?php
+if($canManage):?><button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addVendoModal">Add Vendo</button><?php
+endif;?></div>
     </div>
-    <?php if(!$gatewayConfigured):?><div class="alert alert-warning"><strong>Vendo Gateway is not configured.</strong><div class="small">Device enrollment and management are unavailable until it is configured.</div></div><?php endif;?>
+    <?php
+if(!$gatewayConfigured):?><div class="alert alert-warning"><strong>Vendo Gateway is not configured.</strong><div class="small">Device enrollment and management are unavailable until it is configured.</div></div><?php
+endif;?>
     <div class="row g-3 mb-4">
         <div class="col-6 col-md-4 col-xl-2"><div class="card card-body h-100"><small class="text-body-secondary">Enrolled</small><strong class="fs-3"><?= $total ?></strong></div></div>
         <div class="col-6 col-md-4 col-xl-2"><div class="card card-body h-100"><small class="text-body-secondary">Pending setup</small><strong class="fs-3"><?= $pending ?></strong></div></div>
@@ -25,10 +44,17 @@ $total=count($rows);$pending=count($pairings);$online=$active=$updates=$unlinked
         <div class="col-6 col-md-4 col-xl-2"><div class="card card-body h-100"><small class="text-body-secondary">Unlinked</small><strong class="fs-3"><?= $unlinked ?></strong></div></div>
         <div class="col-6 col-md-4 col-xl-2"><div class="card card-body h-100"><small class="text-body-secondary">Updates</small><strong class="fs-3"><?= $updates ?></strong></div></div>
     </div>
-    <?php if(!$rows&&!$pairings):?>
-        <div class="card card-body text-center py-5"><h2 class="h5">No Vendos</h2><p class="text-body-secondary">Add a Vendo to generate a one-time setup code for an ESP8266 or ESP32.</p><?php if($canManage):?><div><button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addVendoModal">Add Vendo</button></div><?php endif;?></div>
-    <?php else:?><div id="vendo-list">
-        <?php foreach($pairings as $pairing):$pairingId=(string)$pairing['pairing_id'];$setupCode=(string)$pairing['pairing_code'];$remaining=max(0,(int)$pairing['expires_at_epoch']-time());?>
+    <?php
+if(!$rows&&!$pairings):?>
+        <div class="card card-body text-center py-5"><h2 class="h5">No Vendos</h2><p class="text-body-secondary">Add a Vendo to generate a one-time setup code for an ESP8266 or ESP32.</p><?php
+if($canManage):?><div><button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addVendoModal">Add Vendo</button></div><?php
+endif;?></div>
+    <?php
+else:?><div id="vendo-list">
+        <?php
+foreach($pairings as $pairing):$pairingId=(string)$pairing['pairing_id'];
+$setupCode=(string)$pairing['pairing_code'];
+$remaining=max(0,(int)$pairing['expires_at_epoch']-time());?>
         <article class="card mb-3 border-warning-subtle" data-pairing-row data-pairing-id="<?= e($pairingId) ?>" data-pairing-remaining="<?= $remaining ?>">
             <div class="card-body">
                 <div class="d-flex flex-column flex-lg-row justify-content-between gap-3 align-items-lg-center">
@@ -44,12 +70,36 @@ $total=count($rows);$pending=count($pairings);$online=$active=$updates=$unlinked
                 </div>
             </div>
         </article>
-        <?php endforeach;?>
-        <?php foreach($rows as $i=>$row):$device=$row['device'];$binding=$row['binding'];$config=$row['config']??[];$reported=$row['reported']??[];$firmware=$row['firmware']??[];$deviceId=(string)$binding['gateway_device_id'];$isOnline=$device&&$device->lastSeenAt&&$device->lastSeenAt->getTimestamp()>=time()-180;$state=(string)($device?->state??'unknown');$stateClass=match($state){'active'=>'success','suspended'=>'warning',default=>'secondary'};$platform=strtolower((string)($firmware['target']??$reported['hardware']['platform']??''));$platformKnown=isset($gpioProfiles[$platform]);$profile=$platformKnown?$gpioProfiles[$platform]:null;$defaults=$profile['defaults']??[];$pins=$config['hardware']['pins']??$reported['hardware']['pins']??[];$coin=$config['coin']??$reported['coin']??[];$fw=$config['firmware']??[];$current=(string)($firmware['current_version']??$device?->firmwareVersion??'');$latest=(string)($firmware['latest_version']??'');$available=$firmware['update_available']??null;?>
+        <?php
+endforeach;?>
+        <?php
+foreach($rows as $i=>$row):$device=$row['device'];
+$binding=$row['binding'];
+$config=$row['config']??[];
+$reported=$row['reported']??[];
+$firmware=$row['firmware']??[];
+$deviceId=(string)$binding['gateway_device_id'];
+$isOnline=$device&&$device->lastSeenAt&&$device->lastSeenAt->getTimestamp()>=time()-180;
+$state=(string)($device?->state??'unknown');
+$stateClass=match($state){
+    'active'=>'success','suspended'=>'warning',default=>'secondary'
+};
+$platform=strtolower((string)($firmware['target']??$reported['hardware']['platform']??''));
+$platformKnown=isset($gpioProfiles[$platform]);
+$profile=$platformKnown?$gpioProfiles[$platform]:null;
+$defaults=$profile['defaults']??[];
+$pins=$config['hardware']['pins']??$reported['hardware']['pins']??[];
+$coin=$config['coin']??$reported['coin']??[];
+$fw=$config['firmware']??[];
+$current=(string)($firmware['current_version']??$device?->firmwareVersion??'');
+$latest=(string)($firmware['latest_version']??'');
+$available=$firmware['update_available']??null;?>
         <article class="card mb-3" data-vendo-row="<?= e($deviceId) ?>">
             <div class="card-body">
                 <div class="d-flex flex-column flex-xl-row justify-content-between gap-3">
-                    <div class="min-w-0"><div class="d-flex flex-wrap align-items-center gap-2"><h2 class="h5 mb-0" data-vendo-name><?= e($binding['vendo_name']?:'Vendo') ?></h2><span class="badge text-bg-<?= $isOnline?'success':'secondary' ?>"><?= $isOnline?'Online':'Offline' ?></span><span data-device-state><span class="badge text-bg-<?= e($stateClass) ?>"><?= e(ucfirst($state)) ?></span></span><?php if($available===true):?><span class="badge text-bg-warning">Update available</span><?php endif;?></div><div class="small text-body-secondary mt-1"><code><?= e($deviceId) ?></code></div></div>
+                    <div class="min-w-0"><div class="d-flex flex-wrap align-items-center gap-2"><h2 class="h5 mb-0" data-vendo-name><?= e($binding['vendo_name']?:'Vendo') ?></h2><span class="badge text-bg-<?= $isOnline?'success':'secondary' ?>"><?= $isOnline?'Online':'Offline' ?></span><span data-device-state><span class="badge text-bg-<?= e($stateClass) ?>"><?= e(ucfirst($state)) ?></span></span><?php
+if($available===true):?><span class="badge text-bg-warning">Update available</span><?php
+endif;?></div><div class="small text-body-secondary mt-1"><code><?= e($deviceId) ?></code></div></div>
                     <button class="btn btn-outline-primary align-self-start" data-bs-toggle="collapse" data-bs-target="#vendo-manage-<?= $i ?>">Manage</button>
                 </div>
                 <div class="row g-3 mt-1 small">
@@ -60,19 +110,43 @@ $total=count($rows);$pending=count($pairings);$online=$active=$updates=$unlinked
                 </div>
             </div>
             <div class="collapse <?= !empty($row['selected'])?'show':'' ?>" id="vendo-manage-<?= $i ?>" data-vendo-manage="<?= e($deviceId) ?>" data-bs-parent="#vendo-list"><div class="border-top bg-body-tertiary p-3 p-lg-4"><div class="row g-4">
-                <?php if($canManage):?><div class="col-12"><div class="card"><div class="card-header"><strong>Station assignment</strong></div><div class="card-body"><form method="post" class="row g-2 align-items-end js-vendo-form"><input type="hidden" name="_csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="action" value="link_station"><input type="hidden" name="device_id" value="<?= e($deviceId) ?>"><div class="col-md-9"><label class="form-label">Hotspot station</label><select class="form-select" name="station_id" required><option value="" disabled>Select station</option><?php foreach($stations as $station):?><option value="<?= (int)$station['id'] ?>" <?= (int)($binding['station_id']??0)===(int)$station['id']?'selected':'' ?>><?= e($station['name']) ?></option><?php endforeach;?></select><div class="form-text">Assigning this Vendo moves it from its current station. If the target already has a Vendo, that Vendo becomes unlinked.</div></div><div class="col-md-3 d-grid"><button class="btn btn-primary">Link station</button></div></form><?php if(!empty($binding['station_id'])):?><form method="post" class="mt-2 js-vendo-form"><input type="hidden" name="_csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="action" value="unlink"><input type="hidden" name="device_id" value="<?= e($deviceId) ?>"><button class="btn btn-sm btn-link text-body-secondary p-0">Unlink from station</button></form><?php endif;?></div></div></div><?php endif;?>
+                <?php
+if($canManage):?><div class="col-12"><div class="card"><div class="card-header"><strong>Station assignment</strong></div><div class="card-body"><form method="post" class="row g-2 align-items-end js-vendo-form"><input type="hidden" name="_csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="action" value="link_station"><input type="hidden" name="device_id" value="<?= e($deviceId) ?>"><div class="col-md-9"><label class="form-label">Hotspot station</label><select class="form-select" name="station_id" required><option value="" disabled>Select station</option><?php
+foreach($stations as $station):?><option value="<?= (int)$station['id'] ?>" <?= (int)($binding['station_id']??0)===(int)$station['id']?'selected':'' ?>><?= e($station['name']) ?></option><?php
+endforeach;?></select><div class="form-text">Assigning this Vendo moves it from its current station. If the target already has a Vendo, that Vendo becomes unlinked.</div></div><div class="col-md-3 d-grid"><button class="btn btn-primary">Link station</button></div></form><?php
+if(!empty($binding['station_id'])):?><form method="post" class="mt-2 js-vendo-form"><input type="hidden" name="_csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="action" value="unlink"><input type="hidden" name="device_id" value="<?= e($deviceId) ?>"><button class="btn btn-sm btn-link text-body-secondary p-0">Unlink from station</button></form><?php
+endif;?></div></div></div><?php
+endif;?>
                 <div class="col-xl-5"><div class="card h-100"><div class="card-header"><strong>Device controls</strong></div><div class="card-body">
-                    <?php if($canManage):?><form method="post" class="js-vendo-form mb-4"><input type="hidden" name="_csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="action" value="rename"><input type="hidden" name="device_id" value="<?= e($deviceId) ?>"><label class="form-label">Vendo name</label><div class="input-group"><input class="form-control" name="vendo_name" value="<?= e($binding['vendo_name']?:'Vendo') ?>" maxlength="160" required><button class="btn btn-outline-primary">Rename</button></div></form>
-                    <form method="post" class="d-flex flex-wrap gap-2 js-vendo-form mb-4"><input type="hidden" name="_csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="device_id" value="<?= e($deviceId) ?>"><button class="btn btn-sm btn-outline-success" name="action" value="coin_enable">Enable coin</button><button class="btn btn-sm btn-outline-secondary" name="action" value="coin_disable">Disable coin</button><button class="btn btn-sm btn-outline-secondary" name="action" value="restart" onclick="return confirm('Restart this Vendo?')">Restart</button><?php if($state==='active'):?><button class="btn btn-sm btn-outline-warning" name="action" value="suspend" data-state-action>Suspend</button><?php else:?><button class="btn btn-sm btn-outline-success" name="action" value="activate" data-state-action>Activate</button><?php endif;?></form>
-                    <div class="border-top pt-3"><div class="small text-danger mb-2">Remove Vendo</div><p class="small text-body-secondary">Erases this device identity, credentials, configuration, queued commands, and station link. Historical accounting and audit records remain. The ESP must enroll again to return.</p><form method="post" class="js-vendo-form"><input type="hidden" name="_csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="device_id" value="<?= e($deviceId) ?>"><button class="btn btn-sm btn-outline-danger" name="action" value="delete" onclick="return confirm('Remove this Vendo from PixiePoint? The ESP must be enrolled again to return.')">Remove Vendo</button></form></div><?php else:?><div class="text-body-secondary">Read-only access.</div><?php endif;?>
+                    <?php
+if($canManage):?><form method="post" class="js-vendo-form mb-4"><input type="hidden" name="_csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="action" value="rename"><input type="hidden" name="device_id" value="<?= e($deviceId) ?>"><label class="form-label">Vendo name</label><div class="input-group"><input class="form-control" name="vendo_name" value="<?= e($binding['vendo_name']?:'Vendo') ?>" maxlength="160" required><button class="btn btn-outline-primary">Rename</button></div></form>
+                    <form method="post" class="d-flex flex-wrap gap-2 js-vendo-form mb-4"><input type="hidden" name="_csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="device_id" value="<?= e($deviceId) ?>"><button class="btn btn-sm btn-outline-success" name="action" value="coin_enable">Enable coin</button><button class="btn btn-sm btn-outline-secondary" name="action" value="coin_disable">Disable coin</button><button class="btn btn-sm btn-outline-secondary" name="action" value="restart" onclick="return confirm('Restart this Vendo?')">Restart</button><?php
+if($state==='active'):?><button class="btn btn-sm btn-outline-warning" name="action" value="suspend" data-state-action>Suspend</button><?php
+else:?><button class="btn btn-sm btn-outline-success" name="action" value="activate" data-state-action>Activate</button><?php
+endif;?></form>
+                    <div class="border-top pt-3"><div class="small text-danger mb-2">Remove Vendo</div><p class="small text-body-secondary">Erases this device identity, credentials, configuration, queued commands, and station link. Historical accounting and audit records remain. The ESP must enroll again to return.</p><form method="post" class="js-vendo-form"><input type="hidden" name="_csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="device_id" value="<?= e($deviceId) ?>"><button class="btn btn-sm btn-outline-danger" name="action" value="delete" onclick="return confirm('Remove this Vendo from PixiePoint? The ESP must be enrolled again to return.')">Remove Vendo</button></form></div><?php
+else:?><div class="text-body-secondary">Read-only access.</div><?php
+endif;?>
                 </div></div></div>
-                <div class="col-xl-7"><div class="card h-100"><div class="card-header d-flex justify-content-between"><strong>Hardware configuration</strong><span class="badge text-bg-secondary text-uppercase"><?= e($platformKnown?$platform:'Unknown') ?></span></div><div class="card-body"><?php if($canManage&&$platformKnown):?><form method="post" class="js-vendo-form js-hardware-form"><input type="hidden" name="_csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="device_id" value="<?= e($deviceId) ?>"><input type="hidden" name="action" value="save_config"><div class="row g-3"><div class="col-md-6"><label class="form-label">Coin input</label><?= $pinSelect('coin_pin',(int)($pins['coin']??$defaults['coin']),$profile['coin'],'js-pin-select') ?></div><div class="col-md-6"><label class="form-label">Relay output</label><?= $pinSelect('relay_pin',(int)($pins['relay']??$defaults['relay']),$profile['output'],'js-pin-select') ?></div><div class="col-md-6"><label class="form-label">Coin settle time</label><div class="input-group"><input class="form-control" type="number" min="50" max="2000" name="coin_settle_ms" value="<?= (int)($coin['settle_ms']??350) ?>"><span class="input-group-text">ms</span></div></div><div class="col-12"><button class="btn btn-primary">Save hardware configuration</button></div></div></form><?php elseif(!$platformKnown):?><div class="alert alert-warning mb-0">Hardware configuration becomes available after the ESP reports its platform.</div><?php else:?><div class="text-body-secondary">Read-only access.</div><?php endif;?></div></div></div>
-                <div class="col-12"><div class="card"><div class="card-header d-flex flex-column flex-md-row justify-content-between gap-2"><div><strong>Firmware</strong><div class="small text-body-secondary">Release status and automatic update policy.</div></div><div class="small text-md-end">Installed <strong><?= $current!==''?'v'.e(ltrim($current,'vV')):'Unknown' ?></strong> · Latest <strong data-firmware-latest><?= $latest!==''?'v'.e(ltrim($latest,'vV')):'Unknown' ?></strong></div></div><div class="card-body"><?php if($canManage):?><div class="d-flex flex-wrap gap-2 mb-3"><form method="post" class="d-flex gap-2 js-vendo-form"><input type="hidden" name="_csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="device_id" value="<?= e($deviceId) ?>"><button class="btn btn-sm btn-outline-primary" name="action" value="firmware_check">Check now</button><button class="btn btn-sm btn-primary" data-firmware-update <?= $available===true?'':'disabled' ?> name="action" value="firmware_update"><?= $available===true?'Update to v'.e(ltrim($latest,'vV')):'Update firmware' ?></button></form></div><form method="post" class="row g-3 align-items-end js-vendo-form"><input type="hidden" name="_csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="action" value="save_firmware"><input type="hidden" name="device_id" value="<?= e($deviceId) ?>"><div class="col-sm-4"><div class="form-check form-switch"><input class="form-check-input js-firmware-auto-check" type="checkbox" name="auto_check" id="fw-check-<?= $i ?>" <?= ($fw['auto_check']??true)?'checked':'' ?>><label class="form-check-label" for="fw-check-<?= $i ?>">Automatic checks</label></div></div><div class="col-sm-3"><label class="form-label">Interval</label><select class="form-select" name="check_interval_hours"><?php foreach([1,2,3,4,6,8,12,24] as $h):?><option value="<?= $h ?>" <?= (int)($fw['check_interval_hours']??2)===$h?'selected':'' ?>><?= $h ?> hour<?= $h===1?'':'s' ?></option><?php endforeach;?></select></div><div class="col-sm-3"><div class="form-check form-switch"><input class="form-check-input js-firmware-auto-update" type="checkbox" name="auto_update" id="fw-update-<?= $i ?>" <?= ($fw['auto_update']??false)?'checked':'' ?>><label class="form-check-label" for="fw-update-<?= $i ?>">Auto update</label></div></div><input type="hidden" name="channel" value="stable"><div class="col-sm-2 d-grid"><button class="btn btn-outline-primary">Save</button></div></form><?php endif;?></div></div></div>
+                <div class="col-xl-7"><div class="card h-100"><div class="card-header d-flex justify-content-between"><strong>Hardware configuration</strong><span class="badge text-bg-secondary text-uppercase"><?= e($platformKnown?$platform:'Unknown') ?></span></div><div class="card-body"><?php
+if($canManage&&$platformKnown):?><form method="post" class="js-vendo-form js-hardware-form"><input type="hidden" name="_csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="device_id" value="<?= e($deviceId) ?>"><input type="hidden" name="action" value="save_config"><div class="row g-3"><div class="col-md-6"><label class="form-label">Coin input</label><?= $pinSelect('coin_pin',(int)($pins['coin']??$defaults['coin']),$profile['coin'],'js-pin-select') ?></div><div class="col-md-6"><label class="form-label">Relay output</label><?= $pinSelect('relay_pin',(int)($pins['relay']??$defaults['relay']),$profile['output'],'js-pin-select') ?></div><div class="col-md-6"><label class="form-label">Coin settle time</label><div class="input-group"><input class="form-control" type="number" min="50" max="2000" name="coin_settle_ms" value="<?= (int)($coin['settle_ms']??350) ?>"><span class="input-group-text">ms</span></div></div><div class="col-12"><button class="btn btn-primary">Save hardware configuration</button></div></div></form><?php
+elseif(!$platformKnown):?><div class="alert alert-warning mb-0">Hardware configuration becomes available after the ESP reports its platform.</div><?php
+else:?><div class="text-body-secondary">Read-only access.</div><?php
+endif;?></div></div></div>
+                <div class="col-12"><div class="card"><div class="card-header d-flex flex-column flex-md-row justify-content-between gap-2"><div><strong>Firmware</strong><div class="small text-body-secondary">Release status and automatic update policy.</div></div><div class="small text-md-end">Installed <strong><?= $current!==''?'v'.e(ltrim($current,'vV')):'Unknown' ?></strong> · Latest <strong data-firmware-latest><?= $latest!==''?'v'.e(ltrim($latest,'vV')):'Unknown' ?></strong></div></div><div class="card-body"><?php
+if($canManage):?><div class="d-flex flex-wrap gap-2 mb-3"><form method="post" class="d-flex gap-2 js-vendo-form"><input type="hidden" name="_csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="device_id" value="<?= e($deviceId) ?>"><button class="btn btn-sm btn-outline-primary" name="action" value="firmware_check">Check now</button><button class="btn btn-sm btn-primary" data-firmware-update <?= $available===true?'':'disabled' ?> name="action" value="firmware_update"><?= $available===true?'Update to v'.e(ltrim($latest,'vV')):'Update firmware' ?></button></form></div><form method="post" class="row g-3 align-items-end js-vendo-form"><input type="hidden" name="_csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="action" value="save_firmware"><input type="hidden" name="device_id" value="<?= e($deviceId) ?>"><div class="col-sm-4"><div class="form-check form-switch"><input class="form-check-input js-firmware-auto-check" type="checkbox" name="auto_check" id="fw-check-<?= $i ?>" <?= ($fw['auto_check']??true)?'checked':'' ?>><label class="form-check-label" for="fw-check-<?= $i ?>">Automatic checks</label></div></div><div class="col-sm-3"><label class="form-label">Interval</label><select class="form-select" name="check_interval_hours"><?php
+foreach([1,2,3,4,6,8,12,24] as $h):?><option value="<?= $h ?>" <?= (int)($fw['check_interval_hours']??2)===$h?'selected':'' ?>><?= $h ?> hour<?= $h===1?'':'s' ?></option><?php
+endforeach;?></select></div><div class="col-sm-3"><div class="form-check form-switch"><input class="form-check-input js-firmware-auto-update" type="checkbox" name="auto_update" id="fw-update-<?= $i ?>" <?= ($fw['auto_update']??false)?'checked':'' ?>><label class="form-check-label" for="fw-update-<?= $i ?>">Auto update</label></div></div><input type="hidden" name="channel" value="stable"><div class="col-sm-2 d-grid"><button class="btn btn-outline-primary">Save</button></div></form><?php
+endif;?></div></div></div>
             </div></div></div>
-        </article><?php endforeach;?>
-    </div><?php endif;?>
+        </article><?php
+endforeach;?>
+    </div><?php
+endif;?>
 </div>
-<?php if($canManage):?><div class="modal fade" id="addVendoModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><form method="post" class="js-vendo-form" data-reload-on-success="1"><div class="modal-header"><div><h2 class="modal-title fs-5">Add Vendo</h2><div class="small text-body-secondary">Create a one-time enrollment code for an ESP device.</div></div><button class="btn-close" type="button" data-bs-dismiss="modal"></button></div><div class="modal-body"><input type="hidden" name="_csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="action" value="setup_code"><label class="form-label">Vendo name</label><input class="form-control" name="vendo_name" maxlength="160" placeholder="Example: Front Vendo" required><div class="form-text mt-2">After generation, the setup code appears in the Vendo list while PixiePoint waits up to 10 minutes for the ESP to claim it.</div></div><div class="modal-footer"><button class="btn btn-outline-secondary" type="button" data-bs-dismiss="modal">Cancel</button><button class="btn btn-primary">Generate setup code</button></div></form></div></div></div><?php endif;?>
+<?php
+if($canManage):?><div class="modal fade" id="addVendoModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><form method="post" class="js-vendo-form" data-reload-on-success="1"><div class="modal-header"><div><h2 class="modal-title fs-5">Add Vendo</h2><div class="small text-body-secondary">Create a one-time enrollment code for an ESP device.</div></div><button class="btn-close" type="button" data-bs-dismiss="modal"></button></div><div class="modal-body"><input type="hidden" name="_csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="action" value="setup_code"><label class="form-label">Vendo name</label><input class="form-control" name="vendo_name" maxlength="160" placeholder="Example: Front Vendo" required><div class="form-text mt-2">After generation, the setup code appears in the Vendo list while PixiePoint waits up to 10 minutes for the ESP to claim it.</div></div><div class="modal-footer"><button class="btn btn-outline-secondary" type="button" data-bs-dismiss="modal">Cancel</button><button class="btn btn-primary">Generate setup code</button></div></form></div></div></div><?php
+endif;?>
 <script>
 (()=>{
 const box=document.getElementById('vendo-ajax-message'),esc=s=>$('<div>').text(s??'').html(),message=(text,ok=true)=>{box.innerHTML=`<div class="alert ${ok?'alert-success':'alert-danger'}">${esc(text)}</div>`;box.scrollIntoView({behavior:'smooth',block:'nearest'});},busy=(b,on)=>{if(!b)return;if(on){b.dataset.old=b.innerHTML;b.disabled=true;b.innerHTML='<span class="spinner-border spinner-border-sm me-1"></span>Working...';}else{b.disabled=false;if(b.dataset.old)b.innerHTML=b.dataset.old;}},syncPins=f=>{const s=[...f.querySelectorAll('.js-pin-select')],used=s.map(x=>x.value);s.forEach(x=>[...x.options].forEach(o=>{o.disabled=o.value!==x.value&&used.includes(o.value)}));};

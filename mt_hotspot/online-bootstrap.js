@@ -1,4 +1,4 @@
-(function () {
+(function() {
   "use strict";
 
   var TIMEOUT_MS = 7000;
@@ -20,7 +20,9 @@
       mode: "cors",
       cache: "no-store",
       credentials: "omit",
-      headers: { "Accept": "text/html" }
+      headers: {
+        "Accept": "text/html"
+      }
     };
 
     if (method === "GET") {
@@ -31,7 +33,10 @@
       options.body = data.toString();
     }
 
-    return { url: url, options: options };
+    return {
+      url: url,
+      options: options
+    };
   }
 
   function load() {
@@ -49,25 +54,25 @@
 
     var request = requestTarget(form);
     var controller = window.AbortController ? new AbortController() : null;
-    var timer = setTimeout(function () {
+    var timer = setTimeout(function() {
       if (controller) controller.abort();
     }, TIMEOUT_MS);
 
     if (controller) request.options.signal = controller.signal;
 
     fetch(request.url, request.options)
-      .then(function (response) {
+      .then(function(response) {
         if (!response.ok) throw new Error("portal-http-" + response.status);
         return response.text();
       })
-      .then(function (html) {
+      .then(function(html) {
         clearTimeout(timer);
         if (!html || !html.trim()) throw new Error("portal-empty");
         document.open();
         document.write(html);
         document.close();
       })
-      .catch(function () {
+      .catch(function() {
         clearTimeout(timer);
         running = false;
         text("bootstrap-status", "Hosted portal unavailable · retrying in 3 seconds");

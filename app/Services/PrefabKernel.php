@@ -21,9 +21,9 @@ final class PrefabKernel
         PrefabConfig::set([
             'database' => $db,
             'modules' => [
-                'permissions' => ['definitions' => $root . '/config/permissions.php', 'table' => 'prefab_subject_permissions'],
-                'logs' => ['table' => 'prefab_logs'],
-            ],
+            'permissions' => ['definitions' => $root . '/config/permissions.php', 'table' => 'prefab_subject_permissions'],
+            'logs' => ['table' => 'prefab_logs'],
+        ],
         ]);
 
         $logs = new LogManager(['database' => $db]);
@@ -32,19 +32,20 @@ final class PrefabKernel
         $map = new UserMap(
             table: 'users', id: 'id', name: 'name', email: 'email', active: 'active',
             attributes: [
-                'password_hash' => 'password_hash',
-                'platform_role' => 'platform_role',
-                'points' => 'points',
-                'account_api_key' => 'account_api_key',
-                'google_sub' => 'google_sub',
-                'avatar_url' => 'avatar_url',
-            ],
+            'password_hash' => 'password_hash',
+            'platform_role' => 'platform_role',
+            'points' => 'points',
+            'account_api_key' => 'account_api_key',
+            'google_sub' => 'google_sub',
+            'avatar_url' => 'avatar_url',
+        ],
             allowCreate: true, allowUpdate: true, allowDelete: false,
         );
 
         $users = new UserManager(['database' => $db, 'map' => $map, 'factory' => new AppUserFactory()]);
         $users->prefabConfigure();
-        $auth = new AuthManager(); $auth->prefabConfigure();
+        $auth = new AuthManager();
+        $auth->prefabConfigure();
         $permissions = new PermissionManager(['database' => $db, 'definitions' => $root . '/config/permissions.php', 'table' => 'prefab_subject_permissions']);
         $permissions->prefabConfigure();
         $routes = new RouteManager();

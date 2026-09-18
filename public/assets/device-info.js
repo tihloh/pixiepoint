@@ -1,4 +1,4 @@
-(function () {
+(function() {
   'use strict';
 
   const context = window.PIXIEPOINT_CONTEXT || {};
@@ -36,17 +36,19 @@
     });
 
     return fetch(`${hostedOrigin}/hotspot/device-voucher`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
-      body: body.toString(),
-      cache: 'no-store',
-      keepalive: true,
-    })
-      .then(function (response) {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
+        },
+        body: body.toString(),
+        cache: 'no-store',
+        keepalive: true,
+      })
+      .then(function(response) {
         if (!response.ok) throw new Error('Voucher was not saved.');
         return response.json();
       })
-      .then(function (data) {
+      .then(function(data) {
         if (!data || !data.ok) throw new Error('Voucher was not saved.');
         if (data.device && data.device.uuid) rememberUuid(data.device.uuid);
         return true;
@@ -55,7 +57,7 @@
 
   document.addEventListener(
     'submit',
-    function (event) {
+    function(event) {
       const form = event.target;
       if (!form || form.id !== 'compat-voucher-form') return;
       const input = document.getElementById('compat-voucher');
@@ -63,7 +65,9 @@
       if (!String(voucher || '').trim()) return;
 
       // Remembering a voucher must never delay or block native router login.
-      saveVoucher(voucher).catch(function () { return false; });
+      saveVoucher(voucher).catch(function() {
+        return false;
+      });
     },
     true,
   );

@@ -28,16 +28,20 @@ return static function (RouteManager $routes, array $c): void {
     $routes->post('/hotspot/authenticate', [$c['hotspot'], 'authenticate'])->name('hotspot.authenticate');
 
     $routes->post('/hotspot/session', static function () use ($c, $nativeUrl): never {
-        $url = $nativeUrl($_POST['refresh_url'] ?? null);
-        if ($url !== null) { header('Location: ' . $url, true, 303); exit; }
-        $c['hotspot']->session();
-    })->name('hotspot.session');
+            $url = $nativeUrl($_POST['refresh_url'] ?? null);
+            if ($url !== null) {
+                header('Location: ' . $url, true, 303); exit;
+            }
+            $c['hotspot']->session();
+        })->name('hotspot.session');
 
     $routes->post('/hotspot/disconnected', static function () use ($c, $nativeUrl): never {
-        $url = $nativeUrl($_POST['login_url'] ?? null);
-        if ($url !== null) { header('Location: ' . $url, true, 303); exit; }
-        $c['hotspot']->disconnected();
-    })->name('hotspot.disconnected');
+            $url = $nativeUrl($_POST['login_url'] ?? null);
+            if ($url !== null) {
+                header('Location: ' . $url, true, 303); exit;
+            }
+            $c['hotspot']->disconnected();
+        })->name('hotspot.disconnected');
 
     $routes->get('/admin/portal-emulator', [$c['emulator'], 'index'])->name('admin.portal_emulator')->auth()->middleware('prefab.access');
     $routes->get('/emulator/', [$c['emulator'], 'index'])->name('emulator.compat')->auth()->middleware('prefab.access');

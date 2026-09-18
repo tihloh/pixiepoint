@@ -27,7 +27,7 @@ final class PointWallet
         }
 
         $this->db->prepare("INSERT INTO point_wallets(device_id,status,created_at,updated_at) VALUES(?,'active',?,?)")
-            ->execute([$deviceId, now(), now()]);
+        ->execute([$deviceId, now(), now()]);
 
         return $this->find((int) $this->db->lastInsertId());
     }
@@ -50,7 +50,7 @@ final class PointWallet
         $lookup->execute([$userId]);
         $points = max(0, (int) $lookup->fetchColumn());
         $this->db->prepare("INSERT INTO point_wallets(user_id,balance,status,created_at,updated_at) VALUES(?,?,'active',?,?)")
-            ->execute([$userId, $points, now(), now()]);
+        ->execute([$userId, $points, now(), now()]);
 
         return $this->find((int) $this->db->lastInsertId());
     }
@@ -67,7 +67,7 @@ final class PointWallet
         $stmt->execute([(int) $wallet['id'], $points, $eventKey, now()]);
         if ($stmt->rowCount() > 0) {
             $this->db->prepare('UPDATE point_wallets SET balance=balance+?,updated_at=? WHERE id=?')
-                ->execute([$points, now(), $wallet['id']]);
+            ->execute([$points, now(), $wallet['id']]);
             if ($userId) {
                 $this->db->prepare('UPDATE users SET points=points+? WHERE id=?')->execute([$points, $userId]);
             }
@@ -121,13 +121,14 @@ final class PointWallet
             if ($insert->rowCount() > 0) {
                 $this->db->prepare('UPDATE point_wallets SET balance=balance+?,updated_at=? WHERE id=?')->execute([$points, now(), $user['id']]);
                 $this->db->prepare('UPDATE users SET points=points+? WHERE id=?')->execute([$points, $userId]);
-            } else {
+            }
+            else {
                 $points = 0;
             }
         }
 
         $this->db->prepare("UPDATE point_wallets SET balance=0,status='claimed',claimed_by_wallet_id=?,claimed_at=?,updated_at=? WHERE id=?")
-            ->execute([$user['id'], now(), now(), $guest['id']]);
+        ->execute([$user['id'], now(), now(), $guest['id']]);
 
         return $points;
     }

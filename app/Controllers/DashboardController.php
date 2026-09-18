@@ -41,7 +41,7 @@ final class DashboardController
         $routerIds = $this->accessibleRouterIds($userId, $platformOwner);
 
         $metrics = [
-            'Points' => $this->points->balanceForDevice(0, $userId),
+        'Points' => $this->points->balanceForDevice(0, $userId),
         ];
 
         if ($this->auth->can('routers.view')) {
@@ -71,8 +71,8 @@ final class DashboardController
 
         if ($this->auth->can('users.view')) {
             $metrics['Users'] = (int) $this->db
-                ->query('SELECT COUNT(*) FROM users')
-                ->fetchColumn();
+            ->query('SELECT COUNT(*) FROM users')
+            ->fetchColumn();
         }
 
         $recentSessions = $this->recentSessionsForRouters($routerIds);
@@ -111,7 +111,7 @@ final class DashboardController
 
         if ($result->fails()) {
             $_SESSION['device_claim_message'] =
-                '<div class="alert">The device confirmation was invalid. Please try again.</div>';
+            '<div class="alert">The device confirmation was invalid. Please try again.</div>';
             redirect('/dashboard');
         }
 
@@ -122,7 +122,7 @@ final class DashboardController
         // Prevent a stale page from claiming a different device identity.
         if (!$current || (int) $current['id'] !== $deviceId) {
             $_SESSION['device_claim_message'] =
-                '<div class="alert">This browser is no longer presenting the same device identity. Reconnect and try again.</div>';
+            '<div class="alert">This browser is no longer presenting the same device identity. Reconnect and try again.</div>';
             redirect('/dashboard');
         }
 
@@ -134,23 +134,25 @@ final class DashboardController
             if ($targetId > 0) {
                 $this->devices->mergeInto($deviceId, $targetId, $userId);
                 $_SESSION['device_claim_message'] =
-                    '<div class="notice">Device restored.'
-                    . ($claimedPoints > 0
-                        ? ' ' . e($claimedPoints) . ' guest points were claimed.'
-                        : '')
-                    . '</div>';
-            } else {
+                '<div class="notice">Device restored.'
+                . ($claimedPoints > 0
+                    ? ' ' . e($claimedPoints) . ' guest points were claimed.'
+                    : '')
+                . '</div>';
+            }
+            else {
                 $this->devices->claimAsNew($deviceId, $userId);
                 $_SESSION['device_claim_message'] =
-                    '<div class="notice">Device saved to your PixiePoint account.'
-                    . ($claimedPoints > 0
-                        ? ' ' . e($claimedPoints) . ' guest points were claimed.'
-                        : '')
-                    . '</div>';
+                '<div class="notice">Device saved to your PixiePoint account.'
+                . ($claimedPoints > 0
+                    ? ' ' . e($claimedPoints) . ' guest points were claimed.'
+                    : '')
+                . '</div>';
             }
-        } catch (Throwable $e) {
+        }
+        catch (Throwable $e) {
             $_SESSION['device_claim_message'] =
-                '<div class="alert">' . e($e->getMessage()) . '</div>';
+            '<div class="alert">' . e($e->getMessage()) . '</div>';
         }
 
         redirect('/dashboard');
@@ -181,12 +183,12 @@ final class DashboardController
         $registerUrl = 'https://hs.portalx.win/api/router/register/' . $key;
 
         return ':local identity [/system identity get name]; '
-            . ':local serial [/system routerboard get serial-number]; '
-            . '/tool fetch url="' . $registerUrl . '" mode=https '
-            . 'http-header-field=("X-PixiePoint-Identity: " . $identity . ",X-PixiePoint-Serial: " . $serial) '
-            . 'dst-path="PixiePointRegister.rsc"; '
-            . '/import file-name="PixiePointRegister.rsc"; '
-            . '/file remove [find name="PixiePointRegister.rsc"]';
+        . ':local serial [/system routerboard get serial-number]; '
+        . '/tool fetch url="' . $registerUrl . '" mode=https '
+        . 'http-header-field=("X-PixiePoint-Identity: " . $identity . ",X-PixiePoint-Serial: " . $serial) '
+        . 'dst-path="PixiePointRegister.rsc"; '
+        . '/import file-name="PixiePointRegister.rsc"; '
+        . '/file remove [find name="PixiePointRegister.rsc"]';
     }
 
     /**
@@ -240,12 +242,12 @@ final class DashboardController
 
         $placeholders = implode(',', array_fill(0, count($routerIds), '?'));
         $sql = 'SELECT COUNT(DISTINCT device_id) FROM ('
-            . 'SELECT s.device_id FROM sessions s '
-            . 'WHERE s.router_id IN (' . $placeholders . ') AND s.device_id IS NOT NULL '
-            . 'UNION '
-            . 'SELECT e.device_id FROM router_login_events e '
-            . 'WHERE e.router_id IN (' . $placeholders . ') AND e.device_id IS NOT NULL'
-            . ') router_devices';
+        . 'SELECT s.device_id FROM sessions s '
+        . 'WHERE s.router_id IN (' . $placeholders . ') AND s.device_id IS NOT NULL '
+        . 'UNION '
+        . 'SELECT e.device_id FROM router_login_events e '
+        . 'WHERE e.router_id IN (' . $placeholders . ') AND e.device_id IS NOT NULL'
+        . ') router_devices';
 
         $stmt = $this->db->prepare($sql);
         $stmt->execute([...$routerIds, ...$routerIds]);

@@ -40,8 +40,8 @@ final class DeviceInfoController
 
         try {
             $device = $uuid !== ''
-                ? $this->deviceByUuid($uuid)
-                : $this->devices->resolve($mac, $this->scope($routerIdentity, $interface), $ip);
+            ? $this->deviceByUuid($uuid)
+            : $this->devices->resolve($mac, $this->scope($routerIdentity, $interface), $ip);
 
             if (!$device) {
                 $this->json(['ok' => false, 'error' => 'device.not_found'], 404);
@@ -56,8 +56,8 @@ final class DeviceInfoController
                 $stmt->execute([$userId]);
                 if ($user = $stmt->fetch()) {
                     $account = [
-                        'linked' => true,
-                        'name' => (string) $user['name'],
+                    'linked' => true,
+                    'name' => (string) $user['name'],
                     ];
                 }
             }
@@ -90,20 +90,21 @@ final class DeviceInfoController
                 'saved_voucher' => trim((string) ($device['last_voucher'] ?? '')),
                 'points' => $this->points->balanceForDevice($deviceId, $userId),
                 'device' => [
-                    'uuid' => (string) ($device['uuid'] ?? ''),
-                    'mac' => (string) ($device['mac'] ?? $mac),
-                    'ip' => $ip !== '' ? $ip : (string) ($device['last_ip'] ?? ''),
-                    'first_seen_at' => (string) ($device['first_seen_at'] ?? ''),
-                    'last_seen_at' => (string) ($device['last_seen_at'] ?? ''),
-                ],
+                'uuid' => (string) ($device['uuid'] ?? ''),
+                'mac' => (string) ($device['mac'] ?? $mac),
+                'ip' => $ip !== '' ? $ip : (string) ($device['last_ip'] ?? ''),
+                'first_seen_at' => (string) ($device['first_seen_at'] ?? ''),
+                'last_seen_at' => (string) ($device['last_seen_at'] ?? ''),
+            ],
                 'stats' => [
-                    'purchases' => (int) ($stats['purchases'] ?? 0),
-                    'spent' => (int) ($stats['spent'] ?? 0),
-                    'purchased_seconds' => (int) ($stats['purchased_seconds'] ?? 0),
-                ],
+                'purchases' => (int) ($stats['purchases'] ?? 0),
+                'spent' => (int) ($stats['spent'] ?? 0),
+                'purchased_seconds' => (int) ($stats['purchased_seconds'] ?? 0),
+            ],
                 'history' => $history,
             ]);
-        } catch (Throwable) {
+        }
+        catch (Throwable) {
             $this->json(['ok' => false, 'error' => 'device.lookup_failed'], 500);
         }
     }
@@ -133,8 +134,8 @@ final class DeviceInfoController
 
         try {
             $device = $uuid !== ''
-                ? $this->deviceByUuid($uuid)
-                : $this->devices->resolve($mac, $this->scope($routerIdentity, $interface), $ip);
+            ? $this->deviceByUuid($uuid)
+            : $this->devices->resolve($mac, $this->scope($routerIdentity, $interface), $ip);
 
             if (!$device) {
                 $this->json(['ok' => false, 'error' => 'device.not_found'], 404);
@@ -148,7 +149,8 @@ final class DeviceInfoController
                 'saved_voucher' => $voucher,
                 'device' => ['uuid' => (string) ($device['uuid'] ?? $uuid)],
             ]);
-        } catch (Throwable) {
+        }
+        catch (Throwable) {
             $this->json(['ok' => false, 'error' => 'voucher.save_failed'], 500);
         }
     }
@@ -158,7 +160,7 @@ final class DeviceInfoController
         return implode('|', array_filter([
             $routerIdentity,
             $interface,
-        ], static fn (string $value): bool => $value !== '')) ?: 'global';
+            ], static fn (string $value): bool => $value !== '')) ?: 'global';
     }
 
     private function validUuid(string $uuid): bool

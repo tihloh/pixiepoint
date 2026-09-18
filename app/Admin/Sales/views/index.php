@@ -47,11 +47,14 @@
                 </tr>
             </thead>
             <tbody>
-                <?php if (!$events): ?>
+                <?php
+if (!$events): ?>
                     <tr><td colspan="8" class="empty">No sales recorded.</td></tr>
-                <?php endif; ?>
+                <?php
+endif; ?>
 
-                <?php foreach ($events as $event): ?>
+                <?php
+foreach ($events as $event): ?>
                     <tr>
                         <td class="text-nowrap"><?= e($event['created_at']) ?></td>
                         <td><?= e($event['router_name']) ?></td>
@@ -62,7 +65,8 @@
                         <td class="text-nowrap">₱<?= e(number_format((int) $event['amount_pesos'])) ?></td>
                         <td><?= e($event['points_awarded']) ?></td>
                     </tr>
-                <?php endforeach; ?>
+                <?php
+endforeach; ?>
             </tbody>
         </table>
     </div>

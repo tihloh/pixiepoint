@@ -27,7 +27,8 @@ final class AccountingController
         try {
             $this->db->query('SELECT 1')->fetchColumn();
             echo json_encode(['ready' => true, 'service' => 'pixiepoint', 'time' => gmdate(DATE_ATOM)]);
-        } catch (\Throwable) {
+        }
+        catch (\Throwable) {
             http_response_code(503);
             echo json_encode(['ready' => false]);
         }
@@ -55,7 +56,8 @@ final class AccountingController
                 'bytes_out' => 'default:0|integer|min:0',
                 'terminate_cause' => 'trim|null_if_empty|nullable|string|max:128',
             ]);
-        } catch (InvalidArgumentException $e) {
+        }
+        catch (InvalidArgumentException $e) {
             $this->json(['ok' => false, 'error' => $e->getMessage()], 422);
         }
 
@@ -108,13 +110,15 @@ final class AccountingController
             if ($recordId) {
                 $stmt = $this->db->prepare('UPDATE sessions SET user_id=COALESCE(user_id,?),radius_session_id=?,router_id=COALESCE(?,router_id),device_id=COALESCE(?,device_id),client_ip=?,status=?,started_at=COALESCE(started_at,?),updated_at=?,ended_at=?,uptime_seconds=?,bytes_in=?,bytes_out=?,terminate_cause=? WHERE id=?');
                 $stmt->execute([$userId,$sessionId,$routerId,$deviceId,$clientIp,$mapped,$status === 'start' ? now() : null,now(),$status === 'stop' ? now() : null,(int) $payload['uptime'],(int) $payload['bytes_in'],(int) $payload['bytes_out'],(string) ($payload['terminate_cause'] ?? ''),$recordId]);
-            } else {
+            }
+            else {
                 $stmt = $this->db->prepare('INSERT INTO sessions(user_id,radius_session_id,router_id,device_id,username,client_ip,status,started_at,updated_at,ended_at,uptime_seconds,bytes_in,bytes_out,terminate_cause) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)');
                 $stmt->execute([$userId,$sessionId,$routerId,$deviceId,$username,$clientIp,$mapped,$status === 'start' ? now() : null,now(),$status === 'stop' ? now() : null,(int) $payload['uptime'],(int) $payload['bytes_in'],(int) $payload['bytes_out'],(string) ($payload['terminate_cause'] ?? '')]);
             }
 
             $this->db->commit();
-        } catch (\Throwable $e) {
+        }
+        catch (\Throwable $e) {
             if ($this->db->inTransaction()) {
                 $this->db->rollBack();
             }
@@ -142,7 +146,8 @@ final class AccountingController
                 'duration_seconds' => 'default:0|integer|min:0',
                 'is_extension' => 'default:0|integer|min:0|max:1',
             ]);
-        } catch (InvalidArgumentException $e) {
+        }
+        catch (InvalidArgumentException $e) {
             $this->json(['ok' => false, 'error' => $e->getMessage()], 422);
         }
         if ($result->fails()) {
@@ -199,7 +204,8 @@ final class AccountingController
             }
             $this->db->prepare('UPDATE routers SET last_seen_at=? WHERE id=?')->execute([now(), $router['id']]);
             $this->db->commit();
-        } catch (\Throwable) {
+        }
+        catch (\Throwable) {
             if ($this->db->inTransaction()) {
                 $this->db->rollBack();
             }

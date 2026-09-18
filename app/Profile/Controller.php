@@ -36,7 +36,8 @@ final class Controller
                 if ($action === 'avatar') {
                     $avatarUrl = $this->avatars->store($userId, (string) ($_POST['avatar_data'] ?? ''));
                     $this->users->update($userId, ['avatar_url' => $avatarUrl], $this->context());
-                } else {
+                }
+                else {
                     $name = trim((string) ($_POST['name'] ?? ''));
                     $email = strtolower(trim((string) ($_POST['email'] ?? '')));
 
@@ -56,7 +57,8 @@ final class Controller
                 }
 
                 $_SESSION['profile_flash'] = '<div class="alert ok">Profile updated.</div>';
-            } catch (\Throwable $e) {
+            }
+            catch (\Throwable $e) {
                 $_SESSION['profile_flash'] = '<div class="alert">' . e($e->getMessage()) . '</div>';
             }
 
@@ -81,9 +83,9 @@ final class Controller
     private function context(): array
     {
         return [
-            'actor_id' => $this->auth->auth()->id(),
-            'ip_address' => $_SERVER['REMOTE_ADDR'] ?? null,
-            'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? null,
+        'actor_id' => $this->auth->auth()->id(),
+        'ip_address' => $_SERVER['REMOTE_ADDR'] ?? null,
+        'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? null,
         ];
     }
 }

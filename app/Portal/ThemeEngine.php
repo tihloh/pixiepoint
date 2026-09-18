@@ -38,7 +38,7 @@ final class ThemeEngine
         $themeRecord = $this->themes->find($slug);
 
         $values = [
-            'theme.name' => (string) ($themeRecord['name'] ?? $slug),
+        'theme.name' => (string) ($themeRecord['name'] ?? $slug),
         ];
 
         foreach ($this->flatten($context->data) as $key => $value) {
@@ -65,7 +65,8 @@ final class ThemeEngine
                 $value = $values[$m[2]] ?? '';
                 if (is_bool($value)) {
                     $value = $value ? 'true' : 'false';
-                } elseif (!is_scalar($value)) {
+                }
+                elseif (!is_scalar($value)) {
                     $value = '';
                 }
                 $value = (string) $value;
@@ -93,20 +94,20 @@ final class ThemeEngine
 
         while ($guard++ < 100 && preg_match($pattern, $html)) {
             $html = preg_replace_callback($pattern, function (array $m) use ($values, $features): string {
-                $type = $m[1];
-                $expression = trim($m[2]);
-                $body = $m[3];
-                $parts = preg_split('/\{\{\s*else\s*\}\}/', $body, 2) ?: [$body];
-                $truthy = $type === 'feature'
+                    $type = $m[1];
+                    $expression = trim($m[2]);
+                    $body = $m[3];
+                    $parts = preg_split('/\{\{\s*else\s*\}\}/', $body, 2) ?: [$body];
+                    $truthy = $type === 'feature'
                     ? (bool) ($features[$expression] ?? false)
                     : $this->evaluateCondition($expression, $values);
 
-                if ($type === 'unless') {
-                    $truthy = !$truthy;
-                }
+                    if ($type === 'unless') {
+                        $truthy = !$truthy;
+                    }
 
-                return $truthy ? ($parts[0] ?? '') : ($parts[1] ?? '');
-            }, $html, 1) ?? $html;
+                    return $truthy ? ($parts[0] ?? '') : ($parts[1] ?? '');
+                }, $html, 1) ?? $html;
         }
 
         return $html;
@@ -242,16 +243,16 @@ final class ThemeEngine
         }
 
         return $html
-            . '<section id="pp-debug" class="pp-debug" style="margin:24px auto;padding:16px;max-width:1000px;border:1px solid #888;border-radius:8px;background:rgba(0,0,0,.04);font:14px/1.45 system-ui,sans-serif;color:inherit;overflow:auto">'
-            . '<h2 style="margin:0 0 12px;font-size:18px">PixiePoint Debug</h2>'
-            . '<p style="margin:0 0 16px"><strong>Debug mode enabled.</strong> These are the values currently available to theme placeholders.</p>'
-            . '<h3 style="margin:16px 0 8px;font-size:15px">Available placeholders</h3>'
-            . '<table style="width:100%;border-collapse:collapse"><tbody>' . $placeholderRows . '</tbody></table>'
-            . '<h3 style="margin:16px 0 8px;font-size:15px">Features</h3>'
-            . '<table style="width:100%;border-collapse:collapse"><tbody>' . $featureRows . '</tbody></table>'
-            . '<h3 style="margin:16px 0 8px;font-size:15px">Debug details</h3>'
-            . '<details><summary style="cursor:pointer">Show raw debug payload</summary><pre style="white-space:pre-wrap;margin-top:8px">' . e($debugJson) . '</pre></details>'
-            . '</section>';
+        . '<section id="pp-debug" class="pp-debug" style="margin:24px auto;padding:16px;max-width:1000px;border:1px solid #888;border-radius:8px;background:rgba(0,0,0,.04);font:14px/1.45 system-ui,sans-serif;color:inherit;overflow:auto">'
+        . '<h2 style="margin:0 0 12px;font-size:18px">PixiePoint Debug</h2>'
+        . '<p style="margin:0 0 16px"><strong>Debug mode enabled.</strong> These are the values currently available to theme placeholders.</p>'
+        . '<h3 style="margin:16px 0 8px;font-size:15px">Available placeholders</h3>'
+        . '<table style="width:100%;border-collapse:collapse"><tbody>' . $placeholderRows . '</tbody></table>'
+        . '<h3 style="margin:16px 0 8px;font-size:15px">Features</h3>'
+        . '<table style="width:100%;border-collapse:collapse"><tbody>' . $featureRows . '</tbody></table>'
+        . '<h3 style="margin:16px 0 8px;font-size:15px">Debug details</h3>'
+        . '<details><summary style="cursor:pointer">Show raw debug payload</summary><pre style="white-space:pre-wrap;margin-top:8px">' . e($debugJson) . '</pre></details>'
+        . '</section>';
     }
 
     private function injectThemeAssets(string $html, string $slug): string
@@ -266,7 +267,8 @@ final class ThemeEngine
 
         if (preg_match('/<\/head\s*>/i', $html)) {
             $html = preg_replace('/<\/head\s*>/i', $style . "\n</head>", $html, 1) ?? $html;
-        } else {
+        }
+        else {
             $html = $this->injectFragmentStyle($html, $style);
         }
 
@@ -280,7 +282,8 @@ final class ThemeEngine
 
         if (preg_match('/<\/body\s*>/i', $html)) {
             $html = preg_replace('/<\/body\s*>/i', $script . "\n</body>", $html, 1) ?? $html;
-        } else {
+        }
+        else {
             $html .= "\n" . $script;
         }
 

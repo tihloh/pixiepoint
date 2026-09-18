@@ -21,7 +21,8 @@
                 </tr>
             </thead>
             <tbody>
-                <?php foreach ($users as $user): ?>
+                <?php
+foreach ($users as $user): ?>
                     <tr>
                         <td>
                             <strong><?= e($user['name']) ?></strong>
@@ -42,7 +43,8 @@
                             </a>
                         </td>
                     </tr>
-                <?php endforeach; ?>
+                <?php
+endforeach; ?>
             </tbody>
         </table>
     </div>

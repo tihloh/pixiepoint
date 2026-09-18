@@ -26,11 +26,14 @@
                 </tr>
             </thead>
             <tbody>
-                <?php if (!$sessions): ?>
+                <?php
+if (!$sessions): ?>
                     <tr><td colspan="7" class="empty">No sessions recorded.</td></tr>
-                <?php endif; ?>
+                <?php
+endif; ?>
 
-                <?php foreach ($sessions as $session): ?>
+                <?php
+foreach ($sessions as $session): ?>
                     <tr>
                         <td><?= e($session['account_email'] ?: 'Guest') ?></td>
                         <td><?= e($session['username'] ?: '—') ?></td>
@@ -40,7 +43,8 @@
                         <td class="text-nowrap"><?= e(duration_nice((int) $session['uptime_seconds'])) ?></td>
                         <td class="text-nowrap"><?= e(bytes_nice((int) $session['bytes_in'] + (int) $session['bytes_out'])) ?></td>
                     </tr>
-                <?php endforeach; ?>
+                <?php
+endforeach; ?>
             </tbody>
         </table>
     </div>

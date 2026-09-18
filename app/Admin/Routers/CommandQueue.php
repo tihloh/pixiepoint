@@ -76,10 +76,11 @@ final class CommandQueue
             $this->db->commit();
 
             return [
-                'id' => (int) $row['id'],
-                'command' => (string) $row['command'],
+            'id' => (int) $row['id'],
+            'command' => (string) $row['command'],
             ];
-        } catch (Throwable $e) {
+        }
+        catch (Throwable $e) {
             if ($this->db->inTransaction()) {
                 $this->db->rollBack();
             }

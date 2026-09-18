@@ -6,8 +6,12 @@ namespace PixiePoint\App\Services\Vouchers;
 
 final class MikroTikVoucherAdapter implements VoucherPlatformAdapter
 {
-    public function key(): string{return 'mikrotik';}
-    public function label(): string{return 'MikroTik RouterOS script';}
+    public function key(): string{
+        return 'mikrotik';
+    }
+    public function label(): string{
+        return 'MikroTik RouterOS script';
+    }
 
     public function filename(array $batch): string
     {
@@ -17,12 +21,12 @@ final class MikroTikVoucherAdapter implements VoucherPlatformAdapter
     public function render(array $router, ?array $station, array $batch, array $vouchers): string
     {
         $lines = [
-            '# PixiePoint voucher batch ' . $batch['batch_key'],
-            '# Router: ' . $router['name'] . ' (' . $router['identity'] . ')',
-            '# Hotspot Station: ' . ($station['name'] ?? 'All stations on selected router'),
-            '# Promo: ' . ($batch['promo_name'] ?: 'None'),
-            '# Generated: ' . $batch['created_at'],
-            ':local ppExisting',
+        '# PixiePoint voucher batch ' . $batch['batch_key'],
+        '# Router: ' . $router['name'] . ' (' . $router['identity'] . ')',
+        '# Hotspot Station: ' . ($station['name'] ?? 'All stations on selected router'),
+        '# Promo: ' . ($batch['promo_name'] ?: 'None'),
+        '# Generated: ' . $batch['created_at'],
+        ':local ppExisting',
         ];
         $profile = trim((string) ($batch['platform_profile'] ?? ''));
         foreach($vouchers as $voucher){

@@ -23,13 +23,16 @@ final class Controller extends FeatureController
         $subjects=[];
         $subjectResolver=function(?string $type,int|string|null $id,array $log)use(&$subjects,$actorResolver):?string{
             if($id===null||$id==='')return null;
-            $type=strtolower((string)$type);$key=$type.':'.$id;
+            $type=strtolower((string)$type);
+            $key=$type.':'.$id;
             if(array_key_exists($key,$subjects))return $subjects[$key];
             if(in_array($type,['user','account'],true))return $subjects[$key]=$actorResolver($id);
             $map=['router'=>['routers','name'],'station'=>['vendos','name'],'vendo'=>['vendos','name']];
             if(!isset($map[$type]))return null;
             [$table,$column]=$map[$type];
-            $stmt=$this->db->prepare("SELECT {$column} FROM {$table} WHERE id=? LIMIT 1");$stmt->execute([$id]);$value=$stmt->fetchColumn();
+            $stmt=$this->db->prepare("SELECT {$column} FROM {$table} WHERE id=? LIMIT 1");
+            $stmt->execute([$id]);
+            $value=$stmt->fetchColumn();
             return $subjects[$key]=$value!==false?(string)$value:null;
         };
 

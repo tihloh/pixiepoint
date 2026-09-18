@@ -86,44 +86,44 @@ final class View
     private function bootstrapMarkup(string $html): string
     {
         $replacements = [
-            'class="heading"' => 'class="d-flex flex-column flex-md-row align-items-md-end justify-content-between gap-3 mb-4"',
-            'class="grid"' => 'class="d-grid gap-3 mb-4" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr))"',
-            'class="metric"' => 'class="card card-body h-100 metric"',
-            'class="panel"' => 'class="card card-body mt-4"',
-            'class="actions"' => 'class="d-flex flex-wrap gap-2"',
-            'class="muted"' => 'class="text-body-secondary"',
-            'class="button secondary full"' => 'class="btn btn-outline-secondary w-100"',
-            'class="button full"' => 'class="btn btn-primary w-100"',
-            'class="button secondary"' => 'class="btn btn-outline-secondary"',
-            'class="button ghost"' => 'class="btn btn-outline-secondary"',
-            'class="button"' => 'class="btn btn-primary"',
-            'class="alert ok"' => 'class="alert alert-success"',
-            'class="alert"' => 'class="alert alert-danger"',
-            'class="notice"' => 'class="alert alert-success"',
-            'class="badge off"' => 'class="badge rounded-pill text-bg-secondary"',
-            'class="badge"' => 'class="badge rounded-pill text-bg-success"',
-            'class="code"' => 'class="font-monospace"',
-            'class="empty"' => 'class="text-center text-body-secondary py-4"',
+        'class="heading"' => 'class="d-flex flex-column flex-md-row align-items-md-end justify-content-between gap-3 mb-4"',
+        'class="grid"' => 'class="d-grid gap-3 mb-4" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr))"',
+        'class="metric"' => 'class="card card-body h-100 metric"',
+        'class="panel"' => 'class="card card-body mt-4"',
+        'class="actions"' => 'class="d-flex flex-wrap gap-2"',
+        'class="muted"' => 'class="text-body-secondary"',
+        'class="button secondary full"' => 'class="btn btn-outline-secondary w-100"',
+        'class="button full"' => 'class="btn btn-primary w-100"',
+        'class="button secondary"' => 'class="btn btn-outline-secondary"',
+        'class="button ghost"' => 'class="btn btn-outline-secondary"',
+        'class="button"' => 'class="btn btn-primary"',
+        'class="alert ok"' => 'class="alert alert-success"',
+        'class="alert"' => 'class="alert alert-danger"',
+        'class="notice"' => 'class="alert alert-success"',
+        'class="badge off"' => 'class="badge rounded-pill text-bg-secondary"',
+        'class="badge"' => 'class="badge rounded-pill text-bg-success"',
+        'class="code"' => 'class="font-monospace"',
+        'class="empty"' => 'class="text-center text-body-secondary py-4"',
         ];
 
         $html = strtr($html, $replacements);
         $html = preg_replace_callback('/<input\b([^>]*)>/i', static function(array $match):string{
-            $attrs=$match[1];
-            if(preg_match('/\bclass\s*=/i',$attrs))return $match[0];
-            $type='text';
-            if(preg_match('/\btype\s*=\s*(["\'])(.*?)\1/i',$attrs,$m))$type=strtolower($m[2]);
-            if(in_array($type,['checkbox','radio'],true))return '<input class="form-check-input"'.$attrs.'>';
-            if($type==='hidden')return $match[0];
-            return '<input class="form-control"'.$attrs.'>';
-        }, $html) ?? $html;
+                $attrs=$match[1];
+                if(preg_match('/\bclass\s*=/i',$attrs))return $match[0];
+                $type='text';
+                if(preg_match('/\btype\s*=\s*(["\'])(.*?)\1/i',$attrs,$m))$type=strtolower($m[2]);
+                if(in_array($type,['checkbox','radio'],true))return '<input class="form-check-input"'.$attrs.'>';
+                if($type==='hidden')return $match[0];
+                return '<input class="form-control"'.$attrs.'>';
+            }, $html) ?? $html;
         $html = preg_replace('/<select(?![^>]*\bclass=)([^>]*)>/i', '<select class="form-select"$1>', $html) ?? $html;
         $html = preg_replace('/<textarea(?![^>]*\bclass=)([^>]*)>/i', '<textarea class="form-control"$1>', $html) ?? $html;
         $html = preg_replace_callback('/<label([^>]*)>/i', static function (array $match): string {
-            if (str_contains($match[1], 'class=')) {
-                return $match[0];
-            }
-            return '<label class="form-label"' . $match[1] . '>';
-        }, $html) ?? $html;
+                if (str_contains($match[1], 'class=')) {
+                    return $match[0];
+                }
+                return '<label class="form-label"' . $match[1] . '>';
+            }, $html) ?? $html;
         $html = preg_replace('/<table>(.*?)<\/table>/is', '<div class="table-responsive"><table class="table table-hover align-middle mb-0">$1</table></div>', $html) ?? $html;
 
         return $html;

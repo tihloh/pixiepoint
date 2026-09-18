@@ -3,9 +3,12 @@ declare(strict_types=1);
 require __DIR__.'/../app/Portal/ThemeContext.php';
 require __DIR__.'/../app/Portal/Adapters/PlatformAdapter.php';
 require __DIR__.'/../app/Portal/Adapters/MikroTikAdapter.php';
-function e(mixed $value): string {return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');}
+function e(mixed $value): string {
+    return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
+}
 $adapter=new PixiePoint\App\Portal\Adapters\MikroTikAdapter();
-$cases=[];$sessions=[];
+$cases=[];
+$sessions=[];
 foreach(['default','light','neon','sky'] as $theme){
     $template=file_get_contents(__DIR__.'/../app/Portal/Themes/'.$theme.'/portal.html');
     preg_match_all('/<script\b[^>]*>.*?<\/script>/is',$template,$scripts);

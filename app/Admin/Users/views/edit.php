@@ -18,13 +18,16 @@ $isPlatformOwner = ($user['platform_role'] ?? '') === 'platform_owner';
                 <?= $message ?>
 
                 <div class="d-flex align-items-center gap-3 mb-4">
-                    <?php if (!empty($user['avatar_url'])): ?>
+                    <?php
+if (!empty($user['avatar_url'])): ?>
                         <img src="<?= e($user['avatar_url']) ?>" alt="" class="rounded-circle object-fit-cover border" width="72" height="72">
-                    <?php else: ?>
+                    <?php
+else: ?>
                         <div class="rounded-circle border d-flex align-items-center justify-content-center fs-4 fw-bold" style="width:72px;height:72px">
                             <?= e(strtoupper(substr((string) $user['name'], 0, 1))) ?>
                         </div>
-                    <?php endif; ?>
+                    <?php
+endif; ?>
 
                     <div>
                         <strong class="d-block mb-1"><?= e($user['name']) ?></strong>
@@ -52,14 +55,17 @@ $isPlatformOwner = ($user['platform_role'] ?? '') === 'platform_owner';
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label" for="user-role">Role</label>
-                            <?php if ($isPlatformOwner): ?>
+                            <?php
+if ($isPlatformOwner): ?>
                                 <input class="form-control" value="Platform Owner" readonly>
-                            <?php else: ?>
+                            <?php
+else: ?>
                                 <select class="form-select" id="user-role" name="platform_role">
                                     <option value="member" <?= ($user['platform_role'] ?? '') === 'member' ? 'selected' : '' ?>>Member</option>
                                     <option value="pisowifi_owner" <?= ($user['platform_role'] ?? '') === 'pisowifi_owner' ? 'selected' : '' ?>>PisoWiFi Owner</option>
                                 </select>
-                            <?php endif; ?>
+                            <?php
+endif; ?>
                         </div>
 
                         <div class="col-md-6">

@@ -28,11 +28,14 @@
 
                 <?= $error ?>
 
-                <?php if ($googleEnabled): ?>
+                <?php
+if ($googleEnabled): ?>
                     <div class="mb-3">
-                        <?php require dirname(__DIR__) . '/partials/google-button.php'; ?>
+                        <?php
+require dirname(__DIR__) . '/partials/google-button.php'; ?>
                     </div>
-                <?php endif; ?>
+                <?php
+endif; ?>
 
                 <form method="post" action="/login" class="auth-form">
                     <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">

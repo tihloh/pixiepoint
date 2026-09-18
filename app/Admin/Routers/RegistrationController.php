@@ -113,22 +113,24 @@ final class RegistrationController
                 'actor_id' => $userId,
                 'message' => 'MikroTik gateway was registered from RouterOS.',
                 'metadata' => [
-                    'identity' => $identity,
-                    'hardware_id' => $hardwareId,
-                    'source' => 'routeros-terminal',
-                ],
+                'identity' => $identity,
+                'hardware_id' => $hardwareId,
+                'source' => 'routeros-terminal',
+            ],
                 'ip_address' => $_SERVER['REMOTE_ADDR'] ?? null,
                 'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? null,
             ]);
 
             $this->success($agentKey);
-        } catch (PDOException) {
+        }
+        catch (PDOException) {
             if ($this->db->inTransaction()) {
                 $this->db->rollBack();
             }
 
             $this->fail('Gateway identity or hardware is already registered.');
-        } catch (\Throwable) {
+        }
+        catch (\Throwable) {
             if ($this->db->inTransaction()) {
                 $this->db->rollBack();
             }
@@ -146,15 +148,15 @@ final class RegistrationController
 
         echo ':put "PixiePoint gateway registered";', "\n";
         echo '/tool fetch url="', $installUrl,
-            '" mode=https dst-path="PixiePointAgent.rsc";', "\n";
+        '" mode=https dst-path="PixiePointAgent.rsc";', "\n";
         echo '/system scheduler remove [find name="pixiepoint-agent"];', "\n";
         echo '/system script remove [find name="pixiepoint-agent"];', "\n";
         echo '/system script add name="pixiepoint-agent" ',
-            'source=[/file get [find name="PixiePointAgent.rsc"] contents] ',
-            'policy=ftp,read,write,test;', "\n";
+        'source=[/file get [find name="PixiePointAgent.rsc"] contents] ',
+        'policy=ftp,read,write,test;', "\n";
         echo '/system scheduler add name="pixiepoint-agent" interval=5s ',
-            'start-time=startup on-event="/system script run pixiepoint-agent" ',
-            'policy=ftp,read,write,test;', "\n";
+        'start-time=startup on-event="/system script run pixiepoint-agent" ',
+        'policy=ftp,read,write,test;', "\n";
         echo '/file remove [find name="PixiePointAgent.rsc"];', "\n";
         echo '/system script run pixiepoint-agent;', "\n";
         echo ':put "SUCCESS - PixiePoint Agent installed";', "\n";

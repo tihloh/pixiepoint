@@ -53,7 +53,8 @@ final class Controller extends FeatureController
                 ], $this->context());
 
                 $_SESSION['admin_flash'] = '<div class="alert ok">User added.</div>';
-            } catch (\Throwable $e) {
+            }
+            catch (\Throwable $e) {
                 $_SESSION['admin_flash'] = '<div class="alert">' . e($e->getMessage()) . '</div>';
             }
 
@@ -95,7 +96,8 @@ final class Controller extends FeatureController
                 if ($action === 'avatar') {
                     $avatarUrl = $this->avatars->store($userId, (string) ($_POST['avatar_data'] ?? ''));
                     $this->users->update($userId, ['avatar_url' => $avatarUrl], $this->context());
-                } else {
+                }
+                else {
                     $current = $target->toArray();
                     $name = trim((string) ($_POST['name'] ?? ''));
                     $email = strtolower(trim((string) ($_POST['email'] ?? '')));
@@ -110,9 +112,9 @@ final class Controller extends FeatureController
                     }
 
                     $data = [
-                        'name' => $name,
-                        'email' => $email,
-                        'active' => isset($_POST['active']),
+                    'name' => $name,
+                    'email' => $email,
+                    'active' => isset($_POST['active']),
                     ];
 
                     if (($current['platform_role'] ?? '') !== 'platform_owner') {
@@ -127,7 +129,8 @@ final class Controller extends FeatureController
                 }
 
                 $_SESSION['admin_flash'] = '<div class="alert ok">User updated.</div>';
-            } catch (\Throwable $e) {
+            }
+            catch (\Throwable $e) {
                 $_SESSION['admin_flash'] = '<div class="alert">' . e($e->getMessage()) . '</div>';
             }
 
@@ -151,9 +154,9 @@ final class Controller extends FeatureController
     private function context(): array
     {
         return [
-            'actor_id' => $this->auth->auth()->id(),
-            'ip_address' => $_SERVER['REMOTE_ADDR'] ?? null,
-            'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? null,
+        'actor_id' => $this->auth->auth()->id(),
+        'ip_address' => $_SERVER['REMOTE_ADDR'] ?? null,
+        'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? null,
         ];
     }
 }

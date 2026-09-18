@@ -60,16 +60,19 @@ final class Controller extends FeatureController
 
                         if ($value === 'allow') {
                             $this->permissions->set('user', $userId, $permission, true, $this->context());
-                        } elseif ($value === 'deny') {
+                        }
+                        elseif ($value === 'deny') {
                             $this->permissions->set('user', $userId, $permission, false, $this->context());
-                        } else {
+                        }
+                        else {
                             $this->permissions->clear('user', $userId, $permission, $this->context());
                         }
                     }
                 }
 
                 $_SESSION['admin_flash'] = '<div class="alert ok">Permissions saved.</div>';
-            } catch (\Throwable $e) {
+            }
+            catch (\Throwable $e) {
                 $_SESSION['admin_flash'] = '<div class="alert">' . e($e->getMessage()) . '</div>';
             }
 
@@ -127,9 +130,9 @@ final class Controller extends FeatureController
     private function context(): array
     {
         return [
-            'actor_id' => $this->auth->auth()->id(),
-            'ip_address' => $_SERVER['REMOTE_ADDR'] ?? null,
-            'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? null,
+        'actor_id' => $this->auth->auth()->id(),
+        'ip_address' => $_SERVER['REMOTE_ADDR'] ?? null,
+        'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? null,
         ];
     }
 }

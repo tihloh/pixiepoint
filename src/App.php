@@ -24,10 +24,10 @@ final class App
             (string) ($this->config['database_user'] ?? ''),
             (string) ($this->config['database_password'] ?? ''),
             [
-                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-                PDO::ATTR_EMULATE_PREPARES => false,
-            ],
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+            PDO::ATTR_EMULATE_PREPARES => false,
+        ],
         );
 
         $this->migrate();
@@ -94,13 +94,15 @@ SQL);
         ] as $sql) {
             try {
                 $this->db->exec($sql);
-            } catch (PDOException) {
+            }
+            catch (PDOException) {
             }
         }
 
         try {
             $this->db->exec('ALTER TABLE vouchers ADD CONSTRAINT fk_vouchers_router FOREIGN KEY (router_id) REFERENCES routers(id) ON DELETE SET NULL');
-        } catch (PDOException) {
+        }
+        catch (PDOException) {
         }
 
         $this->db->exec(<<<'SQL'
@@ -125,11 +127,23 @@ SQL);
             'CREATE INDEX idx_vouchers_station ON vouchers (station_id)',
             'CREATE INDEX idx_vouchers_batch ON vouchers (batch_id)',
             'CREATE INDEX idx_vouchers_archive ON vouchers (router_id,archived_at)',
-        ] as $sql){try{$this->db->exec($sql);}catch(PDOException){}}
+        ] as $sql){
+            try{
+                $this->db->exec($sql);
+            }
+            catch(PDOException){
+            }
+        }
         foreach([
             'ALTER TABLE vouchers ADD CONSTRAINT fk_vouchers_station FOREIGN KEY (station_id) REFERENCES vendos(id) ON DELETE SET NULL',
             'ALTER TABLE vouchers ADD CONSTRAINT fk_vouchers_batch FOREIGN KEY (batch_id) REFERENCES voucher_batches(id) ON DELETE SET NULL',
-        ] as $sql){try{$this->db->exec($sql);}catch(PDOException){}}
+        ] as $sql){
+            try{
+                $this->db->exec($sql);
+            }
+            catch(PDOException){
+            }
+        }
 
         $this->db->exec(<<<'SQL'
 UPDATE vouchers v

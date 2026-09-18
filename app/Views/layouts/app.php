@@ -14,7 +14,9 @@ $selectedRouter=$dashboard&&is_array($GLOBALS['pixiepoint_selected_router']??nul
 $routerContext=$selectedRouter&&(preg_match('#^/admin/routers/\d+(?:/|$)#',$path)||preg_match('#^/admin/(?:vouchers|sessions|devices|sales|vendo-gateway)(?:/|$)#',$path));
 $hasGateways=($access['routers']??false)&&count($sidebarRouters)>0;
 $sidebarName=trim((string)($sidebarUser['name']??''))?:'User';
-$sidebarRole=match((string)($sidebarUser['platform_role']??'member')){'platform_owner'=>'Platform owner','pisowifi_owner'=>'PisoWiFi owner',default=>'Member'};
+$sidebarRole=match((string)($sidebarUser['platform_role']??'member')){
+    'platform_owner'=>'Platform owner','pisowifi_owner'=>'PisoWiFi owner',default=>'Member'
+};
 $sidebarAvatar=trim((string)($sidebarUser['avatar_url']??''));
 $sidebarPoints=isset($sidebarUser['points'])?max(0,(int)$sidebarUser['points']):null;
 $sidebarInitial=strtoupper(substr($sidebarName,0,1));
@@ -34,7 +36,8 @@ $sidebarInitial=strtoupper(substr($sidebarName,0,1));
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
 </head>
 <body>
-<?php if($dashboard):?>
+<?php
+if($dashboard):?>
 <nav class="navbar border-bottom d-lg-none sticky-top"><div class="container-fluid px-3"><a class="navbar-brand fw-bold d-flex align-items-center gap-2" href="/dashboard"><span class="logo">P</span><span><?= $name ?></span></a><button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#pixiepoint-sidebar" aria-controls="pixiepoint-sidebar" aria-label="Open navigation"><span class="navbar-toggler-icon"></span></button></div></nav>
 <div class="d-lg-flex min-vh-100">
 <aside class="offcanvas-lg offcanvas-start border-end pixie-sidebar" tabindex="-1" id="pixiepoint-sidebar" aria-labelledby="pixiepoint-sidebar-label">
@@ -42,25 +45,51 @@ $sidebarInitial=strtoupper(substr($sidebarName,0,1));
 <div class="offcanvas-body d-flex flex-column p-3">
 <a class="d-none d-lg-flex flex-column align-items-center text-decoration-none text-body fw-bold mb-4 px-2 pixie-brand" href="/dashboard"><span class="logo pixie-brand-logo">P</span><span class="mt-2"><?= $name ?></span></a>
 <nav class="nav nav-pills flex-column gap-1">
-<?php if($routerContext):?>
+<?php
+if($routerContext):?>
 <a class="nav-link text-body-secondary" href="/admin/routers">← Gateways</a>
 <a class="nav-link<?= $active('/admin/routers/'.(int)$selectedRouter['id']) ?>" href="/admin/routers/<?= e($selectedRouter['id']) ?>"><?= e($selectedRouter['name']?:$selectedRouter['identity']) ?></a>
-<?php if($access['vouchers']??false):?><a class="nav-link<?= $active('/admin/vouchers') ?>" href="/admin/vouchers">Vouchers</a><?php endif;?>
-<?php if($access['sessions']??false):?><a class="nav-link<?= $active('/admin/sessions') ?>" href="/admin/sessions">Sessions</a><?php endif;?>
-<?php if($access['devices']??false):?><a class="nav-link<?= $active('/admin/devices') ?>" href="/admin/devices">Devices</a><?php endif;?>
-<?php if($access['vendos']??false):?><a class="nav-link<?= $active('/admin/vendo-gateway') ?>" href="/admin/vendo-gateway">Vendos</a><?php endif;?>
-<?php else:?>
+<?php
+if($access['vouchers']??false):?><a class="nav-link<?= $active('/admin/vouchers') ?>" href="/admin/vouchers">Vouchers</a><?php
+endif;?>
+<?php
+if($access['sessions']??false):?><a class="nav-link<?= $active('/admin/sessions') ?>" href="/admin/sessions">Sessions</a><?php
+endif;?>
+<?php
+if($access['devices']??false):?><a class="nav-link<?= $active('/admin/devices') ?>" href="/admin/devices">Devices</a><?php
+endif;?>
+<?php
+if($access['vendos']??false):?><a class="nav-link<?= $active('/admin/vendo-gateway') ?>" href="/admin/vendo-gateway">Vendos</a><?php
+endif;?>
+<?php
+else:?>
 <a class="nav-link<?= $active('/dashboard') ?>" href="/dashboard">Dashboard</a>
-<?php if($hasGateways):?><a class="nav-link<?= $active('/admin/routers') ?>" href="/admin/routers">Gateways</a><?php endif;?>
-<?php endif;?>
-<?php if($access['sales']??false):?><a class="nav-link<?= $active('/admin/sales') ?>" href="/admin/sales">Sales</a><?php endif;?>
-<?php if($access['users']??false):?><a class="nav-link<?= $active('/admin/users') ?>" href="/admin/users">Users</a><?php endif;?>
-<?php if($access['logs']??false):?><a class="nav-link<?= $active('/admin/logs') ?>" href="/admin/logs">Log</a><?php endif;?>
+<?php
+if($hasGateways):?><a class="nav-link<?= $active('/admin/routers') ?>" href="/admin/routers">Gateways</a><?php
+endif;?>
+<?php
+endif;?>
+<?php
+if($access['sales']??false):?><a class="nav-link<?= $active('/admin/sales') ?>" href="/admin/sales">Sales</a><?php
+endif;?>
+<?php
+if($access['users']??false):?><a class="nav-link<?= $active('/admin/users') ?>" href="/admin/users">Users</a><?php
+endif;?>
+<?php
+if($access['logs']??false):?><a class="nav-link<?= $active('/admin/logs') ?>" href="/admin/logs">Log</a><?php
+endif;?>
 </nav>
-<div class="card border-0 rounded-3 mt-auto pixie-user-card"><div class="card-body p-3"><div class="d-flex align-items-center gap-3"><?php if($sidebarAvatar!==''):?><img src="<?= e($sidebarAvatar) ?>" alt="" class="pixie-user-avatar"><?php else:?><span class="pixie-user-avatar pixie-user-avatar-fallback" aria-hidden="true"><?= e($sidebarInitial) ?></span><?php endif;?><div class="min-w-0 flex-grow-1"><div class="fw-semibold text-truncate"><?= e($sidebarName) ?></div><div class="text-body-secondary small text-truncate"><?= e($sidebarRole) ?></div><?php if($sidebarPoints!==null):?><div class="small mt-1"><span aria-hidden="true">★</span> <?= e(number_format($sidebarPoints)) ?> points</div><?php endif;?></div></div><div class="d-flex gap-2 mt-3"><a class="btn btn-outline-light btn-sm flex-fill<?= $active('/profile') ?>" href="/profile">Profile</a><a class="btn btn-outline-danger btn-sm flex-fill" href="/logout">Log out</a></div></div></div>
+<div class="card border-0 rounded-3 mt-auto pixie-user-card"><div class="card-body p-3"><div class="d-flex align-items-center gap-3"><?php
+if($sidebarAvatar!==''):?><img src="<?= e($sidebarAvatar) ?>" alt="" class="pixie-user-avatar"><?php
+else:?><span class="pixie-user-avatar pixie-user-avatar-fallback" aria-hidden="true"><?= e($sidebarInitial) ?></span><?php
+endif;?><div class="min-w-0 flex-grow-1"><div class="fw-semibold text-truncate"><?= e($sidebarName) ?></div><div class="text-body-secondary small text-truncate"><?= e($sidebarRole) ?></div><?php
+if($sidebarPoints!==null):?><div class="small mt-1"><span aria-hidden="true">★</span> <?= e(number_format($sidebarPoints)) ?> points</div><?php
+endif;?></div></div><div class="d-flex gap-2 mt-3"><a class="btn btn-outline-light btn-sm flex-fill<?= $active('/profile') ?>" href="/profile">Profile</a><a class="btn btn-outline-danger btn-sm flex-fill" href="/logout">Log out</a></div></div></div>
 </div></aside>
 <main class="container-fluid px-3 px-md-4 py-4 pixie-content"><?= $content ?></main>
 </div>
-<?php else:?><main class="portal container-fluid"><?= $content ?></main><?php endif;?>
+<?php
+else:?><main class="portal container-fluid"><?= $content ?></main><?php
+endif;?>
 </body>
 </html>

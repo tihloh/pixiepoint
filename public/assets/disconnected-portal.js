@@ -1,4 +1,4 @@
-(function () {
+(function() {
   'use strict';
 
   const session = window.PIXIEPOINT_DISCONNECTED || {};
@@ -33,14 +33,14 @@
   }
 
   function escapeHtml(value) {
-    return String(value).replace(/[&<>"']/g, function (char) {
+    return String(value).replace(/[&<>"']/g, function(char) {
       return {
         '&': '&amp;',
         '<': '&lt;',
         '>': '&gt;',
         '"': '&quot;',
         "'": '&#39;',
-      }[char];
+      } [char];
     });
   }
 

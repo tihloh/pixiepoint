@@ -15,7 +15,8 @@
                 <?= $message ?>
 
                 <div class="d-flex align-items-center gap-3 mb-4">
-                    <?php if (!empty($user['avatar_url'])): ?>
+                    <?php
+if (!empty($user['avatar_url'])): ?>
                         <img
                             src="<?= e($user['avatar_url']) ?>"
                             alt=""
@@ -23,14 +24,16 @@
                             width="88"
                             height="88"
                         >
-                    <?php else: ?>
+                    <?php
+else: ?>
                         <div
                             class="rounded-circle border d-flex align-items-center justify-content-center fs-3 fw-bold"
                             style="width:88px;height:88px"
                         >
                             <?= e(strtoupper(substr((string) $user['name'], 0, 1))) ?>
                         </div>
-                    <?php endif; ?>
+                    <?php
+endif; ?>
 
                     <div>
                         <h2 class="h5 mb-1"><?= e($user['name']) ?></h2>

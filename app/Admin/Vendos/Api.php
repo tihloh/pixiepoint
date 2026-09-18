@@ -25,26 +25,26 @@ final class Api
         $targets = array_values(array_filter($result['candidates'], static fn (array $v): bool => (bool) ($v['debug_enabled'] ?? false)));
 
         return [
-            'input' => ['routerIdentity' => $routerIdentity, 'serverAddress' => $serverIp, 'normalizedServerIp' => $normalizedServer, 'clientIp' => $clientIp, 'interface' => $interface],
-            'candidateCount' => count($result['candidates']),
-            'selectedCount' => count($result['selected']),
-            'selectedIds' => array_column($result['selected'], 'id'),
-            'debugTargetIds' => array_map(static fn (array $v): string => (string) $v['id'], $targets),
-            'candidates' => array_map(function (array $v) use ($normalizedServer, $clientIp, $interface): array {
+        'input' => ['routerIdentity' => $routerIdentity, 'serverAddress' => $serverIp, 'normalizedServerIp' => $normalizedServer, 'clientIp' => $clientIp, 'interface' => $interface],
+        'candidateCount' => count($result['candidates']),
+        'selectedCount' => count($result['selected']),
+        'selectedIds' => array_column($result['selected'], 'id'),
+        'debugTargetIds' => array_map(static fn (array $v): string => (string) $v['id'], $targets),
+        'candidates' => array_map(function (array $v) use ($normalizedServer, $clientIp, $interface): array {
                 $baseUrl = rtrim((string) ($v['base_url'] ?? ''), '/');
                 return [
-                    'id' => (string) $v['id'],
-                    'name' => $v['name'],
-                    'type' => $baseUrl !== '' ? 'vendo' : 'voucher',
-                    'debugEnabled' => (bool) ($v['debug_enabled'] ?? false),
-                    'serverIp' => (string) ($v['server_ip'] ?? ''),
-                    'clientSubnet' => (string) ($v['client_subnet'] ?? ''),
-                    'interface' => (string) ($v['interface_name'] ?? ''),
-                    'baseUrl' => $baseUrl,
-                    'serverMatch' => $normalizedServer !== '' && (string) ($v['server_ip'] ?? '') === $normalizedServer,
-                    'subnetMatch' => $clientIp !== '' && trim((string) ($v['client_subnet'] ?? '')) !== '' && $this->ipInCidr($clientIp, (string) $v['client_subnet']),
-                    'interfaceMatch' => $interface !== '' && (string) ($v['interface_name'] ?? '') === $interface,
-                ];
+                'id' => (string) $v['id'],
+                'name' => $v['name'],
+                'type' => $baseUrl !== '' ? 'vendo' : 'voucher',
+                'debugEnabled' => (bool) ($v['debug_enabled'] ?? false),
+                'serverIp' => (string) ($v['server_ip'] ?? ''),
+                'clientSubnet' => (string) ($v['client_subnet'] ?? ''),
+                'interface' => (string) ($v['interface_name'] ?? ''),
+                'baseUrl' => $baseUrl,
+                'serverMatch' => $normalizedServer !== '' && (string) ($v['server_ip'] ?? '') === $normalizedServer,
+                'subnetMatch' => $clientIp !== '' && trim((string) ($v['client_subnet'] ?? '')) !== '' && $this->ipInCidr($clientIp, (string) $v['client_subnet']),
+                'interfaceMatch' => $interface !== '' && (string) ($v['interface_name'] ?? '') === $interface,
+            ];
             }, $targets),
         ];
     }
@@ -79,8 +79,8 @@ final class Api
         }
 
         $selected = array_map(static function (array $v): array {
-            $baseUrl = rtrim((string) ($v['base_url'] ?? ''), '/');
-            return [
+                $baseUrl = rtrim((string) ($v['base_url'] ?? ''), '/');
+                return [
                 'id' => (string) $v['id'],
                 'name' => (string) $v['name'],
                 'type' => $baseUrl !== '' ? 'vendo' : 'voucher',
@@ -92,7 +92,7 @@ final class Api
                 'chargingEnabled' => $baseUrl !== '' && (bool) $v['charging_enabled'],
                 'eloadEnabled' => $baseUrl !== '' && (bool) $v['eload_enabled'],
             ];
-        }, $rows);
+            }, $rows);
 
         return ['candidates' => $candidates, 'selected' => $selected];
     }

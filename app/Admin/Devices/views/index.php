@@ -24,11 +24,14 @@
                 </tr>
             </thead>
             <tbody>
-                <?php if (!$devices): ?>
+                <?php
+if (!$devices): ?>
                     <tr><td colspan="5" class="empty">No devices observed.</td></tr>
-                <?php endif; ?>
+                <?php
+endif; ?>
 
-                <?php foreach ($devices as $device): ?>
+                <?php
+foreach ($devices as $device): ?>
                     <tr>
                         <td class="code text-nowrap"><?= e($device['mac']) ?></td>
                         <td><?= e($device['email'] ?: 'Guest') ?></td>
@@ -36,7 +39,8 @@
                         <td><?= e($device['sessions']) ?></td>
                         <td class="text-nowrap"><?= e($device['last_seen_at']) ?></td>
                     </tr>
-                <?php endforeach; ?>
+                <?php
+endforeach; ?>
             </tbody>
         </table>
     </div>

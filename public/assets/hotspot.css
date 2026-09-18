@@ -5,17 +5,17 @@
  */
 
 [hidden] {
-    display: none !important;
+  display: none !important;
 }
 
 #compat-alert {
-    white-space: pre-wrap;
+  white-space: pre-wrap;
 }
 
 .compat-status {
-    display: block;
+  display: block;
 }
 
 .compat-countdown {
-    font-variant-numeric: tabular-nums;
+  font-variant-numeric: tabular-nums;
 }

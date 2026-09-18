@@ -34,10 +34,13 @@
     <button class="button full" type="submit">Disconnect</button>
 </form>
 
-<?php if ($authenticated): ?>
+<?php
+if ($authenticated): ?>
     <a class="button full" href="/dashboard">My PixiePoint account</a>
-<?php else: ?>
+<?php
+else: ?>
     <p class="muted">
         Create a PixiePoint account later to protect your points and device history.
     </p>
-<?php endif; ?>
+<?php
+endif; ?>

@@ -165,10 +165,10 @@ ROS;
         );
 
         $_SESSION['admin_flash'] = '<div class="alert ok">Test command #'
-            . $commandId
-            . ' queued for '
-            . htmlspecialchars((string) $router['name'], ENT_QUOTES, 'UTF-8')
-            . '.</div>';
+        . $commandId
+        . ' queued for '
+        . htmlspecialchars((string) $router['name'], ENT_QUOTES, 'UTF-8')
+        . '.</div>';
 
         redirect('/admin/routers');
     }

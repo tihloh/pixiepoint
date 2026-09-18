@@ -18,7 +18,9 @@ final class VoucherEngine
 
     public function platforms(): array
     {
-        $items=[];foreach($this->adapters as $adapter)$items[$adapter->key()]=$adapter->label();return $items;
+        $items=[];
+        foreach($this->adapters as $adapter)$items[$adapter->key()]=$adapter->label();
+        return $items;
     }
 
     public function adapter(string $platform): VoucherPlatformAdapter
@@ -29,11 +31,20 @@ final class VoucherEngine
 
     public function codes(int $quantity,string $prefix,int $length,array $reserved=[]): array
     {
-        $alphabet='23456789ABCDEFGHJKLMNPQRSTUVWXYZ';$prefix=strtoupper(preg_replace('/[^A-Z0-9_-]/i','',$prefix));
+        $alphabet='23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+        $prefix=strtoupper(preg_replace('/[^A-Z0-9_-]/i','',$prefix));
         if($quantity<1||$quantity>1000)throw new InvalidArgumentException('Quantity must be between 1 and 1,000.');
         if($length<4||$length>32)throw new InvalidArgumentException('Random code length must be between 4 and 32.');
-        $seen=array_fill_keys(array_map('strtoupper',$reserved),true);$codes=[];
-        while(count($codes)<$quantity){$suffix='';for($i=0;$i<$length;$i++)$suffix.=$alphabet[random_int(0,strlen($alphabet)-1)];$code=$prefix.$suffix;if(isset($seen[$code]))continue;$seen[$code]=true;$codes[]=$code;}
+        $seen=array_fill_keys(array_map('strtoupper',$reserved),true);
+        $codes=[];
+        while(count($codes)<$quantity){
+            $suffix='';
+            for($i=0;$i<$length;$i++)$suffix.=$alphabet[random_int(0,strlen($alphabet)-1)];
+            $code=$prefix.$suffix;
+            if(isset($seen[$code]))continue;
+            $seen[$code]=true;
+            $codes[]=$code;
+        }
         return $codes;
     }
 }

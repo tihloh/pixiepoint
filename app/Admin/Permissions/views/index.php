@@ -31,11 +31,14 @@
                 <section class="mb-4">
                     <h2 class="h6 mb-3">Groups</h2>
                     <div class="row g-2">
-                        <?php if (!$groups): ?>
+                        <?php
+if (!$groups): ?>
                             <div class="text-body-secondary small">No groups available.</div>
-                        <?php endif; ?>
+                        <?php
+endif; ?>
 
-                        <?php foreach ($groups as $group): ?>
+                        <?php
+foreach ($groups as $group): ?>
                             <div class="col-md-4 col-sm-6">
                                 <label class="border rounded p-3 d-flex align-items-center gap-2 w-100">
                                     <input
@@ -49,7 +52,8 @@
                                     <span><?= e($group->name) ?></span>
                                 </label>
                             </div>
-                        <?php endforeach; ?>
+                        <?php
+endforeach; ?>
                     </div>
                 </section>
 
@@ -58,11 +62,14 @@
                 <section>
                     <div class="mb-3">
                         <h2 class="h6 mb-1">Permissions</h2>
-                        <?php if ($isPlatformOwner): ?>
+                        <?php
+if ($isPlatformOwner): ?>
                             <div class="small text-body-secondary">Platform Owner always has full access.</div>
-                        <?php else: ?>
+                        <?php
+else: ?>
                             <div class="small text-body-secondary">User settings override inherited group permissions.</div>
-                        <?php endif; ?>
+                        <?php
+endif; ?>
                     </div>
 
                     <div class="table-responsive">
@@ -76,31 +83,37 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <?php foreach ($definitions as $permission => $definition): ?>
+                                <?php
+foreach ($definitions as $permission => $definition): ?>
                                     <?php
-                                    $result = $resolved[$permission] ?? null;
-                                    $override = array_key_exists($permission, $overrides)
-                                        ? ($overrides[$permission] ? 'allow' : 'deny')
-                                        : 'inherit';
-                                    $allowed = $isPlatformOwner || ($result?->allowed ?? false);
+$result = $resolved[$permission] ?? null;
+$override = array_key_exists($permission, $overrides)
+? ($overrides[$permission] ? 'allow' : 'deny')
+: 'inherit';
+$allowed = $isPlatformOwner || ($result?->allowed ?? false);
                                     ?>
                                     <tr>
                                         <td>
                                             <strong><?= e($definition['name'] ?? $permission) ?></strong>
-                                            <?php if (!empty($definition['description'])): ?>
+                                            <?php
+if (!empty($definition['description'])): ?>
                                                 <div class="small text-body-secondary"><?= e($definition['description']) ?></div>
-                                            <?php endif; ?>
+                                            <?php
+endif; ?>
                                         </td>
                                         <td>
-                                            <?php if ($isPlatformOwner): ?>
+                                            <?php
+if ($isPlatformOwner): ?>
                                                 <span class="text-body-secondary">Fixed</span>
-                                            <?php else: ?>
+                                            <?php
+else: ?>
                                                 <select class="form-select form-select-sm" name="permissions[<?= e($permission) ?>]">
                                                     <option value="inherit" <?= $override === 'inherit' ? 'selected' : '' ?>>Inherit</option>
                                                     <option value="allow" <?= $override === 'allow' ? 'selected' : '' ?>>Allow</option>
                                                     <option value="deny" <?= $override === 'deny' ? 'selected' : '' ?>>Deny</option>
                                                 </select>
-                                            <?php endif; ?>
+                                            <?php
+endif; ?>
                                         </td>
                                         <td>
                                             <span class="small text-body-secondary">
@@ -113,7 +126,8 @@
                                             </span>
                                         </td>
                                     </tr>
-                                <?php endforeach; ?>
+                                <?php
+endforeach; ?>
                             </tbody>
                         </table>
                     </div>

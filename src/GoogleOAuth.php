@@ -18,7 +18,7 @@ final class GoogleOAuth
     public function enabled(): bool
     {
         return trim((string) ($this->config['google_client_id'] ?? '')) !== ''
-            && trim((string) ($this->config['google_client_secret'] ?? '')) !== '';
+        && trim((string) ($this->config['google_client_secret'] ?? '')) !== '';
     }
 
     public function authorizationUrl(): string
@@ -128,12 +128,12 @@ final class GoogleOAuth
     {
         $headers[] = 'Accept: application/json';
         $options = [
-            'http' => [
-                'method' => $form === null ? 'GET' : 'POST',
-                'header' => implode("\r\n", $headers),
-                'ignore_errors' => true,
-                'timeout' => 15,
-            ],
+        'http' => [
+        'method' => $form === null ? 'GET' : 'POST',
+        'header' => implode("\r\n", $headers),
+        'ignore_errors' => true,
+        'timeout' => 15,
+        ],
         ];
         if ($form !== null) {
             $options['http']['header'] .= "\r\nContent-Type: application/x-www-form-urlencoded";

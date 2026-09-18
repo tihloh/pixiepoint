@@ -43,13 +43,13 @@ final class RouterAccess
     public function canManage(int $routerId, int $userId, bool $platformOwner): bool
     {
         return $platformOwner
-            || in_array($this->roleFor($routerId, $userId), self::WRITE_ROLES, true);
+        || in_array($this->roleFor($routerId, $userId), self::WRITE_ROLES, true);
     }
 
     public function canManageTeam(int $routerId, int $userId, bool $platformOwner): bool
     {
         return $platformOwner
-            || in_array($this->roleFor($routerId, $userId), self::TEAM_ROLES, true);
+        || in_array($this->roleFor($routerId, $userId), self::TEAM_ROLES, true);
     }
 
     public function roleFor(int $routerId, int $userId): ?string

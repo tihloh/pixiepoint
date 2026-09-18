@@ -20,7 +20,7 @@ final class GoogleOAuth
     public function enabled(): bool
     {
         return trim((string) ($this->config['google_client_id'] ?? '')) !== ''
-            && trim((string) ($this->config['google_client_secret'] ?? '')) !== '';
+        && trim((string) ($this->config['google_client_secret'] ?? '')) !== '';
     }
 
     public function authorizationUrl(): string
@@ -83,9 +83,9 @@ final class GoogleOAuth
         $id = $this->idByGoogleSubject($sub);
         $user = $id !== null ? $this->users->find($id) : $this->users->findByEmail($email);
         $context = [
-            'ip_address' => $_SERVER['REMOTE_ADDR'] ?? null,
-            'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? null,
-            'source' => 'google-oauth',
+        'ip_address' => $_SERVER['REMOTE_ADDR'] ?? null,
+        'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? null,
+        'source' => 'google-oauth',
         ];
 
         if ($user) {
@@ -93,8 +93,8 @@ final class GoogleOAuth
                 throw new RuntimeException('This PixiePoint account is disabled.');
             }
             $update = [
-                'google_sub' => $sub,
-                'avatar_url' => $picture !== '' ? $picture : null,
+            'google_sub' => $sub,
+            'avatar_url' => $picture !== '' ? $picture : null,
             ];
             if (($user->name ?? '') === '') {
                 $update['name'] = $name !== '' ? $name : $email;
@@ -149,12 +149,12 @@ final class GoogleOAuth
     {
         $headers[] = 'Accept: application/json';
         $options = [
-            'http' => [
-                'method' => $form === null ? 'GET' : 'POST',
-                'header' => implode("\r\n", $headers),
-                'ignore_errors' => true,
-                'timeout' => 15,
-            ],
+        'http' => [
+        'method' => $form === null ? 'GET' : 'POST',
+        'header' => implode("\r\n", $headers),
+        'ignore_errors' => true,
+        'timeout' => 15,
+        ],
         ];
 
         if ($form !== null) {

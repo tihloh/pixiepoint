@@ -10,8 +10,8 @@ use PixiePoint\App\Services\AuthContext;
 final class EmulatorController
 {
     private const PAGES = [
-        'login.html', 'status.html', 'logout.html', 'alogin.html',
-        'redirect.html', 'error.html', 'flogin.html', 'rlogin.html',
+    'login.html', 'status.html', 'logout.html', 'alogin.html',
+    'redirect.html', 'error.html', 'flogin.html', 'rlogin.html',
     ];
 
     private string $hotspotRoot;
@@ -36,12 +36,12 @@ final class EmulatorController
         $userId = (int) $user['id'];
         $platformOwner = $this->auth->isPlatformOwner();
         $routers = $platformOwner
-            ? $this->db->query('SELECT id,name,identity,public_host,portal_theme_id FROM routers WHERE enabled=1 ORDER BY name')->fetchAll()
-            : $this->routersForUser($userId);
+        ? $this->db->query('SELECT id,name,identity,public_host,portal_theme_id FROM routers WHERE enabled=1 ORDER BY name')->fetchAll()
+        : $this->routersForUser($userId);
         $rows = $this->stationsForUser($userId, $platformOwner);
         $stations = array_map(static function (array $v): array {
-            $baseUrl = rtrim((string) ($v['base_url'] ?? ''), '/');
-            return [
+                $baseUrl = rtrim((string) ($v['base_url'] ?? ''), '/');
+                return [
                 'id' => (int) $v['id'],
                 'routerId' => (int) $v['router_id'],
                 'name' => (string) $v['name'],
@@ -55,21 +55,21 @@ final class EmulatorController
                 'chargingEnabled' => $baseUrl !== '' && (bool) $v['charging_enabled'],
                 'eloadEnabled' => $baseUrl !== '' && (bool) $v['eload_enabled'],
             ];
-        }, $rows);
+            }, $rows);
 
         $sampleVendo = ['id' => 0, 'routerId' => 0, 'name' => 'Sample Vendo', 'type' => 'vendo', 'baseUrl' => 'https://example.invalid', 'serverIp' => '192.168.88.1', 'clientSubnet' => '192.168.88.0/24', 'interfaceName' => 'bridge-hotspot', 'passwordMode' => 'blank', 'chargingEnabled' => true, 'eloadEnabled' => true];
         $sampleVoucher = ['id' => -1, 'routerId' => 0, 'name' => 'Sample Voucher Hotspot', 'type' => 'voucher', 'baseUrl' => '', 'serverIp' => '192.168.88.1', 'clientSubnet' => '192.168.88.0/24', 'interfaceName' => 'bridge-hotspot', 'passwordMode' => 'voucher', 'chargingEnabled' => false, 'eloadEnabled' => false];
 
         $data = [
-            'user' => ['name' => (string) ($user['name'] ?? ''), 'email' => (string) ($user['email'] ?? '')],
-            'platforms' => [['id' => 'mikrotik', 'name' => 'MikroTik']],
-            'pages' => self::PAGES,
-            'routers' => array_map(static fn (array $r): array => ['id' => (int) $r['id'], 'name' => (string) $r['name'], 'identity' => (string) $r['identity'], 'publicHost' => (string) ($r['public_host'] ?? ''), 'portalThemeId' => $r['portal_theme_id'] !== null ? (int) $r['portal_theme_id'] : null], $routers),
-            'stations' => $stations,
-            'vendos' => $stations,
-            'sampleRouter' => ['id' => 0, 'name' => 'Sample Router', 'identity' => 'PIXIEPOINT-DEMO', 'publicHost' => '192.168.88.1'],
-            'sampleVendo' => $sampleVendo,
-            'sampleVoucher' => $sampleVoucher,
+        'user' => ['name' => (string) ($user['name'] ?? ''), 'email' => (string) ($user['email'] ?? '')],
+        'platforms' => [['id' => 'mikrotik', 'name' => 'MikroTik']],
+        'pages' => self::PAGES,
+        'routers' => array_map(static fn (array $r): array => ['id' => (int) $r['id'], 'name' => (string) $r['name'], 'identity' => (string) $r['identity'], 'publicHost' => (string) ($r['public_host'] ?? ''), 'portalThemeId' => $r['portal_theme_id'] !== null ? (int) $r['portal_theme_id'] : null], $routers),
+        'stations' => $stations,
+        'vendos' => $stations,
+        'sampleRouter' => ['id' => 0, 'name' => 'Sample Router', 'identity' => 'PIXIEPOINT-DEMO', 'publicHost' => '192.168.88.1'],
+        'sampleVendo' => $sampleVendo,
+        'sampleVoucher' => $sampleVoucher,
         ];
 
         $shell = $this->readHotspotFile('emulator/index.html');
@@ -112,12 +112,12 @@ final class EmulatorController
         }
         $extension = strtolower(pathinfo($path, PATHINFO_EXTENSION));
         $types = [
-            'css' => 'text/css; charset=utf-8',
-            'html' => 'text/html; charset=utf-8',
-            'js' => 'application/javascript; charset=utf-8',
-            'json' => 'application/json; charset=utf-8',
-            'svg' => 'image/svg+xml',
-            'txt' => 'text/plain; charset=utf-8',
+        'css' => 'text/css; charset=utf-8',
+        'html' => 'text/html; charset=utf-8',
+        'js' => 'application/javascript; charset=utf-8',
+        'json' => 'application/json; charset=utf-8',
+        'svg' => 'image/svg+xml',
+        'txt' => 'text/plain; charset=utf-8',
         ];
         header('Content-Type: ' . ($types[$extension] ?? 'application/octet-stream'));
         header('Cache-Control: no-store, no-cache, must-revalidate');
@@ -162,8 +162,8 @@ final class EmulatorController
     private function stationsForUser(int $userId, bool $platformOwner): array
     {
         $sql = $platformOwner
-            ? 'SELECT v.id,v.router_id,v.name,v.base_url,v.server_ip,v.client_subnet,v.interface_name,v.portal_theme_id,v.password_mode,v.charging_enabled,v.eload_enabled FROM vendos v JOIN routers r ON r.id=v.router_id WHERE v.enabled=1 AND r.enabled=1 ORDER BY r.name,v.name'
-            : 'SELECT v.id,v.router_id,v.name,v.base_url,v.server_ip,v.client_subnet,v.interface_name,v.portal_theme_id,v.password_mode,v.charging_enabled,v.eload_enabled FROM vendos v JOIN routers r ON r.id=v.router_id JOIN router_members rm ON rm.router_id=r.id WHERE v.enabled=1 AND r.enabled=1 AND rm.user_id=? ORDER BY r.name,v.name';
+        ? 'SELECT v.id,v.router_id,v.name,v.base_url,v.server_ip,v.client_subnet,v.interface_name,v.portal_theme_id,v.password_mode,v.charging_enabled,v.eload_enabled FROM vendos v JOIN routers r ON r.id=v.router_id WHERE v.enabled=1 AND r.enabled=1 ORDER BY r.name,v.name'
+        : 'SELECT v.id,v.router_id,v.name,v.base_url,v.server_ip,v.client_subnet,v.interface_name,v.portal_theme_id,v.password_mode,v.charging_enabled,v.eload_enabled FROM vendos v JOIN routers r ON r.id=v.router_id JOIN router_members rm ON rm.router_id=r.id WHERE v.enabled=1 AND r.enabled=1 AND rm.user_id=? ORDER BY r.name,v.name';
         $stmt = $this->db->prepare($sql);
         $stmt->execute($platformOwner ? [] : [$userId]);
         return $stmt->fetchAll();

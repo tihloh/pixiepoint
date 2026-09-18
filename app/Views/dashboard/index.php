@@ -19,15 +19,18 @@ $isRouterOwner = ($user['platform_role'] ?? 'member') === 'pisowifi_owner';
 </div>
 
 <section class="grid" aria-label="Account summary">
-    <?php foreach ($metrics as $label => $value): ?>
+    <?php
+foreach ($metrics as $label => $value): ?>
         <div class="metric">
             <small><?= e($label) ?></small>
             <strong><?= e($value) ?></strong>
         </div>
-    <?php endforeach; ?>
+    <?php
+endforeach; ?>
 </section>
 
-<?php if (!$isRouterOwner): ?>
+<?php
+if (!$isRouterOwner): ?>
     <div class="text-end mb-3">
         <button
             class="btn btn-link btn-sm text-body-secondary"
@@ -39,7 +42,8 @@ $isRouterOwner = ($user['platform_role'] ?? 'member') === 'pisowifi_owner';
             Own a PisoWiFi? Register your MikroTik gateway
         </button>
     </div>
-<?php endif; ?>
+<?php
+endif; ?>
 
 <?= $deviceRecovery ?>
 
@@ -57,12 +61,15 @@ $isRouterOwner = ($user['platform_role'] ?? 'member') === 'pisowifi_owner';
             </tr>
         </thead>
         <tbody>
-            <?php if (!$sessions): ?>
+            <?php
+if (!$sessions): ?>
                 <tr>
                     <td colspan="5" class="empty">No recent sessions.</td>
                 </tr>
-            <?php else: ?>
-                <?php foreach ($sessions as $session): ?>
+            <?php
+else: ?>
+                <?php
+foreach ($sessions as $session): ?>
                     <tr>
                         <td><?= e($session['username'] ?: '—') ?></td>
                         <td class="code"><?= e($session['mac'] ?: '—') ?></td>
@@ -74,13 +81,16 @@ $isRouterOwner = ($user['platform_role'] ?? 'member') === 'pisowifi_owner';
                         </td>
                         <td><?= e($session['updated_at']) ?></td>
                     </tr>
-                <?php endforeach; ?>
-            <?php endif; ?>
+                <?php
+endforeach; ?>
+            <?php
+endif; ?>
         </tbody>
     </table>
 </section>
 
-<?php if (!$isRouterOwner): ?>
+<?php
+if (!$isRouterOwner): ?>
     <div class="modal fade" id="register-router-modal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content">
@@ -128,4 +138,5 @@ $isRouterOwner = ($user['platform_role'] ?? 'member') === 'pisowifi_owner';
             });
         });
     </script>
-<?php endif; ?>
+<?php
+endif; ?>

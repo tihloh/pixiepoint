@@ -13,10 +13,10 @@ use Tihloh\Prefab\Users\Services\UserManager;
 final class AuthContext
 {
     private const ROUTER_ROLE_PERMISSIONS = [
-        'owner' => ['routers.view','routers.manage','vendos.view','vendos.manage','vouchers.view','vouchers.manage','devices.view','sessions.view','sales.view','logs.view'],
-        'manager' => ['routers.view','routers.manage','vendos.view','vendos.manage','vouchers.view','vouchers.manage','devices.view','sessions.view','sales.view','logs.view'],
-        'operator' => ['routers.view','routers.manage','vendos.view','vendos.manage','vouchers.view','vouchers.manage','devices.view','sessions.view','sales.view','logs.view'],
-        'viewer' => ['routers.view','vendos.view','vouchers.view','devices.view','sessions.view','sales.view','logs.view'],
+    'owner' => ['routers.view','routers.manage','vendos.view','vendos.manage','vouchers.view','vouchers.manage','devices.view','sessions.view','sales.view','logs.view'],
+    'manager' => ['routers.view','routers.manage','vendos.view','vendos.manage','vouchers.view','vouchers.manage','devices.view','sessions.view','sales.view','logs.view'],
+    'operator' => ['routers.view','routers.manage','vendos.view','vendos.manage','vouchers.view','vouchers.manage','devices.view','sessions.view','sales.view','logs.view'],
+    'viewer' => ['routers.view','vendos.view','vouchers.view','devices.view','sessions.view','sales.view','logs.view'],
     ];
 
     public function __construct(
@@ -27,7 +27,9 @@ final class AuthContext
     ) {
     }
 
-    public function auth(): AuthManager { return $this->auth; }
+    public function auth(): AuthManager {
+        return $this->auth;
+    }
 
     public function user(): ?array
     {
@@ -74,7 +76,7 @@ final class AuthContext
                 . '<p class="muted">Your account does not have <span class="code">'
                 . e($permission) . '</span>.</p>'
                 . '<a class="button full" href="/dashboard">Back to dashboard</a>',
-            ));
+                ));
         }
         return $user;
     }
@@ -92,7 +94,8 @@ final class AuthContext
                 $routers = $this->db->query(
                     'SELECT id,name,identity FROM routers WHERE enabled=1 ORDER BY name',
                 )->fetchAll();
-            } else {
+            }
+            else {
                 $stmt = $this->db->prepare(
                     'SELECT r.id,r.name,r.identity
                      FROM routers r
@@ -122,16 +125,16 @@ final class AuthContext
         $GLOBALS['pixiepoint_selected_router'] = $selectedRouter;
 
         return [
-            'users' => $this->can('users.view'),
-            'groups' => $this->can('groups.manage'),
-            'routers' => $this->can('routers.view') || $this->can('routers.manage'),
-            'vendos' => $this->can('vendos.view') || $this->can('vendos.manage'),
-            'vouchers' => $this->can('vouchers.view') || $this->can('vouchers.manage'),
-            'devices' => $this->can('devices.view'),
-            'sessions' => $this->can('sessions.view'),
-            'sales' => $this->can('sales.view'),
-            'logs' => $this->can('logs.view'),
-            'router_selected' => $selectedRouter !== null,
+        'users' => $this->can('users.view'),
+        'groups' => $this->can('groups.manage'),
+        'routers' => $this->can('routers.view') || $this->can('routers.manage'),
+        'vendos' => $this->can('vendos.view') || $this->can('vendos.manage'),
+        'vouchers' => $this->can('vouchers.view') || $this->can('vouchers.manage'),
+        'devices' => $this->can('devices.view'),
+        'sessions' => $this->can('sessions.view'),
+        'sales' => $this->can('sales.view'),
+        'logs' => $this->can('logs.view'),
+        'router_selected' => $selectedRouter !== null,
         ];
     }
 
@@ -141,7 +144,8 @@ final class AuthContext
             $stmt = $this->db->prepare('SELECT DISTINCT role FROM router_members WHERE user_id=?');
             $stmt->execute([$userId]);
             $roles = $stmt->fetchAll(PDO::FETCH_COLUMN);
-        } catch (\Throwable) {
+        }
+        catch (\Throwable) {
             return false;
         }
         foreach ($roles as $role) {

@@ -1,4 +1,4 @@
-(function () {
+(function() {
   'use strict';
   const hostedOrigin = window.PIXIEPOINT_HOSTED_ORIGIN || 'https://hs.portalx.win',
     version = Date.now();
@@ -15,15 +15,17 @@
   }
 
   function request(url, type) {
-    return new Promise(function (resolve, reject) {
+    return new Promise(function(resolve, reject) {
       const x = new XMLHttpRequest();
       x.open('GET', url, true);
       x.timeout = 7000;
       if (type) x.setRequestHeader('Accept', type);
-      x.onload = function () {
+      x.onload = function() {
         x.status >= 200 && x.status < 300 ? resolve(x.responseText) : reject(new Error('HTTP ' + x.status));
       };
-      x.onerror = x.ontimeout = function () { reject(new Error('Request failed')); };
+      x.onerror = x.ontimeout = function() {
+        reject(new Error('Request failed'));
+      };
       x.send();
     });
   }
@@ -35,13 +37,19 @@
 
     const escaped = String(c.macEsc || '').trim();
     if (!escaped || escaped.includes('$(')) return '';
-    try { return decodeURIComponent(escaped); } catch (_) { return escaped; }
+    try {
+      return decodeURIComponent(escaped);
+    } catch (_) {
+      return escaped;
+    }
   }
 
   function randomVoucher() {
-    const a = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789', b = new Uint8Array(6);
+    const a = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789',
+      b = new Uint8Array(6);
     if (window.crypto && crypto.getRandomValues) crypto.getRandomValues(b);
-    else for (let i = 0; i < b.length; i++) b[i] = Math.floor(Math.random() * 256);
+    else
+      for (let i = 0; i < b.length; i++) b[i] = Math.floor(Math.random() * 256);
     let v = 'PP';
     for (let i = 0; i < b.length; i++) v += a[b[i] % a.length];
     return v;
@@ -60,7 +68,10 @@
   function applyDeviceProfile(p) {
     if (!isLogin || !p || !p.ok) return;
     const v = String(p.saved_voucher || '').trim();
-    if (v) { setVoucher(v, true); return; }
+    if (v) {
+      setVoucher(v, true);
+      return;
+    }
     if (!voucherResolved) setVoucher(randomVoucher(), false);
   }
 
@@ -69,7 +80,7 @@
   }
 
   function loadStyle(href, id) {
-    return new Promise(function (resolve, reject) {
+    return new Promise(function(resolve, reject) {
       if (id && document.getElementById(id)) return resolve();
       const l = document.createElement('link');
       if (id) l.id = id;
@@ -82,7 +93,7 @@
   }
 
   function loadScript(src, id) {
-    return new Promise(function (resolve, reject) {
+    return new Promise(function(resolve, reject) {
       if (id && document.getElementById(id)) return resolve();
       const s = document.createElement('script');
       if (id) s.id = id;
@@ -94,19 +105,19 @@
   }
 
   function copyAttributes(from, to) {
-    Array.from(from.attributes || []).forEach(function (attr) {
+    Array.from(from.attributes || []).forEach(function(attr) {
       to.setAttribute(attr.name, attr.value);
     });
   }
 
   function clearFragmentAssets() {
-    document.querySelectorAll('[data-pixiepoint-fragment-asset="1"]').forEach(function (node) {
+    document.querySelectorAll('[data-pixiepoint-fragment-asset="1"]').forEach(function(node) {
       node.remove();
     });
   }
 
   function appendFragmentStyle(node) {
-    return new Promise(function (resolve) {
+    return new Promise(function(resolve) {
       const clone = document.createElement(node.tagName.toLowerCase());
       copyAttributes(node, clone);
       clone.setAttribute('data-pixiepoint-fragment-asset', '1');
@@ -118,21 +129,29 @@
         return;
       }
 
-      clone.addEventListener('load', resolve, { once: true });
-      clone.addEventListener('error', resolve, { once: true });
+      clone.addEventListener('load', resolve, {
+        once: true
+      });
+      clone.addEventListener('error', resolve, {
+        once: true
+      });
       document.head.appendChild(clone);
     });
   }
 
   function appendFragmentScript(node) {
-    return new Promise(function (resolve) {
+    return new Promise(function(resolve) {
       const script = document.createElement('script');
       copyAttributes(node, script);
       script.setAttribute('data-pixiepoint-fragment-asset', '1');
 
       if (node.src) {
-        script.addEventListener('load', resolve, { once: true });
-        script.addEventListener('error', resolve, { once: true });
+        script.addEventListener('load', resolve, {
+          once: true
+        });
+        script.addEventListener('error', resolve, {
+          once: true
+        });
         document.head.appendChild(script);
         return;
       }
@@ -150,8 +169,12 @@
     const styles = Array.from(template.content.querySelectorAll('link[rel~="stylesheet"], style'));
     const scripts = Array.from(template.content.querySelectorAll('script'));
 
-    styles.forEach(function (node) { node.remove(); });
-    scripts.forEach(function (node) { node.remove(); });
+    styles.forEach(function(node) {
+      node.remove();
+    });
+    scripts.forEach(function(node) {
+      node.remove();
+    });
 
     clearFragmentAssets();
 
@@ -179,7 +202,7 @@
 
     await mountFragment(root, await request(`${hostedOrigin}/hotspot/compat?${q.toString()}`, 'text/html'));
 
-    ['chap-login', 'pap-login'].forEach(function (id) {
+    ['chap-login', 'pap-login'].forEach(function(id) {
       const form = document.getElementById(id);
       if (!form) return;
       form.action = c.loginUrl || '';
@@ -187,7 +210,7 @@
       if (dst) dst.value = c.originalUrl || '';
     });
 
-    window.PIXIEPOINT_VENDOS = Array.from(root.querySelectorAll('#compat-vendo option')).map(function (o) {
+    window.PIXIEPOINT_VENDOS = Array.from(root.querySelectorAll('#compat-vendo option')).map(function(o) {
       return {
         id: o.value,
         name: o.textContent.trim(),
@@ -200,7 +223,7 @@
   }
 
   function readServerRenderedVendos(root) {
-    window.PIXIEPOINT_VENDOS = Array.from(root.querySelectorAll('#compat-vendo option, #pp-vendo option')).map(function (o) {
+    window.PIXIEPOINT_VENDOS = Array.from(root.querySelectorAll('#compat-vendo option, #pp-vendo option')).map(function(o) {
       return {
         id: o.value,
         name: o.textContent.trim(),
@@ -241,8 +264,9 @@
       if (serverRendered) {
         readServerRenderedVendos(root);
         if (isLogin) {
-          ['chap-login', 'pap-login'].forEach(function (id) {
-            const form = document.getElementById(id), c = window.PIXIEPOINT_CONTEXT || {};
+          ['chap-login', 'pap-login'].forEach(function(id) {
+            const form = document.getElementById(id),
+              c = window.PIXIEPOINT_CONTEXT || {};
             if (!form) return;
             form.action = c.loginUrl || '';
             const dst = form.elements.namedItem('dst');
@@ -277,15 +301,20 @@
     x.open('GET', `${hostedOrigin}/hotspot/health?t=${Date.now()}`, true);
     x.timeout = 5000;
     x.setRequestHeader('Accept', 'application/json');
-    x.onload = function () {
+    x.onload = function() {
       let h = null;
-      try { h = JSON.parse(x.responseText); } catch (_) {}
-      if (x.status >= 200 && x.status < 300 && h && h.ready === true) { loadPortal(); return; }
+      try {
+        h = JSON.parse(x.responseText);
+      } catch (_) {}
+      if (x.status >= 200 && x.status < 300 && h && h.ready === true) {
+        loadPortal();
+        return;
+      }
       status('Hosted portal unavailable · retrying…');
       clearTimeout(retryTimer);
       retryTimer = setTimeout(check, 4000);
     };
-    x.onerror = x.ontimeout = function () {
+    x.onerror = x.ontimeout = function() {
       status(navigator.onLine === false ? 'No network connection · retrying…' : 'Hosted portal unavailable · retrying…');
       clearTimeout(retryTimer);
       retryTimer = setTimeout(check, 4000);
@@ -293,7 +322,9 @@
     x.send();
   }
 
-  window.addEventListener('pixiepoint:device-profile', function (e) { applyDeviceProfile(e.detail || {}); });
+  window.addEventListener('pixiepoint:device-profile', function(e) {
+    applyDeviceProfile(e.detail || {});
+  });
   window.addEventListener('online', check);
   check();
 })();

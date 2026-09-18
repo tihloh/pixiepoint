@@ -58,13 +58,21 @@
     var accumulatorC = -1732584194;
     var accumulatorD = 271733878;
     var roundFunctions = [roundF, roundG, roundH, roundI];
-    var shifts = [[7,12,17,22],[5,9,14,20],[4,11,16,23],[6,10,15,21]];
+    var shifts = [
+      [7, 12, 17, 22],
+      [5, 9, 14, 20],
+      [4, 11, 16, 23],
+      [6, 10, 15, 21]
+    ];
     var constants = [];
     for (index = 0; index < 64; index += 1) constants[index] = (Math.abs(Math.sin(index + 1)) * 4294967296) | 0;
 
     for (var blockOffset = 0; blockOffset < paddedInput.length; blockOffset += 64) {
       var words = [];
-      var savedA = accumulatorA, savedB = accumulatorB, savedC = accumulatorC, savedD = accumulatorD;
+      var savedA = accumulatorA,
+        savedB = accumulatorB,
+        savedC = accumulatorC,
+        savedD = accumulatorD;
       for (index = 0; index < 64; index += 4) {
         words[index >> 2] = paddedInput.charCodeAt(blockOffset + index) |
           (paddedInput.charCodeAt(blockOffset + index + 1) << 8) |

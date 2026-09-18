@@ -26,7 +26,8 @@ $businessName = (string) ($vendos[0]['businessName'] ?? 'PixiePoint');
                 <div class="field" id="compat-topup-slot">
                     <label for="compat-vendo">Coin slot</label>
                     <select id="compat-vendo">
-                        <?php foreach ($vendos as $index => $vendo): ?>
+                        <?php
+foreach ($vendos as $index => $vendo): ?>
                             <option
                                 value="<?= e($vendo['id']) ?>"
                                 data-base-url="<?= e($vendo['baseUrl']) ?>"
@@ -38,13 +39,14 @@ $businessName = (string) ($vendos[0]['businessName'] ?? 'PixiePoint');
                             >
                                 <?= e($vendo['businessName']) ?>
                             </option>
-                        <?php endforeach; ?>
+                        <?php
+endforeach; ?>
                     </select>
 
                     <small id="compat-health" class="compat-status">
                         <?= $vendos
-                          ? 'Checking the local coin slot…'
-                          : 'No coin slot available for this hotspot' ?>
+? 'Checking the local coin slot…'
+: 'No coin slot available for this hotspot' ?>
                     </small>
                 </div>
 
@@ -125,7 +127,8 @@ $businessName = (string) ($vendos[0]['businessName'] ?? 'PixiePoint');
                     <div id="compat-eload-products">Loading products…</div>
                 </div>
 
-                <?php if ($debug): ?>
+                <?php
+if ($debug): ?>
                     <details class="compat-debug" open>
                         <summary>Temporary hotspot debug</summary>
                         <div class="compat-debug-grid">
@@ -147,7 +150,8 @@ $businessName = (string) ($vendos[0]['businessName'] ?? 'PixiePoint');
                             </div>
                         </div>
                     </details>
-                <?php endif; ?>
+                <?php
+endif; ?>
 
                 <noscript>
                     <div class="alert">
@@ -157,13 +161,13 @@ $businessName = (string) ($vendos[0]['businessName'] ?? 'PixiePoint');
 
                 <script>
                     window.PIXIEPOINT_VENDOS = <?= json_encode(
-                        $vendos,
-                        JSON_UNESCAPED_SLASHES |
-                          JSON_HEX_TAG |
-                          JSON_HEX_AMP |
-                          JSON_HEX_APOS |
-                          JSON_HEX_QUOT,
-                    ) ?>;
+    $vendos,
+    JSON_UNESCAPED_SLASHES |
+    JSON_HEX_TAG |
+    JSON_HEX_AMP |
+    JSON_HEX_APOS |
+    JSON_HEX_QUOT,
+) ?>;
                 </script>
             </div>
         </div>

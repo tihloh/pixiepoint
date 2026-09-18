@@ -9,8 +9,10 @@
 
 <?= $message ?>
 
-<?php if (!empty($actionUrl) && !empty($actionLabel)): ?>
+<?php
+if (!empty($actionUrl) && !empty($actionLabel)): ?>
     <a class="button full" href="<?= e($actionUrl) ?>">
         <?= e($actionLabel) ?>
     </a>
-<?php endif; ?>
+<?php
+endif; ?>

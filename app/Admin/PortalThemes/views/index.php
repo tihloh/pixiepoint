@@ -12,11 +12,14 @@
 </div>
 
 <section class="panel">
-    <?php if (!$themes): ?>
+    <?php
+if (!$themes): ?>
         <div class="text-body-secondary">No portal themes are installed.</div>
-    <?php else: ?>
+    <?php
+else: ?>
         <div class="row g-3">
-            <?php foreach ($themes as $theme): ?>
+            <?php
+foreach ($themes as $theme): ?>
                 <div class="col-md-6 col-xl-4">
                     <div class="card h-100">
                         <div class="card-body d-flex flex-column">
@@ -36,7 +39,9 @@
                         </div>
                     </div>
                 </div>
-            <?php endforeach; ?>
+            <?php
+endforeach; ?>
         </div>
-    <?php endif; ?>
+    <?php
+endif; ?>
 </section>

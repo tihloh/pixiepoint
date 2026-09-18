@@ -21,11 +21,13 @@
   font-size: 1.35rem;
 }
 
-.pixie-brand { line-height: 1.15; }
+.pixie-brand {
+  line-height: 1.15;
+}
 
 .pixie-user-card {
   border: 1px solid transparent;
-  background: rgba(255,255,255,.035);
+  background: rgba(255, 255, 255, .035);
   transition: background-color .15s ease, border-color .15s ease;
 }
 
@@ -54,13 +56,19 @@
   font-weight: 700;
 }
 
-.pixie-user-card .text-body-secondary { font-size: .76rem; }
+.pixie-user-card .text-body-secondary {
+  font-size: .76rem;
+}
 
 .pixie-sidebar .nav-link {
   color: var(--bs-secondary-color);
   padding-block: clamp(.3rem, 1.1vh, .6rem);
 }
-.pixie-sidebar .nav-link:hover { color: var(--bs-body-color); }
+
+.pixie-sidebar .nav-link:hover {
+  color: var(--bs-body-color);
+}
+
 .pixie-sidebar .nav-link.active {
   color: #fff;
   background: rgba(var(--bs-primary-rgb), 0.18);
@@ -76,13 +84,13 @@
   text-transform: uppercase;
 }
 
-.pixie-sidebar > .offcanvas-body > nav:first-of-type {
+.pixie-sidebar>.offcanvas-body>nav:first-of-type {
   flex: 1 1 auto;
   min-height: 0;
   overflow: hidden;
 }
 
-.pixie-sidebar > .offcanvas-body > nav:first-of-type .nav-link {
+.pixie-sidebar>.offcanvas-body>nav:first-of-type .nav-link {
   line-height: 1.15;
 }
 
@@ -99,25 +107,47 @@ main .panel {
   box-shadow: 0 0.25rem 0.9rem rgba(0, 0, 0, 0.16);
 }
 
-main .panel > h2,
-main .panel > p { padding-inline: 1rem; }
-main .panel > h2 { margin: 0; padding-top: 1rem; font-size: 1.05rem; }
-main .panel > h2 + .muted { margin-bottom: .75rem; }
-main .table { margin-bottom: 0; }
+main .panel>h2,
+main .panel>p {
+  padding-inline: 1rem;
+}
+
+main .panel>h2 {
+  margin: 0;
+  padding-top: 1rem;
+  font-size: 1.05rem;
+}
+
+main .panel>h2+.muted {
+  margin-bottom: .75rem;
+}
+
+main .table {
+  margin-bottom: 0;
+}
+
 main .table thead th {
   color: var(--bs-secondary-color);
-  background: rgba(255,255,255,.025);
+  background: rgba(255, 255, 255, .025);
   font-size: .8rem;
   white-space: nowrap;
 }
-main .table tbody tr:last-child > * { border-bottom-width: 0; }
-main .empty { color: var(--bs-secondary-color); text-align: center; }
+
+main .table tbody tr:last-child>* {
+  border-bottom-width: 0;
+}
+
+main .empty {
+  color: var(--bs-secondary-color);
+  text-align: center;
+}
 
 /* Normalize raw admin form controls used by compact PHP views. */
 main .modal label {
   display: block;
   margin-bottom: .35rem;
 }
+
 main .modal input:not([type="hidden"]):not([type="checkbox"]),
 main .modal select,
 main .modal textarea {
@@ -132,13 +162,15 @@ main .modal textarea {
   border-radius: var(--bs-border-radius);
   outline: 0;
 }
+
 main .modal input:not([type="hidden"]):not([type="checkbox"]):focus,
 main .modal select:focus,
 main .modal textarea:focus {
   border-color: #7c5cff;
-  box-shadow: 0 0 0 .2rem rgba(124,92,255,.15);
+  box-shadow: 0 0 0 .2rem rgba(124, 92, 255, .15);
 }
-main .modal label > input[type="checkbox"] {
+
+main .modal label>input[type="checkbox"] {
   display: inline-block;
   appearance: none;
   -webkit-appearance: none;
@@ -157,14 +189,16 @@ main .modal label > input[type="checkbox"] {
   background-size: .8rem .8rem;
   cursor: pointer;
 }
-main .modal label > input[type="checkbox"]:checked {
+
+main .modal label>input[type="checkbox"]:checked {
   border-color: #7c5cff;
   background-color: #7c5cff;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='2.2' d='m3 8 3 3 7-7'/%3E%3C/svg%3E");
 }
-main .modal label > input[type="checkbox"]:focus-visible {
+
+main .modal label>input[type="checkbox"]:focus-visible {
   outline: 0;
-  box-shadow: 0 0 0 .2rem rgba(124,92,255,.2);
+  box-shadow: 0 0 0 .2rem rgba(124, 92, 255, .2);
 }
 
 @media (min-width: 992px) {
@@ -182,17 +216,17 @@ main .modal label > input[type="checkbox"]:focus-visible {
     min-height: 0;
   }
 
-  .pixie-sidebar .offcanvas-body > nav:first-of-type {
+  .pixie-sidebar .offcanvas-body>nav:first-of-type {
     display: flex;
     flex-direction: column;
     gap: clamp(.15rem, .55vh, .35rem) !important;
   }
 
-  .pixie-sidebar .offcanvas-body > nav:first-of-type .nav-group-label {
+  .pixie-sidebar .offcanvas-body>nav:first-of-type .nav-group-label {
     flex: 0 0 auto;
   }
 
-  .pixie-sidebar .offcanvas-body > nav:last-of-type {
+  .pixie-sidebar .offcanvas-body>nav:last-of-type {
     flex: 0 0 auto;
   }
 
