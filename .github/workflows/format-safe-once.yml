@@ -441,7 +441,7 @@ jobs:
           JS
 
           mapfile -d '' js_files < <(find app/Portal/Themes mt_hotspot public tests -type f \( -name '*.js' -o -name '*.cjs' \) -print0)
-          node /tmp/verify-js.cjs "${js_files[@]}"
+          NODE_PATH="$PWD/node_modules" node /tmp/verify-js.cjs "${js_files[@]}"
 
       - name: Verify CSS strings, comments, and non-whitespace characters are unchanged
         run: |
