@@ -164,19 +164,22 @@ final class Controller extends FeatureController
             if($action==='save_config'){
                 $coin=(int)($_POST['coin_pin']??0);
                 $relay=(int)($_POST['relay_pin']??0);
+                $coinFrame=(int)($_POST['coin_frame_pin']??0);
                 $settle=(int)($_POST['coin_settle_ms']??350);
                 $platform=$this->devicePlatform($deviceId);
                 if($platform===null)throw new \RuntimeException('Device firmware target is unknown. Wait for the device to report its platform before changing GPIO configuration.');
                 $coinPins=$platform==='esp32'?[4,13,14,16,17,18,19,21,22,23,25,26,27,32,33]:[4,5,12,13,14];
                 $outputPins=$platform==='esp32'?[4,13,14,16,17,18,19,21,22,23,25,26,27,32,33]:[4,5,12,13,14,16];
                 if(!in_array($coin,$coinPins,true))throw new \RuntimeException('Selected coin GPIO is not supported by '.$platform.'.');
-                if(!in_array($relay,$outputPins,true))throw new \RuntimeException('Selected relay GPIO is not supported by '.$platform.'.');
-                if($coin===$relay)throw new \RuntimeException('Coin and relay GPIOs must be different.');
+                if(!in_array($relay,$outputPins,true))throw new \RuntimeException('Selected coin power GPIO is not supported by '.$platform.'.');
+                if(!in_array($coinFrame,$outputPins,true))throw new \RuntimeException('Selected coin frame GPIO is not supported by '.$platform.'.');
+                if(count(array_unique([$coin,$relay,$coinFrame]))!==3)throw new \RuntimeException('Coin input, coin power and coin frame GPIOs must be different.');
                 if($settle<50||$settle>2000)throw new \RuntimeException('Coin settle time must be between 50 and 2000 ms.');
                 $resolved=$this->gateway->configs->resolve($deviceId);
                 $config=$resolved['config']??[];
                 $config['hardware']['pins']['coin']=$coin;
                 $config['hardware']['pins']['relay']=$relay;
+                $config['hardware']['pins']['coin_frame']=$coinFrame;
                 unset($config['hardware']['pins']['status_led']);
                 $config['coin']['settle_ms']=$settle;
                 $this->gateway->configs->setDeviceConfig($deviceId,$config);
