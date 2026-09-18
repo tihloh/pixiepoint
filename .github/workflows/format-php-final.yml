@@ -1,0 +1,128 @@
+name: Final whitespace-only PHP formatting
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .format-php-final
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          tools: composer
+
+      - name: Install PHPCBF
+        run: composer global require squizlabs/php_codesniffer:^3.13 --no-interaction --no-progress
+
+      - name: Build whitespace merger
+        run: |
+          cat > /tmp/merge-format.php <<'PHP'
+          <?php
+          declare(strict_types=1);
+
+          function parts(string $code): array {
+              $tokens=[];$gaps=[''];
+              foreach(token_get_all($code) as $token){
+                  if(is_array($token)){
+                      [$id,$text]=$token;
+                      if($id===T_WHITESPACE){$gaps[array_key_last($gaps)].=$text;continue;}
+                      if($id===T_OPEN_TAG||$id===T_OPEN_TAG_WITH_ECHO){
+                          preg_match('/^(.*?)(\s*)$/s',$text,$m);
+                          $tokens[]=['id'=>$id,'text'=>$m[1]??$text];
+                          $gaps[]=$m[2]??'';
+                          continue;
+                      }
+                      $tokens[]=['id'=>$id,'text'=>$text];
+                      $gaps[]='';
+                  }else{
+                      $tokens[]=['id'=>null,'text'=>$token];
+                      $gaps[]='';
+                  }
+              }
+              return[$tokens,$gaps];
+          }
+
+          function compatible(array $a,array $b):bool{
+              if(count($a)!==count($b))return false;
+              foreach($a as $i=>$x){
+                  $y=$b[$i];
+                  if($x['id']!==$y['id'])return false;
+                  if($x['text']!==$y['text'])return false;
+              }
+              return true;
+          }
+
+          [$src,$fmt]=array_slice($argv,1,2);
+          [$ot,$og]=parts(file_get_contents($src));
+          [$ft,$fg]=parts(file_get_contents($fmt));
+
+          if(!compatible($ot,$ft))exit(3);
+
+          $out=$fg[0]??'';
+          foreach($ot as $i=>$t){
+              $out.=$t['text'];
+              $out.=$fg[$i+1]??'';
+          }
+          file_put_contents($src,$out);
+          PHP
+
+      - name: Reflow PHP while preserving every code token
+        shell: bash
+        run: |
+          mkdir -p /tmp/phpfmt
+          mapfile -d '' files < <(
+            find app bin config public src tests -type f -name '*.php' -print0
+            printf '%s\0' config.example.php router.php
+          )
+
+          merged=0
+          skipped=0
+          for f in "${files[@]}"; do
+            t="/tmp/phpfmt/${merged}_${skipped}.php"
+            cp "$f" "$t"
+
+            set +e
+            ~/.composer/vendor/bin/phpcbf --standard=PSR12 "$t" >/dev/null 2>&1
+            rc=$?
+            set -e
+            if [ "$rc" -gt 1 ]; then
+              skipped=$((skipped+1))
+              continue
+            fi
+
+            if php /tmp/merge-format.php "$f" "$t"; then
+              merged=$((merged+1))
+            else
+              skipped=$((skipped+1))
+            fi
+          done
+          echo "Whitespace-reflowed PHP files: $merged"
+          echo "Skipped because formatter altered non-whitespace tokens: $skipped"
+
+      - name: Verify syntax
+        run: |
+          find app bin config public src tests -type f -name '*.php' -print0 | xargs -0 -n1 php -l
+          php -l config.example.php
+          php -l router.php
+
+      - name: Commit
+        run: |
+          rm -f .format-php-final .github/workflows/format-php-final.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "Complete whitespace-only PHP formatting"
+          git push origin HEAD:main
