@@ -1,0 +1,27 @@
+name: review-vendo-lock
+on:
+  push:
+    branches: ['review/codex-refactor-20260918']
+    paths:
+      - composer.json
+      - .github/workflows/review-vendo-lock.yml
+permissions:
+  contents: write
+jobs:
+  lock:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+      - name: Update Vendo Gateway lock
+        run: composer update tihloh/vendo-gateway --with-all-dependencies --no-interaction --prefer-dist
+      - name: Commit lock
+        run: |
+          if git diff --quiet -- composer.lock; then exit 0; fi
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add composer.lock
+          git commit -m "Lock review Vendo Gateway branch"
+          git push
