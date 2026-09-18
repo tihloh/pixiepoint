@@ -5,8 +5,8 @@ declare(strict_types=1);
 /** @var array $pairings */
 /** @var bool $canManage */
 $gpioProfiles=[
-'esp8266'=>['coin'=>[4=>'GPIO4 (D2)',5=>'GPIO5 (D1)',12=>'GPIO12 (D6)',13=>'GPIO13 (D7)',14=>'GPIO14 (D5)'],'output'=>[4=>'GPIO4 (D2)',5=>'GPIO5 (D1)',12=>'GPIO12 (D6)',13=>'GPIO13 (D7)',14=>'GPIO14 (D5)',16=>'GPIO16 (D0)'],'defaults'=>['coin'=>5,'relay'=>12]],
-'esp32'=>['coin'=>[4=>'GPIO4',13=>'GPIO13',14=>'GPIO14',16=>'GPIO16',17=>'GPIO17',18=>'GPIO18',19=>'GPIO19',21=>'GPIO21',22=>'GPIO22',23=>'GPIO23',25=>'GPIO25',26=>'GPIO26',27=>'GPIO27',32=>'GPIO32',33=>'GPIO33'],'output'=>[4=>'GPIO4',13=>'GPIO13',14=>'GPIO14',16=>'GPIO16',17=>'GPIO17',18=>'GPIO18',19=>'GPIO19',21=>'GPIO21',22=>'GPIO22',23=>'GPIO23',25=>'GPIO25',26=>'GPIO26',27=>'GPIO27',32=>'GPIO32',33=>'GPIO33'],'defaults'=>['coin'=>27,'relay'=>26]],
+'esp8266'=>['coin'=>[4=>'GPIO4 (D2)',5=>'GPIO5 (D1)',12=>'GPIO12 (D6)',13=>'GPIO13 (D7)',14=>'GPIO14 (D5)'],'output'=>[4=>'GPIO4 (D2)',5=>'GPIO5 (D1)',12=>'GPIO12 (D6)',13=>'GPIO13 (D7)',14=>'GPIO14 (D5)',16=>'GPIO16 (D0)'],'defaults'=>['coin'=>5,'relay'=>12,'coin_frame'=>16]],
+'esp32'=>['coin'=>[4=>'GPIO4',13=>'GPIO13',14=>'GPIO14',16=>'GPIO16',17=>'GPIO17',18=>'GPIO18',19=>'GPIO19',21=>'GPIO21',22=>'GPIO22',23=>'GPIO23',25=>'GPIO25',26=>'GPIO26',27=>'GPIO27',32=>'GPIO32',33=>'GPIO33'],'output'=>[4=>'GPIO4',13=>'GPIO13',14=>'GPIO14',16=>'GPIO16',17=>'GPIO17',18=>'GPIO18',19=>'GPIO19',21=>'GPIO21',22=>'GPIO22',23=>'GPIO23',25=>'GPIO25',26=>'GPIO26',27=>'GPIO27',32=>'GPIO32',33=>'GPIO33'],'defaults'=>['coin'=>27,'relay'=>26,'coin_frame'=>25]],
 ];
 $pinSelect=static function(string $name,int $selected,array $options,string $class=''):string{
     $html='<select name="'.e($name).'" class="form-select '.e($class).'" required>';
@@ -248,13 +248,16 @@ $available=$firmware['update_available']??null;?>
                                         <input type="hidden" name="device_id" value="<?= e($deviceId) ?>">
                                         <input type="hidden" name="action" value="save_config">
                                         <div class="row g-3">
-                                            <div class="col-md-6">
+                                            <div class="col-md-4">
                                                 <label class="form-label">Coin input</label><?= $pinSelect('coin_pin',(int)($pins['coin']??$defaults['coin']),$profile['coin'],'js-pin-select') ?>
                                             </div>
-                                            <div class="col-md-6">
-                                                <label class="form-label">Relay output</label><?= $pinSelect('relay_pin',(int)($pins['relay']??$defaults['relay']),$profile['output'],'js-pin-select') ?>
+                                            <div class="col-md-4">
+                                                <label class="form-label">Coin power relay/MOSFET</label><?= $pinSelect('relay_pin',(int)($pins['relay']??$defaults['relay']),$profile['output'],'js-pin-select') ?>
                                             </div>
-                                            <div class="col-md-6">
+                                            <div class="col-md-4">
+                                                <label class="form-label">Coin frame control</label><?= $pinSelect('coin_frame_pin',(int)($pins['coin_frame']??$defaults['coin_frame']),$profile['output'],'js-pin-select') ?>
+                                            </div>
+                                            <div class="col-md-4">
                                                 <label class="form-label">Coin settle time</label>
                                                 <div class="input-group">
                                                     <input class="form-control" type="number" min="50" max="2000" name="coin_settle_ms" value="<?= (int)($coin['settle_ms']??350) ?>">
