@@ -144,6 +144,8 @@ final class VendoGatewayController
             $name=str_replace(' ','-',ucwords(strtolower(str_replace('_',' ',substr($key,5)))));
             $headers[$name]=(string)$value;
         }
+        if(isset($_SERVER['HTTP_AUTHORIZATION']))$headers['Authorization']=(string)$_SERVER['HTTP_AUTHORIZATION'];
+        elseif(isset($_SERVER['REDIRECT_HTTP_AUTHORIZATION']))$headers['Authorization']=(string)$_SERVER['REDIRECT_HTTP_AUTHORIZATION'];
         return$headers;
     }
     private function run(callable $callback): never{
