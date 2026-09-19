@@ -243,8 +243,8 @@ final class VendoGatewayController
             if($chunk===false||$chunk==='')break;
             echo $chunk;
             $remaining-=strlen($chunk);
-            if(function_exists('fastcgi_finish_request')){}
-            else flush();
+            @ob_flush();
+            flush();
         }
         fclose($fh);
         exit;
