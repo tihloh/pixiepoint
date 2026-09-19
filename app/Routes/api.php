@@ -17,6 +17,7 @@ return static function (RouteManager $routes, array $c): void {
     $routes->get('/vendo/v1/config', [$c['vendo.gateway'], 'config'])->name('vendo.config');
     $routes->post('/vendo/v1/state', [$c['vendo.gateway'], 'state'])->name('vendo.state');
     $routes->post('/vendo/v1/firmware/check', [$c['vendo.gateway'], 'firmware'])->name('vendo.firmware');
+    $routes->get('/vendo/v1/firmware/download/{version}/{target}', [$c['vendo.gateway'], 'firmwareDownload'])->name('vendo.firmware.download');
 
     $routes->get('/hotspot/health', [$c['api'], 'health'])->name('api.health');
     $routes->get('/api/router/install', [$c['router.agent'], 'install'])->name('api.router.install');
