@@ -112,7 +112,7 @@ final class VendoGatewayController
     {
         $version=ltrim(trim($version),'vV');
         $target=strtolower(trim($target));
-        if(!preg_match('/^\\d+\\.\\d+\\.\\d+(?:\\+[a-zA-Z0-9.-]+)?$/',$version)||!in_array($target,['esp8266','esp32'],true)){
+        if(!preg_match('/^\d+\.\d+\.\d+(?:\+[a-zA-Z0-9.-]+)?$/',$version)||!in_array($target,['esp8266','esp32'],true)){
             http_response_code(404);
             header('Content-Type: text/plain; charset=utf-8');
             echo 'Firmware not found.';
@@ -209,7 +209,7 @@ final class VendoGatewayController
         $range=trim((string)($_SERVER['HTTP_RANGE']??''));
 
         if($range!==''){
-            if(!preg_match('/^bytes=(\\d+)-(\\d*)$/',$range,$m)){
+            if(!preg_match('/^bytes=(\d+)-(\d*)$/',$range,$m)){
                 http_response_code(416);
                 header('Content-Range: bytes */'.$size);
                 exit;
