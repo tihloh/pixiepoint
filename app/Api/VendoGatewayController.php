@@ -108,6 +108,148 @@ final class VendoGatewayController
         $this->run(fn()=>(new FirmwareEndpoint($this->deviceAuth(),$gateway->firmware))->check($this->headers(),$raw,'POST','/vendo/v1/firmware/check'));
     }
 
+    public function firmwareDownload(string $version,string $target): never
+    {
+        $version=ltrim(trim($version),'vV');
+        $target=strtolower(trim($target));
+        if(!preg_match('/^\\d+\\.\\d+\\.\\d+(?:\\+[a-zA-Z0-9.-]+)?$/',$version)||!in_array($target,['esp8266','esp32'],true)){
+            http_response_code(404);
+            header('Content-Type: text/plain; charset=utf-8');
+            echo 'Firmware not found.';
+            exit;
+        }
+
+        $name='vendogate-'.$target.'.bin';
+        $cacheDir=sys_get_temp_dir().'/pixiepoint-vendo-firmware';
+        if(!is_dir($cacheDir)&&!@mkdir($cacheDir,0770,true)&&!is_dir($cacheDir)){
+            http_response_code(503);
+            header('Content-Type: text/plain; charset=utf-8');
+            echo 'Firmware cache unavailable.';
+            exit;
+        }
+
+        $cache=$cacheDir.'/v'.$version.'-'.$name;
+        if(!is_file($cache)||filesize($cache)<1){
+            $lock=fopen($cache.'.lock','c');
+            if(!$lock||!flock($lock,LOCK_EX)){
+                if($lock)fclose($lock);
+                http_response_code(503);
+                header('Content-Type: text/plain; charset=utf-8');
+                echo 'Firmware cache busy.';
+                exit;
+            }
+            clearstatcache(true,$cache);
+            if(!is_file($cache)||filesize($cache)<1){
+                if(!function_exists('curl_init')){
+                    flock($lock,LOCK_UN);
+                    fclose($lock);
+                    http_response_code(503);
+                    header('Content-Type: text/plain; charset=utf-8');
+                    echo 'Firmware transport unavailable.';
+                    exit;
+                }
+
+                $tmp=$cache.'.tmp.'.bin2hex(random_bytes(4));
+                $out=fopen($tmp,'wb');
+                if(!$out){
+                    flock($lock,LOCK_UN);
+                    fclose($lock);
+                    http_response_code(503);
+                    header('Content-Type: text/plain; charset=utf-8');
+                    echo 'Firmware cache unavailable.';
+                    exit;
+                }
+
+                $url='https://github.com/tihloh/vendogate-firmware-releases/releases/download/v'.rawurlencode($version).'/'.$name;
+                $ch=curl_init($url);
+                curl_setopt_array($ch,[
+                    CURLOPT_FILE=>$out,
+                    CURLOPT_FOLLOWLOCATION=>true,
+                    CURLOPT_PROTOCOLS=>CURLPROTO_HTTPS,
+                    CURLOPT_REDIR_PROTOCOLS=>CURLPROTO_HTTPS,
+                    CURLOPT_CONNECTTIMEOUT=>5,
+                    CURLOPT_TIMEOUT=>120,
+                    CURLOPT_USERAGENT=>'PixiePoint-VendoFirmware/1',
+                    CURLOPT_FAILONERROR=>false,
+                ]);
+                $ok=curl_exec($ch);
+                $code=(int)curl_getinfo($ch,CURLINFO_RESPONSE_CODE);
+                curl_close($ch);
+                fclose($out);
+
+                if(!$ok||$code!==200||!is_file($tmp)||filesize($tmp)<1){
+                    @unlink($tmp);
+                    flock($lock,LOCK_UN);
+                    fclose($lock);
+                    http_response_code(502);
+                    header('Content-Type: text/plain; charset=utf-8');
+                    echo 'Firmware upstream unavailable.';
+                    exit;
+                }
+
+                if(!@rename($tmp,$cache)){
+                    @unlink($tmp);
+                    flock($lock,LOCK_UN);
+                    fclose($lock);
+                    http_response_code(503);
+                    header('Content-Type: text/plain; charset=utf-8');
+                    echo 'Firmware cache unavailable.';
+                    exit;
+                }
+            }
+            flock($lock,LOCK_UN);
+            fclose($lock);
+        }
+
+        clearstatcache(true,$cache);
+        $size=(int)filesize($cache);
+        $start=0;
+        $end=$size-1;
+        $status=200;
+        $range=trim((string)($_SERVER['HTTP_RANGE']??''));
+
+        if($range!==''){
+            if(!preg_match('/^bytes=(\\d+)-(\\d*)$/',$range,$m)){
+                http_response_code(416);
+                header('Content-Range: bytes */'.$size);
+                exit;
+            }
+            $start=(int)$m[1];
+            $end=$m[2]!==''?(int)$m[2]:$end;
+            if($start<0||$start>=$size||$end<$start){
+                http_response_code(416);
+                header('Content-Range: bytes */'.$size);
+                exit;
+            }
+            if($end>=$size)$end=$size-1;
+            $status=206;
+        }
+
+        $length=$end-$start+1;
+        http_response_code($status);
+        header('Content-Type: application/octet-stream');
+        header('Content-Disposition: attachment; filename="'.$name.'"');
+        header('Accept-Ranges: bytes');
+        header('Cache-Control: public, max-age=86400, immutable');
+        header('Content-Length: '.$length);
+        if($status===206)header('Content-Range: bytes '.$start.'-'.$end.'/'.$size);
+
+        $fh=fopen($cache,'rb');
+        if(!$fh)exit;
+        if($start>0)fseek($fh,$start);
+        $remaining=$length;
+        while($remaining>0&&!feof($fh)){
+            $chunk=fread($fh,min(65536,$remaining));
+            if($chunk===false||$chunk==='')break;
+            echo $chunk;
+            $remaining-=strlen($chunk);
+            if(function_exists('fastcgi_finish_request')){}
+            else flush();
+        }
+        fclose($fh);
+        exit;
+    }
+
     private function cleanupPairings(): void
     {
         if(!$this->gateway)return;
