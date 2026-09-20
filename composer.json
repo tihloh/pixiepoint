@@ -17,5 +17,11 @@
       "PixiePoint\\App\\": "app/",
       "PixiePoint\\": "src/"
     }
-  }
+  },
+  "repositories": [
+    {
+      "type": "vcs",
+      "url": "https://github.com/tihloh/vendogate-php"
+    }
+  ]
 }
