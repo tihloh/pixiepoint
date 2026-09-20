@@ -148,7 +148,10 @@ $available=$firmware['update_available']??null;?>
                             <code><?= e($deviceId) ?></code>
                         </div>
                     </div>
-                    <button class="btn btn-outline-primary align-self-start" data-bs-toggle="collapse" data-bs-target="#vendo-manage-<?= $i ?>">Manage</button>
+                    <div class="d-flex gap-2 align-self-start">
+                        <button class="btn btn-outline-secondary" type="button" data-vendo-info="<?= e($deviceId) ?>">Info</button>
+                        <button class="btn btn-outline-primary" type="button" data-bs-toggle="collapse" data-bs-target="#vendo-manage-<?= $i ?>">Manage</button>
+                    </div>
                 </div>
                 <div class="row g-3 mt-1 small">
                     <div class="col-6 col-md-3">
@@ -323,6 +326,26 @@ $available=$firmware['update_available']??null;?>
         </article><?php endforeach;?>
     </div><?php endif;?>
 </div>
+<div class="modal fade" id="vendoInfoModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="min-w-0">
+                    <h2 class="modal-title fs-5" data-vendo-info-title>Vendo information</h2>
+                    <div class="small text-body-secondary text-truncate" data-vendo-info-subtitle></div>
+                </div>
+                <button class="btn-close" type="button" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" data-vendo-info-body>
+                <div class="text-center py-5"><div class="spinner-border"></div></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline-secondary" type="button" data-vendo-info-refresh>Refresh</button>
+                <button class="btn btn-primary" type="button" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
 <?php if($canManage):?><div class="modal fade" id="addVendoModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -371,6 +394,80 @@ $available=$firmware['update_available']??null;?>
                     if (b.dataset.old) b.innerHTML = b.dataset.old;
                 }
             },
+            infoValue = v => v === null || v === undefined || v === '' ? '—' : String(v),
+            yesNo = v => v === true ? 'Yes' : v === false ? 'No' : '—',
+            uptime = ms => {
+                ms = Number(ms || 0);
+                if (!ms) return '—';
+                const s = Math.floor(ms / 1000),
+                    d = Math.floor(s / 86400),
+                    h = Math.floor((s % 86400) / 3600),
+                    m = Math.floor((s % 3600) / 60);
+                return [d ? d + 'd' : '', h ? h + 'h' : '', m ? m + 'm' : '', !d && !h ? s % 60 + 's' : ''].filter(Boolean).join(' ');
+            },
+            infoField = (label, value) => `<div class="col-6"><span class="text-body-secondary d-block small">${esc(label)}</span><strong class="text-break">${esc(infoValue(value))}</strong></div>`,
+            infoCard = (title, fields) => `<div class="col-md-6"><div class="border rounded p-3 h-100"><h3 class="h6 mb-3">${esc(title)}</h3><div class="row g-3">${fields.join('')}</div></div></div>`,
+            renderVendoInfo = d => {
+                const i = d.info || {},
+                    b = d.binding || {},
+                    dev = i.device || {},
+                    reported = i.reported_state || {},
+                    cfg = i.config?.values || {},
+                    fw = i.firmware || {},
+                    fwCfg = fw.settings || cfg.firmware || {},
+                    caps = i.capabilities || {},
+                    pins = cfg.hardware?.pins || reported.hardware?.pins || {},
+                    coin = cfg.coin || reported.coin || {},
+                    server = Number(d.server_time || Date.now() / 1000),
+                    seen = dev.last_seen_at ? Date.parse(dev.last_seen_at) / 1000 : 0,
+                    online = seen > 0 && server - seen <= 180,
+                    seenText = seen ? new Date(seen * 1000).toLocaleString() : '—',
+                    update = fw.update_available === true ? 'Available' : fw.update_available === false ? 'Up to date' : 'Unknown',
+                    capabilities = Object.keys(caps).length ? esc(JSON.stringify(caps, null, 2)) : 'No capabilities reported.';
+                return `<div class="row g-3">
+                    ${infoCard('Identity', [
+                        infoField('Vendo', b.vendo_name || 'Vendo'),
+                        infoField('Station', b.station_name || 'Unlinked'),
+                        infoField('Device ID', dev.device_id),
+                        infoField('Device state', dev.state),
+                        infoField('Reported state', reported.state),
+                        infoField('Connectivity', online ? 'Online' : 'Offline')
+                    ])}
+                    ${infoCard('Hardware', [
+                        infoField('Platform', fw.target || reported.hardware?.platform || caps.platform),
+                        infoField('Hardware UID', dev.hardware_uid),
+                        infoField('Model', dev.hardware_model),
+                        infoField('Revision', dev.hardware_revision),
+                        infoField('IP address', dev.last_ip),
+                        infoField('RSSI', reported.rssi !== undefined ? reported.rssi + ' dBm' : null),
+                        infoField('Free heap', reported.free_heap !== undefined ? reported.free_heap + ' bytes' : null),
+                        infoField('Uptime', uptime(reported.uptime_ms))
+                    ])}
+                    ${infoCard('GPIO / Coin', [
+                        infoField('Coin input', pins.coin !== undefined ? 'GPIO' + pins.coin : null),
+                        infoField('Coin power', pins.relay !== undefined ? 'GPIO' + pins.relay : null),
+                        infoField('Coin frame', pins.coin_frame !== undefined ? 'GPIO' + pins.coin_frame : null),
+                        infoField('Built-in LED', pins.builtin_led !== undefined ? 'GPIO' + pins.builtin_led : null),
+                        infoField('Coin requested', yesNo(reported.coin_requested)),
+                        infoField('Coin accepting', yesNo(reported.coin_enabled)),
+                        infoField('Relay on', yesNo(reported.relay_on)),
+                        infoField('Frame on', yesNo(reported.coin_frame_on)),
+                        infoField('Session busy', yesNo(reported.coin?.local_session_busy)),
+                        infoField('Settle time', coin.settle_ms !== undefined ? coin.settle_ms + ' ms' : null)
+                    ])}
+                    ${infoCard('Firmware', [
+                        infoField('Installed', fw.current_version || dev.firmware_version ? 'v' + String(fw.current_version || dev.firmware_version).replace(/^[vV]/, '') : null),
+                        infoField('Latest', fw.latest_version ? 'v' + String(fw.latest_version).replace(/^[vV]/, '') : null),
+                        infoField('Update', update),
+                        infoField('Channel', fw.channel || fwCfg.channel),
+                        infoField('Auto check', yesNo(fwCfg.auto_check)),
+                        infoField('Auto update', yesNo(fwCfg.auto_update)),
+                        infoField('Check interval', fwCfg.check_interval_hours ? fwCfg.check_interval_hours + ' hour(s)' : null),
+                        infoField('Last seen', seenText)
+                    ])}
+                    <div class="col-12"><details class="border rounded p-3"><summary class="fw-semibold">Capabilities</summary><pre class="small bg-body-tertiary rounded p-3 mt-3 mb-0 overflow-auto">${capabilities}</pre></details></div>
+                </div>`;
+            },
             syncPins = f => {
                 const s = [...f.querySelectorAll('.js-pin-select')],
                     used = s.map(x => x.value);
@@ -400,6 +497,43 @@ $available=$firmware['update_available']??null;?>
                 setTimeout(() => b.textContent = old, 1200)
             } catch {}
         }));
+        const infoModalEl = document.getElementById('vendoInfoModal'),
+            infoBody = infoModalEl?.querySelector('[data-vendo-info-body]'),
+            infoTitle = infoModalEl?.querySelector('[data-vendo-info-title]'),
+            infoSubtitle = infoModalEl?.querySelector('[data-vendo-info-subtitle]'),
+            infoRefresh = infoModalEl?.querySelector('[data-vendo-info-refresh]'),
+            infoModal = infoModalEl ? bootstrap.Modal.getOrCreateInstance(infoModalEl) : null,
+            loadVendoInfo = async deviceId => {
+                if (!infoModal || !deviceId) return;
+                infoRefresh.dataset.deviceId = deviceId;
+                infoTitle.textContent = 'Vendo information';
+                infoSubtitle.textContent = deviceId;
+                infoBody.innerHTML = '<div class="text-center py-5"><div class="spinner-border"></div><div class="small text-body-secondary mt-2">Loading Vendo information...</div></div>';
+                infoModal.show();
+                try {
+                    const u = new URL(location.href);
+                    u.search = '';
+                    u.searchParams.set('device_info', deviceId);
+                    const r = await fetch(u.toString(), {
+                            headers: {
+                                Accept: 'application/json'
+                            },
+                            cache: 'no-store'
+                        }),
+                        d = await r.json().catch(() => ({
+                            ok: false,
+                            message: 'Invalid server response.'
+                        }));
+                    if (!r.ok || !d.ok) throw new Error(d.message || 'Could not load Vendo information.');
+                    infoTitle.textContent = d.binding?.vendo_name || 'Vendo';
+                    infoSubtitle.textContent = deviceId;
+                    infoBody.innerHTML = renderVendoInfo(d);
+                } catch (e) {
+                    infoBody.innerHTML = `<div class="alert alert-danger mb-0">${esc(e.message || 'Could not load Vendo information.')}</div>`;
+                }
+            };
+        document.querySelectorAll('[data-vendo-info]').forEach(b => b.addEventListener('click', () => loadVendoInfo(b.dataset.vendoInfo)));
+        infoRefresh?.addEventListener('click', () => loadVendoInfo(infoRefresh.dataset.deviceId || ''));
         const pairingRows = [...document.querySelectorAll('[data-pairing-row]')];
         if (pairingRows.length) {
             const ids = pairingRows.map(r => r.dataset.pairingId).sort(),
