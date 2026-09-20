@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "f8751a4668ab0a2486ee562f3433c34c",
+    "content-hash": "7ef47e01c883f50a7da98ccdd6388233",
     "packages": [
         {
             "name": "tihloh/prefab-auth",
@@ -414,17 +414,17 @@
             "time": "2026-08-30T17:29:05+00:00"
         },
         {
-            "name": "tihloh/vendo-gateway",
+            "name": "tihloh/vendogate-php",
             "version": "dev-main",
             "source": {
                 "type": "git",
-                "url": "https://github.com/tihloh/vendo-gateway.git",
-                "reference": "b1b389395608b12964796cde2a8355a71160897c"
+                "url": "https://github.com/tihloh/vendogate-php.git",
+                "reference": "d9737ae033011e6ec1b0b26af1211bbd955b0113"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tihloh/vendo-gateway/zipball/b1b389395608b12964796cde2a8355a71160897c",
-                "reference": "b1b389395608b12964796cde2a8355a71160897c",
+                "url": "https://api.github.com/repos/tihloh/vendogate-php/zipball/d9737ae033011e6ec1b0b26af1211bbd955b0113",
+                "reference": "d9737ae033011e6ec1b0b26af1211bbd955b0113",
                 "shasum": ""
             },
             "require": {
@@ -441,7 +441,6 @@
                     "Tihloh\\VendoGateway\\": "src/"
                 }
             },
-            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
             ],
@@ -451,7 +450,7 @@
                 }
             ],
             "description": "Reusable device gateway for coin-operated, vending and IoT hardware.",
-            "homepage": "https://github.com/tihloh/vendo-gateway",
+            "homepage": "https://github.com/tihloh/vendogate-php",
             "keywords": [
                 "esp32",
                 "esp8266",
@@ -461,16 +460,16 @@
                 "vendo"
             ],
             "support": {
-                "issues": "https://github.com/tihloh/vendo-gateway/issues",
-                "source": "https://github.com/tihloh/vendo-gateway"
+                "issues": "https://github.com/tihloh/vendogate-php/issues",
+                "source": "https://github.com/tihloh/vendogate-php"
             },
-            "time": "2026-09-18T13:53:15+00:00"
+            "time": "2026-09-20T02:43:16+00:00"
         }
     ],
     "packages-dev": [],
     "aliases": [
         {
-            "package": "tihloh/vendo-gateway",
+            "package": "tihloh/vendogate-php",
             "version": "dev-main",
             "alias": "1.4.0",
             "alias_normalized": "1.4.0.0"
@@ -478,7 +477,7 @@
     ],
     "minimum-stability": "stable",
     "stability-flags": {
-        "tihloh/vendo-gateway": 20
+        "tihloh/vendogate-php": 20
     },
     "prefer-stable": false,
     "prefer-lowest": false,
