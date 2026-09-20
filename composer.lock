@@ -419,12 +419,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/tihloh/vendogate-php.git",
-                "reference": "d9737ae033011e6ec1b0b26af1211bbd955b0113"
+                "reference": "f2d533691098e73914f06d5bcc7463b8827e6c6b"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tihloh/vendogate-php/zipball/d9737ae033011e6ec1b0b26af1211bbd955b0113",
-                "reference": "d9737ae033011e6ec1b0b26af1211bbd955b0113",
+                "url": "https://api.github.com/repos/tihloh/vendogate-php/zipball/f2d533691098e73914f06d5bcc7463b8827e6c6b",
+                "reference": "f2d533691098e73914f06d5bcc7463b8827e6c6b",
                 "shasum": ""
             },
             "require": {
@@ -463,7 +463,7 @@
                 "issues": "https://github.com/tihloh/vendogate-php/issues",
                 "source": "https://github.com/tihloh/vendogate-php"
             },
-            "time": "2026-09-20T02:43:16+00:00"
+            "time": "2026-09-20T02:55:39Z"
         }
     ],
     "packages-dev": [],
