@@ -42,6 +42,14 @@ final class Controller extends FeatureController
             redirect('/admin/routers');
         }
         $this->cleanupPairings();
+        if(!$this->isPost()&&isset($_GET['device_info'])){
+            $deviceId=trim((string)$_GET['device_info']);
+            if(!$this->gateway)$this->json(['ok'=>false,'message'=>'Vendo Gateway is not configured.'],503);
+            $binding=$this->bridge->binding($deviceId);
+            if($deviceId===''||!$binding||(int)($binding['router_id']??0)!==$routerId)$this->json(['ok'=>false,'message'=>'Vendo not found on this gateway.'],404);
+            try{$this->json(['ok'=>true,'binding'=>$binding,'info'=>$this->gateway->deviceInfo($deviceId),'server_time'=>time()]);}
+            catch(\Throwable $e){$this->json(['ok'=>false,'message'=>$e->getMessage()],422);}
+        }
         if(!$this->isPost()&&(string)($_GET['pairing_status']??'')==='1'){
             $pairings=$this->pendingPairings($routerId);
             $this->json(['ok'=>true,'pairings'=>array_map(static fn(array $row):array=>['id'=>(string)$row['pairing_id'],'expires_at'=>(int)$row['expires_at_epoch']],$pairings),'server_time'=>time()]);
@@ -79,12 +87,10 @@ final class Controller extends FeatureController
                 catch(\Throwable){
                 }
             }
-            $q=$this->db->prepare('SELECT reported_state_json,last_ip FROM vg_devices WHERE device_id=? LIMIT 1');
-            $q->execute([$deviceId]);
-            $raw=$q->fetch();
-            if($raw){
-                $reported=json_decode((string)($raw['reported_state_json']??''),true)?:[];
-                $reported['ip']=$raw['last_ip']??null;
+            if($this->gateway&&$device){
+                try{$reported=$this->gateway->configs->reportedState($deviceId);}
+                catch(\Throwable){}
+                $reported['ip']=$device->lastIp;
             }
             if(!$config&&$reported)$config=['hardware'=>$reported['hardware']??[],'coin'=>$reported['coin']??[]];
             $rows[]=['binding'=>$binding,'device'=>$device,'config'=>$config,'reported'=>$reported,'firmware'=>$firmwareStatus,'selected'=>$selectedDevice!==''&&hash_equals($selectedDevice,$deviceId)];
