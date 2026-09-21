@@ -59,8 +59,9 @@ final class VendoGatewayBridge implements EventHandler
 
         $sessionId=bin2hex(random_bytes(16));
         $maxSeconds=$this->recoveryWindowSeconds($gatewayDeviceId);
-        $stmt=$this->db->prepare('INSERT INTO vendo_gateway_coin_sessions(session_id,gateway_device_id,router_id,vendo_id,user_id,device_id,status,coin_count,credits,started_at,last_activity_at,expires_at,created_at,updated_at) VALUES(?,?,?,?,?,?,"active",0,0,UTC_TIMESTAMP(),UTC_TIMESTAMP(),DATE_ADD(UTC_TIMESTAMP(),INTERVAL ? SECOND),UTC_TIMESTAMP(),UTC_TIMESTAMP())');
-        $stmt->execute([$sessionId,$gatewayDeviceId,$routerId,$stationId,$userId,$deviceId,$maxSeconds]);
+        $expiresAt=gmdate('Y-m-d H:i:s',time()+$maxSeconds);
+        $stmt=$this->db->prepare('INSERT INTO vendo_gateway_coin_sessions(session_id,gateway_device_id,router_id,vendo_id,user_id,device_id,status,coin_count,credits,started_at,last_activity_at,expires_at,created_at,updated_at) VALUES(?,?,?,?,?,?,"active",0,0,UTC_TIMESTAMP(),UTC_TIMESTAMP(),?,UTC_TIMESTAMP(),UTC_TIMESTAMP())');
+        $stmt->execute([$sessionId,$gatewayDeviceId,$routerId,$stationId,$userId,$deviceId,$expiresAt]);
         return$this->session($sessionId,$gatewayDeviceId)??throw new \RuntimeException('Could not create coin session.');
     }
 
