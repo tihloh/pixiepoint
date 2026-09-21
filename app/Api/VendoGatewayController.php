@@ -80,7 +80,15 @@ final class VendoGatewayController
         $this->run(function() use($gateway,$auth,$raw,$headers): array{
             $device=$auth->authenticate($headers,$raw,'POST','/vendo/v1/sync');
             $response=(new SyncEndpoint($auth,$gateway->configs,$gateway->commands,$gateway->states,$gateway->firmware,$gateway->events,$gateway->heartbeats))->handle($headers,$raw,'POST','/vendo/v1/sync',$_SERVER['REMOTE_ADDR']??null);
-            $response['coin_session']=$this->bridge->activeCoinSession($device->deviceId)??['active'=>false];
+            $session=$this->bridge->activeCoinSession($device->deviceId);
+            $response['coin_session']=$session?[
+                'active'=>true,
+                'session_id'=>$session['session_id'],
+                'coin_count'=>$session['coin_count'],
+                'credits'=>$session['credits'],
+                'last_sequence'=>$session['last_sequence'],
+                'last_coin_credits'=>$session['last_coin_credits']
+            ]:['active'=>false];
             return$response;
         });
     }
