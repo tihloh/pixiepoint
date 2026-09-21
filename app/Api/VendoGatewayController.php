@@ -74,8 +74,15 @@ final class VendoGatewayController
     }
     public function sync(): never{
         $gateway=$this->gateway();
+        $auth=$this->deviceAuth();
         $raw=$this->raw();
-        $this->run(fn()=>(new SyncEndpoint($this->deviceAuth(),$gateway->configs,$gateway->commands,$gateway->states,$gateway->firmware,$gateway->events,$gateway->heartbeats))->handle($this->headers(),$raw,'POST','/vendo/v1/sync',$_SERVER['REMOTE_ADDR']??null));
+        $headers=$this->headers();
+        $this->run(function() use($gateway,$auth,$raw,$headers): array{
+            $device=$auth->authenticate($headers,$raw,'POST','/vendo/v1/sync');
+            $response=(new SyncEndpoint($auth,$gateway->configs,$gateway->commands,$gateway->states,$gateway->firmware,$gateway->events,$gateway->heartbeats))->handle($headers,$raw,'POST','/vendo/v1/sync',$_SERVER['REMOTE_ADDR']??null);
+            $response['coin_session']=$this->bridge->activeCoinSession($device->deviceId)??['active'=>false];
+            return$response;
+        });
     }
     public function events(): never{
         $gateway=$this->gateway();

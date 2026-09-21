@@ -12,11 +12,15 @@ use PixiePoint\App\Services\PointWallet;
 use PixiePoint\App\Services\PortalFeatureConfig;
 use PixiePoint\App\Services\PortalThemeManager;
 use PixiePoint\App\Services\View;
+use PixiePoint\App\Services\VendoGatewayBridge;
 use Throwable;
 
 final class HotspotController
 {
+    private VendoGatewayBridge $bridge;
+
     public function __construct(private Api $api,private View $view,private PortalThemeManager $themes,private ThemeEngine $themeEngine,private PlatformAdapter $portalAdapter,private PDO $db,private NetworkDeviceIdentity $networkDevices,private PointWallet $points){
+        $this->bridge=new VendoGatewayBridge($db);
     }
 
     public function portal(): never{
@@ -75,6 +79,60 @@ final class HotspotController
         exit;
     }
 
+    public function coinSessionStart(): never
+    {
+        require_csrf();
+        try{
+            [$context,$device,$userId]=$this->coinOwner();
+            $stationId=max(0,(int)($_POST['vendo_id']??0));
+            $routerId=$this->routerId($context['routerIdentity']);
+            if($stationId<1||$routerId<1||$this->bridge->routerIdForStation($stationId)!==$routerId)throw new \RuntimeException('Vendo is not available for this hotspot.');
+            $session=$this->bridge->startCoinSession($stationId,$routerId,$userId,(int)$device['id']);
+            $this->json(['ok'=>true,'session'=>[
+                'id'=>$session['session_id'],
+                'credits'=>$session['credits'],
+                'coin_count'=>$session['coin_count']
+            ]]);
+        }
+        catch(Throwable $e){
+            $this->json(['ok'=>false,'error'=>$e->getMessage()],409);
+        }
+    }
+
+    public function coinSessionStatus(): never
+    {
+        try{
+            [, $device,$userId]=$this->coinOwner();
+            $sessionId=strtolower(trim((string)($_GET['session']??'')));
+            $session=$this->bridge->coinSessionStatus($sessionId,$userId,(int)$device['id']);
+            if(!$session)$this->json(['ok'=>false,'error'=>'Coin session not found.'],404);
+            $this->json(['ok'=>true,'session'=>[
+                'id'=>$session['session_id'],
+                'active'=>$session['active'],
+                'credits'=>$session['credits'],
+                'coin_count'=>$session['coin_count'],
+                'last_coin_credits'=>$session['last_coin_credits']
+            ]]);
+        }
+        catch(Throwable $e){
+            $this->json(['ok'=>false,'error'=>$e->getMessage()],422);
+        }
+    }
+
+    public function coinSessionFinish(): never
+    {
+        require_csrf();
+        try{
+            [, $device,$userId]=$this->coinOwner();
+            $sessionId=strtolower(trim((string)($_POST['session']??'')));
+            if(!$this->bridge->finishCoinSession($sessionId,$userId,(int)$device['id']))throw new \RuntimeException('Coin session not found.');
+            $this->json(['ok'=>true]);
+        }
+        catch(Throwable $e){
+            $this->json(['ok'=>false,'error'=>$e->getMessage()],422);
+        }
+    }
+
     public function index(): never
     {
         $raw=['router_identity'=>(string)($_GET['router_identity']??''),'server_address'=>(string)($_GET['server_address']??''),'client_ip'=>(string)($_GET['client_ip']??''),'interface'=>(string)($_GET['interface']??''),'mac'=>(string)($_GET['mac']??'')];
@@ -86,6 +144,26 @@ final class HotspotController
         }
         $this->headers('application/json; charset=utf-8');
         echo json_encode(['ok'=>true,'vendos'=>$this->api->forHotspot($d['router_identity'],$d['server_address'],$d['client_ip'],$d['interface'])],JSON_UNESCAPED_SLASHES);
+        exit;
+    }
+
+    private function coinOwner(): array
+    {
+        $context=$this->hotspotContext();
+        $mac=$this->normalizeMac($context['mac']);
+        if($mac==='')throw new \RuntimeException('Hotspot device identity is unavailable.');
+        $scope=implode('|',array_filter([$context['routerIdentity'],$context['interfaceName']]))?:'global';
+        $device=$this->networkDevices->resolve($mac,$scope,$context['ip']);
+        if(!$device)throw new \RuntimeException('Hotspot device could not be resolved.');
+        $userId=!empty($device['user_id'])?(int)$device['user_id']:null;
+        return[$context,$device,$userId];
+    }
+
+    private function json(array $payload,int $status=200): never
+    {
+        http_response_code($status);
+        $this->headers('application/json; charset=utf-8');
+        echo json_encode($payload,JSON_UNESCAPED_SLASHES);
         exit;
     }
 
