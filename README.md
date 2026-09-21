@@ -85,6 +85,24 @@ The management API accepts normalized accounting events at `POST /api/accounting
 
 The recommended RouterOS v7 on-login replacement is [routeros/LoginScript_PixiePoint.rsc](routeros/LoginScript_PixiePoint.rsc). It preserves JuanFi's `duration,amount,extension,vendo` comment format while moving sales, points, devices, and idempotency into PixiePoint. See [routeros/README.md](routeros/README.md) for provisioning and security guidance.
 
+## Native VendoGate coin sessions
+
+Native VendoGate sessions are owned by PixiePoint, not by the ESP. PixiePoint creates
+a 32-character coin-session ID bound to the current account when logged in, or to the
+resolved hotspot device when the customer is a guest. The browser passes only that
+session ID to the local ESP.
+
+Every completed coin group is sent immediately by the authenticated VendoGate device
+with its session ID and raw credits. PixiePoint maps the event back to the owning
+user/device, deduplicates it by event ID, timestamps it on receipt, and performs all
+rate and credit-to-time conversion. The ESP does not receive account/device IDs and
+does not calculate service time.
+
+After an ESP reboot, coin outputs remain off. Its first authenticated sync asks
+PixiePoint for the last active session for that VendoGate device. If one exists the
+ESP restores only the session identity/counters, still with outputs off; the same
+browser session must explicitly resume the local coin slot.
+
 ## Unmodified JuanFi ESP compatibility
 
 PixiePoint can operate with the existing JuanFi ESP/NodeMCU firmware while a native device platform is developed. The MikroTik bootstrap loads the portal application and stylesheet from PixiePoint into one native local document. The hosted application then communicates with the ESP from the browser, preserving the current coin acceptor and voucher protocol without an iframe, nested scrolling, or a second portal layout stored on the router.

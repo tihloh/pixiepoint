@@ -34,8 +34,10 @@ final class VendoGatewayBridge implements EventHandler
         $userId=$session&&!empty($session['user_id'])?(int)$session['user_id']:null;
         $deviceId=$session&&!empty($session['device_id'])?(int)$session['device_id']:null;
 
-        $stmt=$this->db->prepare('INSERT IGNORE INTO vendo_gateway_coin_events(event_id,gateway_device_id,vendo_id,session_id,user_id,device_id,sequence_no,channel,pulses,credits,occurred_at,received_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)');
-        $stmt->execute([$event->eventId,$event->deviceId,$binding['station_id']??null,$sessionId?:null,$userId,$deviceId,$event->sequence,$channel,$pulses,$credits,$event->occurredAt?->format('Y-m-d H:i:s'),$event->receivedAt->format('Y-m-d H:i:s')]);
+        // PixiePoint is authoritative for transaction time. The ESP reports only
+        // sequence/session identity and coin credits; server receipt time is canonical.
+        $stmt=$this->db->prepare('INSERT IGNORE INTO vendo_gateway_coin_events(event_id,gateway_device_id,vendo_id,session_id,user_id,device_id,sequence_no,channel,pulses,credits,occurred_at,received_at) VALUES(?,?,?,?,?,?,?,?,?,?,NULL,?)');
+        $stmt->execute([$event->eventId,$event->deviceId,$binding['station_id']??null,$sessionId?:null,$userId,$deviceId,$event->sequence,$channel,$pulses,$credits,$event->receivedAt->format('Y-m-d H:i:s')]);
         if($stmt->rowCount()>0&&$session&&$session['status']==='active'){
             $q=$this->db->prepare('UPDATE vendo_gateway_coin_sessions SET coin_count=coin_count+1,credits=credits+?,last_event_id=?,last_sequence_no=?,last_coin_credits=?,last_activity_at=UTC_TIMESTAMP(),updated_at=UTC_TIMESTAMP() WHERE session_id=? AND gateway_device_id=? AND status="active"');
             $q->execute([$credits,$event->eventId,$event->sequence,$credits,$sessionId,$event->deviceId]);
@@ -214,6 +216,7 @@ final class VendoGatewayBridge implements EventHandler
             'last_event_id'=>(string)($row['last_event_id']??''),
             'last_sequence'=>(string)($row['last_sequence_no']??''),
             'last_coin_credits'=>(int)($row['last_coin_credits']??0),
+            'owner_type'=>!empty($row['user_id'])?'user':'device',
             'user_id'=>!empty($row['user_id'])?(int)$row['user_id']:null,
             'device_id'=>!empty($row['device_id'])?(int)$row['device_id']:null,
             'vendo_id'=>(int)$row['vendo_id'],
